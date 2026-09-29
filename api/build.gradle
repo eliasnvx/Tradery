@@ -1,0 +1,73 @@
+// Public Economy API: interfaces, records and events. Depends on vanilla Minecraft only, never on :common.
+plugins {
+    id 'multiloader-shared'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    neoFormVersion = neo_form_version
+    // JUnit tests use vanilla classes (Identifier, Codec, Gson) too
+    addModdingDependenciesTo(sourceSets.test)
+}
+
+version = "${api_version}+${minecraft_version}"
+
+base {
+    archivesName = "${mod_id}-api"
+}
+
+dependencies {
+    // Addons compile against these annotations (@Nullable, @ApiStatus)
+    compileOnlyApi "org.jetbrains:annotations:${jetbrains_annotations_version}"
+}
+
+java {
+    withJavadocJar()
+}
+
+javadoc {
+    options.encoding = 'UTF-8'
+    options.addBooleanOption('Xdoclint:all,-missing', true)
+}
+
+// dev.eliasnvx:tradery-api:<api_version>+<mc>. The repository comes from the environment (release workflow);
+// locally: ./gradlew :api:publishToMavenLocal
+publishing {
+    publications {
+        register('mavenApi', MavenPublication) {
+            groupId = project.group
+            artifactId = "${mod_id}-api"
+            from components.java
+            pom {
+                name = 'Tradery API'
+                description = 'Public Economy API of the Tradery mod: accounts, transactions and events'
+                url = 'https://github.com/eliasnvx/Tradery'
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'eliasnvx'
+                        name = 'eliasnvx'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        def mavenUrl = providers.environmentVariable('TRADERY_MAVEN_URL').orNull
+        if (mavenUrl != null) {
+            maven {
+                name = 'release'
+                url = mavenUrl
+                credentials {
+                    username = providers.environmentVariable('TRADERY_MAVEN_USER').orNull
+                    password = providers.environmentVariable('TRADERY_MAVEN_PASSWORD').orNull
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,39 @@
+// Vanilla-only modules (:api, :common) expose their sources so the loader modules can compile them in.
+// Each of them also applies ModDevGradle in vanilla mode (neoFormVersion) to compile against plain Minecraft.
+plugins {
+    id 'multiloader-common'
+}
+
+configurations {
+    sharedJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    sharedResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+artifacts {
+    sharedJava sourceSets.main.java.sourceDirectories.singleFile
+    sharedResources sourceSets.main.resources.sourceDirectories.singleFile
+}
+
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->
+    configurations.named(variant) {
+        attributes {
+            attribute(loaderAttribute, 'common')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant ->
+        configurations.named(variant) {
+            attributes {
+                attribute(loaderAttribute, 'common')
+            }
+        }
+    }
+}

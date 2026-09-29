@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+out/
+bin/
+
+# Runtime
+run/
+runs/
+logs/
+*.log
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.project
+.classpath
+.settings/
+*.launch
+
+# macOS
+.DS_Store
+
+# Local agent notes
+CLAUDE.local.md
