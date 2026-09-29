@@ -17,10 +17,21 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] Visual HUD check: Fabric client GameTest `HudClientTest` (sync on join, /eco give/take, corner/scale/short format, /tradery hud), screenshots reviewed
 - [x] Balance survives a restart: NBT round-trip of accounts/history/stats (JUnit); both dedicated servers start and create the data files
 
-## Phase 2 — Vending (active)
-Not started.
+## Phase 2 — Vending ✅ (closed 2026-09-30)
+- [x] Registration through `Platform.register` (Fabric immediate, NeoForge DeferredRegister), creative tab
+- [x] `vending_block` (facing, stocked light, facade), `display_block`, `vendor_key`; recipes, loot, pickaxe tag
+- [x] Block entity: owner, settings, 27 stock + 9 revenue slots, facade, admin flags; never ticks; not a `Container`
+- [x] Trades: sale (money or items), buyback (money), fee, burn, infinite stock, all limits before any change
+- [x] Menus: buyer (no slots, ×1/×8/×max via menu buttons), owner (stock, take-only revenue, sample slots, draft + Save), admin toggles, display
+- [x] Screens drawn with vanilla-style panels; owner/admin/buyer/display checked in a Fabric client test with screenshots
+- [x] Renderer: goods with STATIC/SPIN/BOB/SPIN_BOB/NONE, facade squeezed into the base; client animation override
+- [x] Owner notifications (sale, empty, no room) and the offline summary on join
+- [x] Vendor index (`tradery:vendors`, self-healing), per-player limit, `VendingPlacedEvent`/`VendingConfiguredEvent`/`VendingPurchaseEvent`
+- [x] Protection: strangers can't break (also creative, via loader events), explosions, pistons, hoppers
+- [x] `/tradery vendors [player]`
+- [x] GameTests (both loaders): sale, last item once, no room, item price + full revenue, buyback, menu rules, break with open menus, protection, rate limit, offline summary, price change closes buyer screens
 
-## Phase 3 — Money sources
+## Phase 3 — Money sources (active)
 Not started.
 
 ## Phase 4 — Integrations
