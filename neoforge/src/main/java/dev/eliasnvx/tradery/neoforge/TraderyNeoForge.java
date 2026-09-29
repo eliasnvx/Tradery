@@ -1,0 +1,67 @@
+package dev.eliasnvx.tradery.neoforge;
+
+import dev.eliasnvx.tradery.Tradery;
+import dev.eliasnvx.tradery.network.TraderyPayloads;
+import dev.eliasnvx.tradery.platform.Platform;
+import dev.eliasnvx.tradery.server.TraderyServer;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.HandlerThread;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
+
+@Mod(Tradery.MOD_ID)
+public final class TraderyNeoForge {
+    public TraderyNeoForge(IEventBus modBus) {
+        Platform.install(new NeoForgePlatform());
+        Tradery.init();
+
+        modBus.addListener(TraderyNeoForge::registerPayloads);
+        TraderyGameTestsNeoForge.register(modBus);
+        NeoForge.EVENT_BUS.addListener((PermissionGatherEvent.Nodes event) -> event.addNodes(NeoForgePlatform.nodes()));
+        NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> TraderyServer.registerCommands(event.getDispatcher()));
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> TraderyServer.onServerStarted(event.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> TraderyServer.onServerStopped(event.getServer()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                TraderyServer.onPlayerJoin(player);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                TraderyServer.onPlayerRespawnOrTravel(player);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerChangedDimensionEvent event) -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                TraderyServer.onPlayerRespawnOrTravel(player);
+            }
+        });
+    }
+
+    /** Optional channels: a server without Tradery on the client side just doesn't get the HUD packets. */
+    private static void registerPayloads(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar(Tradery.MOD_ID).versioned("1").optional().executesOn(HandlerThread.MAIN);
+        for (TraderyPayloads.Entry<?> entry : TraderyPayloads.CLIENTBOUND) {
+            registerClientbound(registrar, entry);
+        }
+    }
+
+    private static <T extends CustomPacketPayload> void registerClientbound(PayloadRegistrar registrar, TraderyPayloads.Entry<T> entry) {
+        registrar.playToClient(entry.type(), entry.codec(), TraderyNeoForge::handleOnClient);
+    }
+
+    /** Dedicated servers never receive clientbound payloads; the client class is only touched on the client. */
+    private static <T extends CustomPacketPayload> void handleOnClient(T payload, IPayloadContext context) {
+        dev.eliasnvx.tradery.client.TraderyClient.handle(payload);
+    }
+}
