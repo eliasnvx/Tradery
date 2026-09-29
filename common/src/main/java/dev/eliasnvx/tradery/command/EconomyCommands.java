@@ -94,7 +94,43 @@ public final class EconomyCommands {
             .then(Commands.literal("hud")
                 .executes(EconomyCommands::toggleHud))
             .then(Commands.literal("reload").requires(allowed(TraderyPermission.ADMIN_RELOAD))
-                .executes(EconomyCommands::reload));
+                .executes(EconomyCommands::reload))
+            .then(Commands.literal("vendors").requires(allowed(TraderyPermission.ADMIN_VENDORS))
+                .executes(context -> vendors(context, null))
+                .then(CommandArgs.player("player")
+                    .executes(context -> vendors(context, CommandArgs.account(context, "player")))));
+    }
+
+    /** Vending blocks of a player (or of the caller), with clickable coordinates. */
+    private static int vendors(CommandContext<CommandSourceStack> context, LedgerAccount of) throws CommandSyntaxException {
+        CommandSourceStack source = context.getSource();
+        dev.eliasnvx.tradery.vending.VendorsData data = dev.eliasnvx.tradery.vending.VendorsData.get(source.getServer());
+        List<dev.eliasnvx.tradery.vending.VendorsData.Entry> entries;
+        String who;
+        if (of != null) {
+            entries = data.ownedBy(of.id());
+            who = of.displayName();
+        } else if (source.getPlayer() != null) {
+            entries = data.ownedBy(AccountId.player(source.getPlayer().getUUID()));
+            who = source.getTextName();
+        } else {
+            entries = data.all();
+            who = "*";
+        }
+        source.sendSuccess(() -> tr("tradery.command.vendors_header", "Vending blocks of %s: %s", Messages.name(who), entries.size())
+            .withStyle(ChatFormatting.YELLOW), false);
+        for (dev.eliasnvx.tradery.vending.VendorsData.Entry entry : entries.subList(0, Math.min(entries.size(), 50))) {
+            net.minecraft.core.BlockPos pos = entry.pos().pos();
+            String dimension = entry.pos().dimension().identifier().toString();
+            String tp = "/execute in " + dimension + " run tp @s " + pos.getX() + " " + (pos.getY() + 1) + " " + pos.getZ();
+            MutableComponent line = Component.literal(pos.getX() + " " + pos.getY() + " " + pos.getZ()).withStyle(style -> style
+                .withColor(ChatFormatting.AQUA)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent.SuggestCommand(tp))
+                .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal(tp))));
+            source.sendSuccess(() -> Component.literal("  ").append(line)
+                .append(Component.literal("  " + dimension).withStyle(ChatFormatting.GRAY)), false);
+        }
+        return entries.size();
     }
 
     // ------------------------------------------------------------------ player commands

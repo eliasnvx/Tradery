@@ -132,5 +132,6 @@
   "tradery.animation.spin": "вращение",
   "tradery.animation.bob": "покачивание",
   "tradery.animation.spin_bob": "вращение и покачивание",
-  "tradery.animation.none": "скрыто"
+  "tradery.animation.none": "скрыто",
+  "tradery.command.vendors_header": "Автоматы %s: %s"
 }

@@ -132,5 +132,6 @@
   "tradery.animation.spin": "spin",
   "tradery.animation.bob": "bob",
   "tradery.animation.spin_bob": "spin & bob",
-  "tradery.animation.none": "hidden"
+  "tradery.animation.none": "hidden",
+  "tradery.command.vendors_header": "Vending blocks of %s: %s"
 }

@@ -48,6 +48,17 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - NeoForge: `Registries.TEST_FUNCTION` + `RegisterGameTestsEvent` only when `GameTestHooks.isGametestEnabled()`; structure `tradery:empty` (5×5×5 air, `tools/structures.py`); `runGameTestServer` is part of `check`.
 - MDG's server run doesn't forward the console, so NeoForge server behaviour is checked with GameTests, not console smoke tests.
 
+## 2026-09-30: Vending
+- Trades are menu button clicks (`clickMenuButton`) instead of a custom `VendingBuy` payload: vanilla already checks the click belongs to the player's open menu; the menu checks distance (≤ 8 blocks) and the rate limit (10/s). The only custom C2S is `VendingSavePayload` (the money price); goods, price item and facade are the server's own copies of the sample slots.
+- Sample ("ghost") slots copy the cursor stack and never take it; clicks are handled in `clicked()` on both sides, so the client prediction matches.
+- The owner edits a draft (data slots + sample slots); "Save" validates (blacklist, facade rules), posts `VendingConfiguredEvent`, applies, and closes every buyer screen of that block when the offer changed — nobody pays a price they didn't see.
+- Buyer screens get stock and affordability through two data slots (16-bit, capped at 9999), recomputed in `broadcastChanges`.
+- Contents drop in `BlockEntity#preRemoveSideEffects` (removal, not unload), which also closes the menus and updates the vendor index.
+- Protection: destroy progress 0 for strangers; creative-mode instant breaking is blocked through Fabric `PlayerBlockBreakEvents.BEFORE` / NeoForge `BreakBlockEvent`; `PushReaction.IMMOVEABLE`; bedrock-level blast resistance.
+- Facade: rendered by the block entity renderer with `BlockModelResolver`, squeezed into the 6 px base; the blockstate `facade=true` hides the default base model.
+- NeoForge GameTest mock players don't have `neoforge:advanced_open_screen`; for such connections menus open the vanilla way (server-side menu is identical).
+- Screens are drawn with fills (`Panels`), no GUI textures.
+
 ## API notes (26.3)
 - `ResourceLocation` → `Identifier`; `Identifier.read(String)` returns `DataResult`.
 - `SavedDataType(Identifier, Supplier, Codec, DataFixTypes)`; `MinecraftServer#getDataStorage()`.
@@ -57,3 +68,8 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - `Player#sendOverlayMessage(Component)` for the action bar.
 - `GameTestHelper#makeMockServerPlayerInLevel()` is deprecated for removal in 26.3 (still works).
 - Worldgen: configured features in `data/<ns>/worldgen/feature/`; loot table functions are `"modifier"`.
+- `PushReaction.IMMOVEABLE` (no `BLOCK`); entity type constants in `EntityTypes`; `PoseStack#rotateDegrees(Axis, float)`.
+- `CreativeModeTab.Output` is protected in vanilla: `:common` gets it through `META-INF/accesstransformer.cfg` (both loaders open it anyway).
+- BER: `extractRenderState(be, state, partialTicks, cameraPos, crumbling)` + `submit(state, pose, collector, camera)`; items via `ItemModelResolver.updateForTopItem`, blocks via `BlockModelResolver.update`.
+- Screens: `extractBackground` / `extractLabels`; the open screen is `Minecraft#gui.screen()`; `Minecraft#hasShiftDown()`.
+- Block models: texture refs can be `{"sprite": ..., "force_translucent": true}`; elements support `light_emission`.
