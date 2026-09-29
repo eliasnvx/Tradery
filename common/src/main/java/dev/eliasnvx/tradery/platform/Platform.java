@@ -2,10 +2,20 @@ package dev.eliasnvx.tradery.platform;
 
 import dev.eliasnvx.tradery.command.TraderyPermission;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.Registry;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.CreativeModeTab;
 
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * What common code needs from the loader. Each loader installs its implementation first thing in its mod
@@ -38,6 +48,27 @@ public interface Platform {
 
     /** Client side: sends a payload to the server; check {@link #canSendToServer} first. */
     void sendToServer(CustomPacketPayload payload);
+
+    /**
+     * Registers an object into a vanilla registry. Fabric registers at once; NeoForge defers to its registry
+     * events. The returned supplier works once registries are populated (after mod construction).
+     */
+    <T> Supplier<T> register(ResourceKey<? extends Registry<? super T>> registry, String name, Supplier<? extends T> factory);
+
+    /** A menu type whose client-side menu is built from data sent when it opens. */
+    <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec);
+
+    /** Opens a menu of a {@link #menuType} type, sending its opening data. */
+    <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec, D data);
+
+    /** A creative tab builder the loader accepts (Fabric needs its own). */
+    CreativeModeTab.Builder creativeTabBuilder();
+
+    /** Builds a menu from its opening data (on the client) or from the server-side state. */
+    @FunctionalInterface
+    interface MenuFactory<M extends AbstractContainerMenu, D> {
+        M create(int containerId, Inventory inventory, D data);
+    }
 
     static Platform get() {
         Platform platform = Holder.instance;

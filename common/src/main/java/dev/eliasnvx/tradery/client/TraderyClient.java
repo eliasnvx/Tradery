@@ -25,6 +25,7 @@ public final class TraderyClient {
             case TraderyPayloads.BalanceDeltaPayload p -> ClientEconomy.onDelta(p);
             case TraderyPayloads.NotificationPayload p -> showNotification(p);
             case TraderyPayloads.HudTogglePayload ignored -> toggleHud();
+            case TraderyPayloads.VendingResultPayload p -> showVendingResult(p);
             default -> {
             }
         }
@@ -56,6 +57,14 @@ public final class TraderyClient {
         }
     }
 
+    private static void showVendingResult(TraderyPayloads.VendingResultPayload payload) {
+        if (Minecraft.getInstance().gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen
+            && screen.getMenu().containerId == payload.containerId()
+            && screen instanceof dev.eliasnvx.tradery.client.screen.VendingResultView view) {
+            view.showResult(payload.success(), payload.message());
+        }
+    }
+
     private static void showNotification(TraderyPayloads.NotificationPayload payload) {
         ClientConfig.Notifications config = TraderyConfig.client().notifications();
         boolean show = switch (payload.kind()) {
@@ -69,7 +78,9 @@ public final class TraderyClient {
         if (!show || player == null) {
             return;
         }
-        Object[] args = payload.args().stream().map(arg -> Component.literal(arg).withStyle(ChatFormatting.GOLD)).toArray();
+        Object[] args = payload.args().stream().map(arg -> arg.startsWith(TraderyPayloads.TRANSLATABLE_PREFIX)
+            ? Component.translatable(arg.substring(TraderyPayloads.TRANSLATABLE_PREFIX.length())).withStyle(ChatFormatting.GOLD)
+            : Component.literal(arg).withStyle(ChatFormatting.GOLD)).toArray();
         player.sendSystemMessage(Component.translatable(payload.key(), args).withStyle(ChatFormatting.GRAY));
     }
 }

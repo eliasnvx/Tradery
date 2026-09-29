@@ -6,16 +6,33 @@ import dev.eliasnvx.tradery.platform.Platform;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.entity.FakePlayer;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.CreativeModeTab;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 final class FabricPlatform implements Platform {
     /** Fabric permission API ids: tradery:balance/others (LuckPerms shows tradery.balance.others). */
@@ -72,6 +89,45 @@ final class FabricPlatform implements Platform {
     @Override
     public void sendToServer(CustomPacketPayload payload) {
         Client.send(payload);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> Supplier<T> register(ResourceKey<? extends Registry<? super T>> registry, String name, Supplier<? extends T> factory) {
+        Registry<? super T> target = (Registry<? super T>) BuiltInRegistries.REGISTRY.getValueOrThrow((ResourceKey) registry);
+        T value = Registry.register(target, Tradery.id(name), factory.get());
+        return () -> value;
+    }
+
+    @Override
+    public <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory,
+                                                                     StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec) {
+        return new ExtendedMenuType<>(factory::create, dataCodec);
+    }
+
+    @Override
+    public <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec, D data) {
+        player.openMenu(new ExtendedMenuProvider<D>() {
+            @Override
+            public D getScreenOpeningData(ServerPlayer opener) {
+                return data;
+            }
+
+            @Override
+            public Component getDisplayName() {
+                return provider.getDisplayName();
+            }
+
+            @Override
+            public @Nullable AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player opener) {
+                return provider.createMenu(containerId, inventory, opener);
+            }
+        });
+    }
+
+    @Override
+    public CreativeModeTab.Builder creativeTabBuilder() {
+        return FabricCreativeModeTab.builder();
     }
 
     /** Client-only classes, loaded only when these are called on the client. */

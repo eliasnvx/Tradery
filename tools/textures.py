@@ -65,8 +65,141 @@ HUD_COIN = [
 ]
 
 
+# ---------------------------------------------------------------- vending block (red machine, brass trim)
+
+MACHINE = {
+    ".": CLEAR,
+    "k": rgba("2b1414"),  # outline
+    "r": rgba("a3302b"),  # body
+    "R": rgba("c8483d"),  # highlight
+    "d": rgba("7a211d"),  # shadow
+    "b": rgba("c9962c"),  # brass
+    "B": rgba("f0c95a"),  # brass highlight
+    "n": rgba("7d5a14"),  # brass shadow
+    "s": rgba("1a1a1a"),  # coin slot
+    "g": rgba("3a3a3a"),  # slot rim
+}
+
+
+def grid(rows):
+    assert len(rows) == 16 and all(len(r) == 16 for r in rows), rows
+    return rows
+
+
+def vending_side():
+    """Rows 10-15 are the 6 px base: brass band on top, red body, shadow. Rows 0-9 only fill unused UV space."""
+    body = ["kRRRRRRRRRRRRRRk"] + ["krrrrrrrrrrrrrdk"] * 9
+    base = ["BBBBBBBBBBBBBBBB", "bRRRRRRRRRRRRRRb", "brrrrrrrrrrrrrdb", "brrrrrrrrrrrrrdb", "bddddddddddddddb", "nnnnnnnnnnnnnnnn"]
+    return grid(body + base)
+
+
+def vending_front():
+    rows = vending_side()
+    rows = rows[:]
+    # coin slot at x 11..13, rows 11..13 (y 2..4 from the bottom)
+    rows[11] = rows[11][:10] + "ggg" + rows[11][13:]
+    rows[12] = rows[12][:10] + "gsg" + rows[12][13:]
+    rows[13] = rows[13][:10] + "gsg" + rows[13][13:]
+    return grid(rows)
+
+
+def vending_top():
+    rows = ["BBBBBBBBBBBBBBBB"]
+    for y in range(1, 15):
+        if y in (1, 14):
+            rows.append("bnbbbbbbbbbbbbnb")
+        else:
+            rows.append("bRrrrrrrrrrrrrdb")
+    rows.append("nnnnnnnnnnnnnnnn")
+    # rivets
+    rows[2] = "bRBrrrrrrrrrrBdb"
+    rows[13] = "bRBrrrrrrrrrrBdb"
+    return grid(rows)
+
+
+def vending_metal():
+    return grid(["BbbbbbbbbbbbbbbB" if y % 5 == 0 else "bBbbbbbbbbbbbbnb" for y in range(16)])
+
+
+LIGHT_ON = {".": CLEAR, "g": rgba("59ff5f"), "G": rgba("b8ffb0")}
+LIGHT_OFF = {".": CLEAR, "g": rgba("3b3b3b"), "G": rgba("555555")}
+
+
+def light():
+    return grid(["GgggGggggggggggg"] + ["gggggggggggggggg"] * 15)
+
+
+# ---------------------------------------------------------------- display block (quartz base, silver trim)
+
+DISPLAY = {
+    ".": CLEAR,
+    "k": rgba("6f6a64"),
+    "q": rgba("e8e3da"),
+    "Q": rgba("f7f4ee"),
+    "d": rgba("c9c2b6"),
+    "m": rgba("a9b0b8"),
+    "M": rgba("d9dee3"),
+    "n": rgba("7c848c"),
+}
+
+
+def display_base():
+    rows = ["qqqqqqqqqqqqqqqq"] * 12 + ["MMMMMMMMMMMMMMMM", "QqqqqqqqqqqqqqqQ", "qddddddddddddddq", "kkkkkkkkkkkkkkkk"]
+    return grid(rows)
+
+
+def display_top():
+    rows = ["MMMMMMMMMMMMMMMM"] + ["mQqqqqqqqqqqqqdm"] * 14 + ["nnnnnnnnnnnnnnnn"]
+    return grid(rows)
+
+
+def display_metal():
+    return grid(["MmmmmmmmmmmmmmmM" if y % 5 == 0 else "mMmmmmmmmmmmmmnm" for y in range(16)])
+
+
+# ---------------------------------------------------------------- vendor key (admin item)
+
+KEY = {
+    ".": CLEAR,
+    "o": rgba("3d2a00"),
+    "b": rgba("d9a51f"),
+    "B": rgba("ffe27a"),
+    "n": rgba("8a6300"),
+    "r": rgba("c0392b"),
+}
+
+VENDOR_KEY = [
+    "................",
+    "..........oooo..",
+    ".........oBBbbo.",
+    "........oBboobno",
+    "........obo..ono",
+    "........obno.bno",
+    "........onbbbnbo",
+    ".......oonnnnno.",
+    "......obno......",
+    ".....obno.......",
+    "....obno........",
+    "...obnooo.......",
+    "..obnobno.......",
+    ".obnoobo........",
+    ".onno.o.........",
+    "..oo............",
+]
+
+
 def main():
     png("gui/sprites/hud/coin.png", HUD_COIN, GOLD)
+    png("block/vending_side.png", vending_side(), MACHINE)
+    png("block/vending_front.png", vending_front(), MACHINE)
+    png("block/vending_top.png", vending_top(), MACHINE)
+    png("block/vending_metal.png", vending_metal(), MACHINE)
+    png("block/vending_light_on.png", light(), LIGHT_ON)
+    png("block/vending_light_off.png", light(), LIGHT_OFF)
+    png("block/display_base.png", display_base(), DISPLAY)
+    png("block/display_top.png", display_top(), DISPLAY)
+    png("block/display_metal.png", display_metal(), DISPLAY)
+    png("item/vendor_key.png", VENDOR_KEY, KEY)
 
 
 if __name__ == "__main__":
