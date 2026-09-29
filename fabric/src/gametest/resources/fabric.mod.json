@@ -7,6 +7,9 @@
   "entrypoints": {
     "fabric-gametest": [
       "dev.eliasnvx.tradery.fabric.gametest.TraderyGameTestsFabric"
+    ],
+    "fabric-client-gametest": [
+      "dev.eliasnvx.tradery.fabric.gametest.HudClientTest"
     ]
   },
   "depends": {

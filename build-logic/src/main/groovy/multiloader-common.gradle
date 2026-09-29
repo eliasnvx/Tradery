@@ -29,6 +29,8 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = java_version as int
+    // 26.x deprecates a lot on the way to removal: see every use
+    options.compilerArgs << '-Xlint:deprecation'
 }
 
 tasks.withType(Test).configureEach {
