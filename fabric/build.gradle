@@ -31,13 +31,14 @@ loom {
 }
 
 // GameTests: shared bodies in common (dev.eliasnvx.tradery.gametest), @GameTest wrappers in src/gametest.
-// runGameTest is part of `build`.
+// runGameTest is part of `build`. Client GameTests open a real window and run by hand:
+//   ./gradlew :fabric:runClientGameTest   (screenshots in fabric/build/run/clientGameTest/screenshots)
 fabricApi {
     configureTests {
         createSourceSet = true
         modId = 'tradery-test'
         enableGameTests = true
-        enableClientGameTests = false
+        enableClientGameTests = true
         eula = true // dev/CI test server only (as in the author's other mods)
     }
 }
