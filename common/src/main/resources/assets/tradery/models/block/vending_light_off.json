@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "tradery:block/vending_light_off",
+    "light": "tradery:block/vending_light_off"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        2,
+        -0.05
+      ],
+      "to": [
+        8,
+        3,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            5,
+            1
+          ],
+          "texture": "#light"
+        }
+      }
+    }
+  ]
+}

@@ -5,23 +5,37 @@ import dev.eliasnvx.tradery.command.TraderyPermission;
 import dev.eliasnvx.tradery.platform.Platform;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.Registry;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.LevelBasedPermissionSet;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.CreativeModeTab;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.payload.AdvancedOpenScreenPayload;
 import net.neoforged.neoforge.server.permission.PermissionAPI;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
 import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
 
 import java.nio.file.Path;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 final class NeoForgePlatform implements Platform {
     /** Nodes tradery.balance.others etc.; the default resolver is the op level fallback. */
@@ -92,6 +106,49 @@ final class NeoForgePlatform implements Platform {
     @Override
     public void sendToServer(CustomPacketPayload payload) {
         Client.send(payload);
+    }
+
+    /** One DeferredRegister per registry, created on first use and attached to the mod bus by {@link #attach}. */
+    private final Map<ResourceKey<?>, DeferredRegister<?>> registers = new LinkedHashMap<>();
+    private boolean attached;
+
+    @Override
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public <T> Supplier<T> register(ResourceKey<? extends Registry<? super T>> registry, String name, Supplier<? extends T> factory) {
+        if (attached) {
+            throw new IllegalStateException("Too late to register " + name + ": registries are attached");
+        }
+        DeferredRegister<? super T> register = (DeferredRegister<? super T>) registers.computeIfAbsent(registry,
+            key -> DeferredRegister.create((ResourceKey) key, Tradery.MOD_ID));
+        return (Supplier<T>) (Supplier) register.register(name, factory);
+    }
+
+    /** Attaches every DeferredRegister to the mod bus; called once after common registration. */
+    void attach(IEventBus modBus) {
+        attached = true;
+        registers.values().forEach(register -> register.register(modBus));
+    }
+
+    @Override
+    public <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory,
+                                                                     StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec) {
+        return IMenuTypeExtension.create((containerId, inventory, buf) -> factory.create(containerId, inventory, dataCodec.decode(buf)));
+    }
+
+    @Override
+    public <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec, D data) {
+        if (player.connection.hasChannel(AdvancedOpenScreenPayload.TYPE)) {
+            player.openMenu(provider, buf -> dataCodec.encode(buf, data));
+        } else {
+            // Connections without NeoForge's channel (GameTest mock players) can't take the opening data;
+            // the server-side menu works the same without it
+            player.openMenu(provider);
+        }
+    }
+
+    @Override
+    public CreativeModeTab.Builder creativeTabBuilder() {
+        return CreativeModeTab.builder();
     }
 
     /** Client-only classes, loaded only when these are called on the client. */

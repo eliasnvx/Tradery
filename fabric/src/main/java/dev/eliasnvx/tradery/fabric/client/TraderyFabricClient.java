@@ -11,13 +11,27 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import dev.eliasnvx.tradery.client.render.DisplayRenderer;
+import dev.eliasnvx.tradery.client.render.VendingRenderer;
+import dev.eliasnvx.tradery.client.screen.DisplayScreen;
+import dev.eliasnvx.tradery.client.screen.VendingBuyerScreen;
+import dev.eliasnvx.tradery.client.screen.VendingOwnerScreen;
+import dev.eliasnvx.tradery.registry.TraderyBlocks;
+import dev.eliasnvx.tradery.registry.TraderyMenus;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 public final class TraderyFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         TraderyClient.init();
+        MenuScreens.register(TraderyMenus.VENDING_BUYER.get(), VendingBuyerScreen::new);
+        MenuScreens.register(TraderyMenus.VENDING_OWNER.get(), VendingOwnerScreen::new);
+        MenuScreens.register(TraderyMenus.DISPLAY.get(), DisplayScreen::new);
+        BlockEntityRenderers.register(TraderyBlocks.VENDING_BLOCK_ENTITY.get(), VendingRenderer::new);
+        BlockEntityRenderers.register(TraderyBlocks.DISPLAY_BLOCK_ENTITY.get(), DisplayRenderer::new);
         for (TraderyPayloads.Entry<?> entry : TraderyPayloads.CLIENTBOUND) {
             registerReceiver(entry.type());
         }

@@ -9,7 +9,8 @@
       "dev.eliasnvx.tradery.fabric.gametest.TraderyGameTestsFabric"
     ],
     "fabric-client-gametest": [
-      "dev.eliasnvx.tradery.fabric.gametest.HudClientTest"
+      "dev.eliasnvx.tradery.fabric.gametest.HudClientTest",
+      "dev.eliasnvx.tradery.fabric.gametest.VendingClientTest"
     ]
   },
   "depends": {

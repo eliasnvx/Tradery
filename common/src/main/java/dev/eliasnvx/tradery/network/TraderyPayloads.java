@@ -2,6 +2,9 @@ package dev.eliasnvx.tradery.network;
 
 import dev.eliasnvx.tradery.Tradery;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -17,9 +20,11 @@ public final class TraderyPayloads {
     public static final int MAX_ID = 256;
     public static final int MAX_TEXT = 256;
     public static final int MAX_ARGS = 8;
+    /** A notification argument starting with this is a translation key, translated on the client. */
+    public static final String TRANSLATABLE_PREFIX = "\u0001";
 
     /** A payload type with its codec, for the loaders to register. */
-    public record Entry<T extends CustomPacketPayload>(CustomPacketPayload.Type<T> type, StreamCodec<? super ByteBuf, T> codec) {
+    public record Entry<T extends CustomPacketPayload>(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
     }
 
     private static <T extends CustomPacketPayload> CustomPacketPayload.Type<T> payloadType(String path) {
@@ -154,17 +159,52 @@ public final class TraderyPayloads {
         }
     }
 
+    /** The outcome of a trade or of saving vendor settings, shown inside the open vending screen. */
+    public record VendingResultPayload(int containerId, boolean success, Component message) implements CustomPacketPayload {
+        public static final Type<VendingResultPayload> TYPE = payloadType("vending_result");
+        public static final StreamCodec<RegistryFriendlyByteBuf, VendingResultPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, VendingResultPayload::containerId,
+            ByteBufCodecs.BOOL, VendingResultPayload::success,
+            ComponentSerialization.TRUSTED_STREAM_CODEC, VendingResultPayload::message,
+            VendingResultPayload::new);
+
+        @Override
+        public Type<VendingResultPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The owner saves the draft settings of the open vending menu. Only the money price travels here; goods,
+     * price item and facade are the server's own copies of the menu's sample slots.
+     */
+    public record VendingSavePayload(int containerId, long price) implements CustomPacketPayload {
+        public static final Type<VendingSavePayload> TYPE = payloadType("vending_save");
+        public static final StreamCodec<ByteBuf, VendingSavePayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, VendingSavePayload::containerId,
+            ByteBufCodecs.VAR_LONG, VendingSavePayload::price,
+            VendingSavePayload::new);
+
+        @Override
+        public Type<VendingSavePayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Server → client payloads. */
     public static final List<Entry<?>> CLIENTBOUND = List.of(
         new Entry<>(CurrencyInfoPayload.TYPE, CurrencyInfoPayload.STREAM_CODEC),
         new Entry<>(BalanceSyncPayload.TYPE, BalanceSyncPayload.STREAM_CODEC),
         new Entry<>(BalanceDeltaPayload.TYPE, BalanceDeltaPayload.STREAM_CODEC),
         new Entry<>(NotificationPayload.TYPE, NotificationPayload.STREAM_CODEC),
-        new Entry<>(HudTogglePayload.TYPE, HudTogglePayload.STREAM_CODEC)
+        new Entry<>(HudTogglePayload.TYPE, HudTogglePayload.STREAM_CODEC),
+        new Entry<>(VendingResultPayload.TYPE, VendingResultPayload.STREAM_CODEC)
     );
 
-    /** Client → server payloads (vending, phase 2). */
-    public static final List<Entry<?>> SERVERBOUND = List.of();
+    /** Client → server payloads. */
+    public static final List<Entry<?>> SERVERBOUND = List.of(
+        new Entry<>(VendingSavePayload.TYPE, VendingSavePayload.STREAM_CODEC)
+    );
 
     private TraderyPayloads() {
     }

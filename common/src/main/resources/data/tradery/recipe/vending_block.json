@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glass",
+    "C": "minecraft:chest",
+    "O": "minecraft:gold_ingot"
+  },
+  "pattern": [
+    " G ",
+    "GCG",
+    "OOO"
+  ],
+  "result": {
+    "id": "tradery:vending_block"
+  }
+}
