@@ -1,0 +1,46 @@
+// Loader modules compile the sources of :api and :common together with their own, so each loader jar is
+// self-contained and the vanilla-only modules never see loader classes.
+plugins {
+    id 'multiloader-common'
+}
+
+def sharedProjects = [':api', ':common']
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+
+configurations {
+    sharedJava {
+        canBeResolved = true
+    }
+    sharedResources {
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    sharedProjects.each { path ->
+        compileOnly(project(path)) {
+            attributes {
+                attribute(loaderAttribute, 'common')
+            }
+        }
+        sharedJava(project(path: path, configuration: 'sharedJava'))
+        sharedResources(project(path: path, configuration: 'sharedResources'))
+    }
+}
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn(configurations.sharedJava)
+    source(configurations.sharedJava)
+}
+
+processResources {
+    dependsOn(configurations.sharedResources)
+    from(configurations.sharedResources)
+}
+
+tasks.named('sourcesJar', Jar) {
+    dependsOn(configurations.sharedJava)
+    from(configurations.sharedJava)
+    dependsOn(configurations.sharedResources)
+    from(configurations.sharedResources)
+}
