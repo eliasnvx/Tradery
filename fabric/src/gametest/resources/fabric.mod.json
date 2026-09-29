@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "tradery-test",
+  "version": "0.0.0",
+  "name": "Tradery GameTests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "dev.eliasnvx.tradery.fabric.gametest.TraderyGameTestsFabric"
+    ]
+  },
+  "depends": {
+    "tradery": "*"
+  }
+}

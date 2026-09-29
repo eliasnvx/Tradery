@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "${mod_name}",
+  "description": "${description}",
+  "authors": ["${mod_author}"],
+  "contact": {
+    "homepage": "https://github.com/eliasnvx/Tradery",
+    "sources": "https://github.com/eliasnvx/Tradery",
+    "issues": "https://github.com/eliasnvx/Tradery/issues"
+  },
+  "license": "${license}",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.eliasnvx.tradery.fabric.TraderyFabric"],
+    "client": ["dev.eliasnvx.tradery.fabric.client.TraderyFabricClient"]
+  },
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": "*",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=${java_version}"
+  }
+}

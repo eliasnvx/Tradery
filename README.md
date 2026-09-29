@@ -1,111 +1,76 @@
-# Tradery - Minecraft Economy System
-
 <div align="center">
 
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.4+-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+# Tradery — Vending Blocks & Economy
 
-**Cross-platform economy system with player shops, virtual currency, and modern GUI**
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.3-62B47A?style=for-the-badge&logo=minecraft&logoColor=white)](https://www.minecraft.net/)
+[![Fabric](https://img.shields.io/badge/Fabric-0.19.5+-DBD0B4?style=for-the-badge)](https://fabricmc.net/)
+[![NeoForge](https://img.shields.io/badge/NeoForge-26.3-E68A00?style=for-the-badge)](https://neoforged.net/)
+[![Java](https://img.shields.io/badge/Java-25-B07219?style=for-the-badge)](https://adoptium.net/)
+[![License](https://img.shields.io/badge/License-MIT-D6303C?style=for-the-badge)](LICENSE)
+[![Economy API](https://img.shields.io/badge/Economy%20API-0.1.0-8A5CF6?style=for-the-badge)](#for-developers-economy-api)
 
-**Plugin (Bukkit/Sponge) + Mod (Forge/NeoForge) hybrid architecture**
+**A virtual currency with your balance on screen, vending blocks for player shops, and coin ore as the source of money — for Fabric and NeoForge, with a public Economy API.**
 
 </div>
 
-## 🎯 Features
+> **Status: in development.** The economy core, commands and the HUD work; vending blocks, coin ore and integrations are next (see [`docs/PROGRESS.md`](docs/PROGRESS.md)).
 
-- **Virtual Currency System** - Vault API integration for Bukkit, Sponge Economy Service
-- **Player Shops** - Place shop blocks, set items, prices, and let players trade
-- **Cross-Platform** - Works on Bukkit/Paper/Spigot and SpongeForge servers
-- **Modern GUI** - Client-side mod provides enhanced trading interface
-- **Multi-Currency Support** - Multiple currencies (planned)
-- **Transaction History** - Full audit log of all trades
+## About
 
-## 📋 Requirements
+Tradery is a spiritual successor to the classic **Vending Block** mod: put a block down, stock it, set a price and let people buy while you're away. Prices can be paid in **items** (the classic way) or in the server's **currency**, which every player sees in the corner of the screen.
 
-### Server-side (Plugin)
-- **Minecraft**: 1.20.1+
-- **Java**: 21+
-- **Vault** (for Bukkit) or Sponge Economy Service
-- **Platform**: Paper/Spigot or SpongeForge
+## Features
 
-### Client-side (Mod) - Optional
-- **Forge/NeoForge**: 1.20.1+
-- Enhances GUI and adds custom blocks
+- **Virtual currency** with a configurable name, symbol and decimals; starting balance, balance ceiling, money sinks
+- **Balance HUD**: any corner, scale 0.5–2, full (`1 250.00 ₮`) or short (`1.2K ₮`) format, count-up animation, `+120 ₮` / `-40 ₮` popups
+- **Commands**: `/bal`, `/pay`, `/baltop`, `/tradery history`, admin `/eco give|take|set|lock|unlock|stats`
+- **Permissions** through LuckPerms or any permission mod (Fabric permission API / NeoForge PermissionAPI), with op-level fallbacks
+- **Transaction log** (JSON lines per day) and money-supply statistics for balancing
+- Coming next: vending and display blocks, buyback mode, admin vendors, coin ore, rewards for mobs and actions, Jade / JEI / REI, Common Economy API and Text Placeholder API on Fabric
 
-## 🏗️ Architecture
-```
-Tradery/
-├── tradery-core/       # Shared logic, database, economy core
-├── tradery-bukkit/     # Bukkit/Paper/Spigot plugin
-├── tradery-sponge/     # Sponge plugin
-├── tradery-mod/        # Forge/NeoForge mod (GUI, blocks)
-└── tradery-common/     # Shared networking protocol
-```
+## For servers
 
-## 🚀 Quick Start
+Configs live in `config/tradery/`:
 
-### For Server Admins
+- `server.json5` — currency, starting balance, `/pay` tax, vending fee, coin ore, log retention. Reload with `/tradery reload`.
+- `client.json5` — each player's HUD and notification preferences.
 
-1. Download plugin from Releases
-2. Place in `plugins/` directory
-3. Install Vault (Bukkit) or use Sponge's economy
-4. Restart server
-5. Configure in `config.yml`
+Money values in configs are in normal units (`100`, `0.5`). Every file is JSON5 with comments; broken values fall back to their defaults and are reported in the server log.
 
-### For Players (Optional)
+| Permission | Default |
+|---|---|
+| `tradery.balance`, `tradery.pay`, `tradery.baltop`, `tradery.history`, `tradery.withdraw` | everyone |
+| `tradery.balance.others`, `tradery.admin.eco`, `tradery.admin.stats`, `tradery.admin.vendors` | op level 2 |
+| `tradery.admin.reload` | op level 3 |
 
-1. Download Tradery mod from Releases
-2. Install Forge/NeoForge 1.20.1+
-3. Place mod in `mods/` folder
-4. Enjoy enhanced GUI!
+## For developers: Economy API
 
-## ⚙️ Basic Configuration
-```yaml
-economy:
-  starting-balance: 1000.0
-  currency-name: "Coins"
+`dev.eliasnvx:tradery-api:<api>+26.3` has no dependency on the mod's internals and works the same on both loaders.
 
-shops:
-  max-per-player: 5
-  transaction-fee: 0.02  # 2%
+```java
+TraderyEconomy eco = TraderyEconomy.get();              // server thread only
+Account account = eco.account(player.getUUID());
+TransactionResult result = eco.withdraw(account, 500,     // 5.00 with 2 decimals
+    Reason.of(Identifier.fromNamespaceAndPath("mymod", "teleport_fee")));
 
-database:
-  type: h2  # h2, mysql, postgresql
+// 5% tax on every vending sale inside a region
+VendingPurchaseEvent.Pre.EVENT.register(e -> {
+    if (Regions.at(e.pos()).is("market")) e.setPrice(e.price() * 105 / 100);
+});
 ```
 
-## 🎮 Commands
+Amounts are `long` minor units. Transactions are atomic; events can cancel them or change amounts and fees.
 
-| Command | Description |
-|---------|-------------|
-| `/tradery` | Open main menu |
-| `/tradery shop create` | Create new shop |
-| `/tradery balance` | Check balance |
-| `/tradery pay <player> <amount>` | Send money |
+## Building
 
-## 🔧 Development Status
+```bash
+./gradlew build            # both loaders, JUnit and GameTests
+./gradlew :fabric:runClient
+./gradlew :neoforge:runClient
+```
 
-**Current Phase:** Core Development (Alpha)
+Requires JDK 25 (Gradle picks it through `gradle/gradle-daemon-jvm.properties`).
 
-- [x] Project structure
-- [x] Core economy logic
-- [ ] Bukkit adapter + Vault
-- [ ] Shop system
-- [ ] GUI (mod)
-- [ ] Sponge adapter
-- [ ] Database layer
+## License
 
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE)
-
-## 🤝 Contributing
-
-Contributions welcome! This is an early-stage project.
-
----
-
-<div align="center">
-
-Made for Minecraft servers that want better economy
-
-</div>
+MIT. Tradery is written from scratch; no code from other Vending Block ports is used.
