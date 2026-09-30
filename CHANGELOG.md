@@ -18,6 +18,7 @@ First release for Minecraft 26.3 (Fabric and NeoForge). Economy API 1.0.0.
 
 ### Vending
 - Vending block: sells goods for money or items, buyback mode, facades, showcase animations, owner notifications and an offline summary.
+- Quick trade without the window: sneak + right-click buys, sneak + left-click sells; hold to repeat. A look-at hint shows the owner, the offer and the keys.
 - Display block: shows an item in a glass case.
 - Vendor key: admin vendors with infinite stock, burned payment, no fee, server ownership.
 - Protection from strangers, explosions, pistons and hoppers; no item slots in the buyer screen.

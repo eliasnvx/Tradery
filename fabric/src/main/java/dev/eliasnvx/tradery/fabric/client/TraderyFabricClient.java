@@ -1,6 +1,7 @@
 package dev.eliasnvx.tradery.fabric.client;
 
 import dev.eliasnvx.tradery.Tradery;
+import dev.eliasnvx.tradery.client.QuickTradeInput;
 import dev.eliasnvx.tradery.client.TraderyClient;
 import dev.eliasnvx.tradery.client.TraderyKeyMappings;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
@@ -11,6 +12,8 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import dev.eliasnvx.tradery.client.render.DisplayRenderer;
 import dev.eliasnvx.tradery.client.render.VendingRenderer;
 import dev.eliasnvx.tradery.client.screen.DisplayScreen;
@@ -19,9 +22,12 @@ import dev.eliasnvx.tradery.client.screen.VendingOwnerScreen;
 import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import dev.eliasnvx.tradery.registry.TraderyMenus;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 
 public final class TraderyFabricClient implements ClientModInitializer {
     @Override
@@ -40,6 +46,10 @@ public final class TraderyFabricClient implements ClientModInitializer {
         }
         ClientTickEvents.END_CLIENT_TICK.register(TraderyClient::onTick);
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> TraderyClient.onDisconnect());
+        // Quick trades: sneak + attack (fires every tick while held) and sneak + use (vanilla repeats it every 4 ticks)
+        ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> QuickTradeInput.onAttack(client));
+        UseBlockCallback.EVENT.register((player, level, hand, hit) -> level.isClientSide() && hand == InteractionHand.MAIN_HAND
+            && QuickTradeInput.onUse(Minecraft.getInstance(), hit.getBlockPos()) ? InteractionResult.FAIL : InteractionResult.PASS);
         // Under the chat and subtitles, so they stay readable when they overlap the panel
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Tradery.id("balance"),
             (graphics, deltaTracker) -> TraderyClient.renderHud(graphics));

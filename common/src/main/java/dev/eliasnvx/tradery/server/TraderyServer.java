@@ -8,6 +8,7 @@ import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.vending.VendingConfigurator;
 import dev.eliasnvx.tradery.vending.VendingNotifier;
 import dev.eliasnvx.tradery.vending.VendingProtection;
+import dev.eliasnvx.tradery.vending.VendingQuickTrade;
 import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -42,6 +43,7 @@ public final class TraderyServer {
 
     public static void onPlayerLeave(ServerPlayer player) {
         VendingTrades.forget(player);
+        VendingQuickTrade.forget(player);
         dev.eliasnvx.tradery.rewards.Rewards.forget(player);
     }
 
@@ -64,6 +66,8 @@ public final class TraderyServer {
             VendingConfigurator.save(player, menu, save.price());
         } else if (payload instanceof TraderyPayloads.GhostSamplePayload ghost && player.containerMenu.containerId == ghost.containerId()) {
             dev.eliasnvx.tradery.menu.GhostSlots.setFromViewer(player, player.containerMenu, ghost.slot(), ghost.stack());
+        } else if (payload instanceof TraderyPayloads.VendingQuickTradePayload quick) {
+            VendingQuickTrade.handle(player, quick.pos(), quick.sell());
         }
     }
 

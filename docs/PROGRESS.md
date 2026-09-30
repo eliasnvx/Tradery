@@ -59,5 +59,7 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] README with screenshots, `docs/api/README.md`, CHANGELOG, `docs/release-checklist.md`
 - [x] Lang coverage test: every translation key used in the code exists
 - [x] HUD at GUI scale 1-4 on 1280x720 (client test screenshots)
+- [x] Polish after review: glass tops, thinner bases, coin icon instead of the symbol in the HUD, vending screens and Jade
+- [x] Quick trade (sneak + use buys, sneak + attack sells, hold to repeat) and the look-at hint; GameTests on both loaders, Fabric client test holds the keys
 - [ ] Manual checks in `docs/release-checklist.md` (two clients per loader, kill -9, 50 vendors TPS, Create/Mekanism)
 - [ ] Create the Modrinth/CurseForge projects, set their ids, add tokens, tag `v1.0.0`

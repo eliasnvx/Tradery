@@ -12,6 +12,10 @@ Before tagging `v<version>`:
    - [ ] A logs out, B buys; A joins and gets "While you were away: …".
    - [ ] Item price: revenue fills up → buyer is refused, A is told; A empties revenue → sales resume.
    - [ ] Buyback: B sells, A's balance pays; A broke → refused.
+   - [ ] Quick trade (the NeoForge side has no client test): B holds sneak + right-click with a block in hand → buys lots
+         about 5 a second, the block in hand is never placed; sneak + left-click on a buyback block sells; the wrong
+         button says which keys to use; A's sneak + left-click still mines A's own block. The look-at hint shows, and
+         hides with Jade installed.
    - [ ] A breaks the block while B has the buyer screen open → B's screen closes, contents drop once.
    - [ ] B can't break A's block (survival and creative); TNT next to it does nothing.
    - [ ] Mine coin ore in survival (balance goes up), blow one up with TNT (coins drop), pick coins up with a full inventory.

@@ -3,6 +3,7 @@ package dev.eliasnvx.tradery.compat.jade;
 import dev.eliasnvx.tradery.Tradery;
 import dev.eliasnvx.tradery.api.vending.PriceMode;
 import dev.eliasnvx.tradery.client.ClientEconomy;
+import dev.eliasnvx.tradery.client.VendingHint;
 import dev.eliasnvx.tradery.vending.VendingBlockEntity;
 import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.VendingTrades;
@@ -55,5 +56,6 @@ enum VendingJadeProvider implements IBlockComponentProvider {
         VendingStockData.INSTANCE.decodeFromData(accessor).ifPresent(count -> tooltip.add(Component.translatable(
             settings.isBuyback() ? "tradery.screen.room" : "tradery.screen.in_stock",
             count >= VendingTrades.UNLIMITED ? "∞" : String.valueOf(count)).withStyle(count > 0 ? ChatFormatting.GREEN : ChatFormatting.RED)));
+        tooltip.add(VendingHint.keys(settings, vendor.isOwnedBy(accessor.getPlayer().getUUID())).copy().withStyle(ChatFormatting.GRAY));
     }
 }
