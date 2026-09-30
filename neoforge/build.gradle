@@ -34,6 +34,20 @@ neoForge {
     }
 }
 
+dependencies {
+    // REI finds NeoForge plugins by an annotation that only its NeoForge jar has
+    compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}") { transitive = false }
+
+    // Dev only: run with the optional mods installed: ./gradlew :neoforge:runClient -Pcompat=true
+    if (project.hasProperty('compat')) {
+        runtimeOnly("mezz.jei:jei-26.3-neoforge:${jei_version}")
+        runtimeOnly("maven.modrinth:jade:${jade_neoforge_version}")
+        runtimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}")
+        runtimeOnly("dev.architectury:architectury-neoforge:${architectury_version}")
+        runtimeOnly("me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}")
+    }
+}
+
 // `build` -> `check` -> GameTests on NeoForge too (Fabric wires runGameTest into build itself)
 tasks.named('check') { dependsOn 'runGameTestServer' }
 

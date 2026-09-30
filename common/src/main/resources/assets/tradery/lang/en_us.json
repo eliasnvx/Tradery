@@ -151,5 +151,19 @@
   "tradery.withdraw.done": "Withdrew %s in coins",
   "tag.item.tradery.coins": "Coins",
   "tag.item.tradery.coin_ores": "Coin Ores",
-  "tag.block.tradery.coin_ores": "Coin Ores"
+  "tag.block.tradery.coin_ores": "Coin Ores",
+  "tradery.reason.tradery.bridge.common_economy": "Another mod",
+  "tradery.jade.owner": "Owner: %s",
+  "tradery.jade.sells": "Sells %s for %s",
+  "tradery.jade.buys": "Buys %s for %s",
+  "tradery.jade.shows": "Shows: %s",
+  "tradery.info.vending_block": "A shop in a block. Put a sample of the goods and a price in its settings, fill the stock, and players buy while you're away — for money or for items. With buyback it buys goods from players instead. Only you can break it.",
+  "tradery.info.display_block": "A glass case that shows one item. Nothing is sold; the item inside is only a picture.",
+  "tradery.info.coin_ore_title": "Coin Ore",
+  "tradery.info.coin_ore": "Found underground: copper at Y 0 to 96, silver at Y -32 to 32, gold at Y -64 to -16. Mining it puts the coins' value straight on your balance; machines and explosions drop coin items instead. Fortune doesn't help.",
+  "tradery.info.coin_title": "Coins",
+  "tradery.info.coin": "Cash. Right-click to put coins on your balance (sneak: all of them); /tradery withdraw pays out coins. Pay with them in vending blocks that take items.",
+  "config.jade.plugin_tradery.vending_block": "Vending block",
+  "config.jade.plugin_tradery.display_block": "Display block",
+  "config.jade.plugin_tradery.vending_stock": "Vending stock"
 }

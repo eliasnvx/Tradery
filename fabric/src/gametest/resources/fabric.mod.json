@@ -6,7 +6,8 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
-      "dev.eliasnvx.tradery.fabric.gametest.TraderyGameTestsFabric"
+      "dev.eliasnvx.tradery.fabric.gametest.TraderyGameTestsFabric",
+      "dev.eliasnvx.tradery.fabric.gametest.CommonEconomyGameTests"
     ],
     "fabric-client-gametest": [
       "dev.eliasnvx.tradery.fabric.gametest.HudClientTest",

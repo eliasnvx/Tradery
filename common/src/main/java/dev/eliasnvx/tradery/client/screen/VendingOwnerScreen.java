@@ -28,7 +28,7 @@ import java.util.OptionalLong;
  * The owner's window: stock (3 rows) and item revenue (1 row) on the left like a chest, the offer settings on the
  * right. Sample slots and toggles change a draft; "Save" applies it on the server.
  */
-public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu> implements VendingResultView {
+public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu> implements VendingResultView, GhostTargets.TraderyGhostScreen {
     private static final int CHEST_WIDTH = 176;
     private static final int CHEST_HEIGHT = 186;
     private static final int PANEL_X = 176;
@@ -256,5 +256,15 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
     /** Animation names for tooltips elsewhere. */
     static Component animationName(DisplayAnimation animation) {
         return Component.translatable("tradery.animation." + animation.name().toLowerCase(Locale.ROOT));
+    }
+
+    @Override
+    public int left() {
+        return leftPos;
+    }
+
+    @Override
+    public int top() {
+        return topPos;
     }
 }

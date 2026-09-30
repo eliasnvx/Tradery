@@ -21,6 +21,11 @@ public final class TraderyFabric implements ModInitializer {
         Platform.install(new FabricPlatform());
         Tradery.init();
         dev.eliasnvx.tradery.registry.TraderyBlocks.init();
+        // Common Economy API is inside our jar: always register; Placeholder API only when installed
+        dev.eliasnvx.tradery.fabric.compat.commoneconomy.TraderyEconomyProvider.register();
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("placeholder-api")) {
+            dev.eliasnvx.tradery.fabric.compat.placeholders.TraderyPlaceholders.register();
+        }
 
         for (TraderyPayloads.Entry<?> entry : TraderyPayloads.CLIENTBOUND) {
             registerClientbound(entry);

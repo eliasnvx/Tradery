@@ -69,6 +69,13 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - Blocks moved by pistons lose their "placed" mark (the mark is per position). `mine` rewards are off by default and the config comment says so.
 - Server config and rewards config have test-only setters used by GameTests, restored in `finally`.
 
+## 2026-09-30: Integrations
+- Plugin classes for Jade/JEI/REI live in `common/.../compat` and are loaded only by those mods (Fabric entrypoints `jade`, `jei_mod_plugin`, `rei_client`; NeoForge annotations `@WailaPlugin`, `@JeiPlugin`, and `@REIPluginClient` on a subclass in the NeoForge module, since that annotation ships only in REI's NeoForge jar). Nothing else references them.
+- Jade 26.x rejects a provider that is both a data provider and a component provider (crashes the game): stock data and the tooltip are two classes. Found by the `-Pcompat` client run.
+- Recipe viewers set samples through `GhostSamplePayload`; the server accepts it only for an active sample slot of the player's open, valid Tradery menu. Samples are copies, so a client-made stack can't create items.
+- Common Economy API is shipped with `include` (Fabric jar-in-jar); money moved through it is a normal Tradery transaction with reason `tradery:bridge/common_economy`.
+- REI's API needs Architectury and Cloth (basic-math) on the compile classpath only.
+
 ## API notes (26.3)
 - `ResourceLocation` → `Identifier`; `Identifier.read(String)` returns `DataResult`.
 - `SavedDataType(Identifier, Supplier, Codec, DataFixTypes)`; `MinecraftServer#getDataStorage()`.
