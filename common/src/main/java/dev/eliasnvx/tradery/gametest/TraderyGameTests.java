@@ -22,6 +22,7 @@ public final class TraderyGameTests {
     public static List<Entry> all() {
         List<Entry> all = new ArrayList<>(EconomyGameTests.ALL);
         all.addAll(VendingGameTests.ALL);
+        all.addAll(SourcesGameTests.ALL);
         return List.copyOf(all);
     }
 }

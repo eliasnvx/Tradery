@@ -375,11 +375,12 @@ CoinOreMinedEvent.EVENT.register(e -> { if (isWeekend()) e.setAmount(e.amount() 
 
 ```json5
 {
-  kill: {
+  kill: { enabled: true, rewards: {
     "minecraft:zombie":   { min: 1, max: 3, chance: 1.0 },
-    "minecraft:creeper":  { min: 2, max: 4 },
-    "#minecraft:raiders": { min: 5, max: 10 },   // теги поддерживаются
-  },
+    "minecraft:creeper":  { min: 2, max: 4 },            // chance по умолчанию 1, max по умолчанию = min
+    "#minecraft:raiders": { min: 5, max: 10 },           // теги поддерживаются, "*" — что угодно
+  } },
+  mine: { enabled: false, rewards: { "minecraft:diamond_ore": { min: 5 } } },
   rules: {
     ignoreSpawnerMobs: true,   // мобы из спавнеров и trial spawner не платят
     ignoreFakePlayers: true,   // Deployer, авто-мечи
@@ -390,7 +391,7 @@ CoinOreMinedEvent.EVENT.register(e -> { if (isWeekend()) e.setAmount(e.amount() 
 ```
 
 - Награда начисляется через API с `Reason` = `tradery:reward/<тип>` — видна в логе и HUD
-- Блоки, поставленные игроком, не дают награду `mine` (флаг в Data Attachment чанка)
+- Блоки, поставленные игроком, не дают награду `mine` (флаг в Data Attachment чанка). Ограничение: блок, сдвинутый поршнем, теряет флаг — поэтому `mine` выключена по умолчанию
 - `ignoreSpawnerMobs`: метка на сущности по причине спавна `EntitySpawnReason.SPAWNER` / `TRIAL_SPAWNER`, проверяется при смерти
 - `craft`: предупреждение в конфиге — обратимые рецепты (9 слитков ↔ блок) превращаются в бесконечные деньги; награда выдаётся только за перечисленные предметы
 

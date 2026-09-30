@@ -31,10 +31,18 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] `/tradery vendors [player]`
 - [x] GameTests (both loaders): sale, last item once, no room, item price + full revenue, buyback, menu rules, break with open menus, protection, rate limit, offline summary, price change closes buyer screens
 
-## Phase 3 — Money sources (active)
-Not started.
+## Phase 3 — Money sources ✅ (closed 2026-09-30)
+- [x] Coins (copper/silver/gold): values from config, synced to clients for tooltips; use = deposit, sneak-use = all coins
+- [x] Coin ore × 3 tiers × stone/deepslate: overlay models on vanilla stone, loot tables (silk touch = ore block, no Fortune), tool tags, not in `c:ores`
+- [x] Payout in `CoinOreBlock#getDrops` (every drop path): survival player → balance (`tradery:ore/mined`), machines/explosions → coin items (counted as cash in the world); `CoinOreMinedEvent`; `ore.dailyCap`; `ore.inflationDamping`
+- [x] Coin pickup straight to the balance even with a full inventory (`CoinPickedUpEvent`), `/tradery withdraw` (exact coins, only if they fit)
+- [x] Worldgen: configured + placed features (data-pack editable), `tradery:enabled_in_config` placement filter, `#tradery:has_coin_ore`, NeoForge biome modifier, Fabric `BiomeModifications`
+- [x] Rewards (`rewards.json5`): kill/mine/craft/fish/advancement, tags and `*`, chance, spawner mobs skipped, fake players skipped, diminishing returns, daily cap, `RewardGrantedEvent`
+- [x] Player-placed blocks marked per chunk (data attachment) so `mine` rewards can't be farmed by placing
+- [x] GameTests (both loaders): ore pays the miner, coins without a player, daily cap, pickup with a full inventory, withdraw/use, kill reward vs spawner mobs, mine reward vs placed blocks, ore feature places ore, all mixins apply; JUnit for the rewards config and diminishing
+- [x] Client check: ores and coins screenshot
 
-## Phase 4 — Integrations
+## Phase 4 — Integrations (active)
 Not started.
 
 ## Phase 5 — Release

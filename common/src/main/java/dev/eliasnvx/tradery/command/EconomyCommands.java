@@ -93,6 +93,10 @@ public final class EconomyCommands {
                     .executes(context -> history(context, IntegerArgumentType.getInteger(context, "page")))))
             .then(Commands.literal("hud")
                 .executes(EconomyCommands::toggleHud))
+            .then(Commands.literal("withdraw").requires(allowed(TraderyPermission.WITHDRAW))
+                .then(CommandArgs.amount("amount")
+                    .executes(context -> dev.eliasnvx.tradery.ore.CoinWithdraw.withdraw(context.getSource().getPlayerOrException(),
+                        CommandArgs.amount(context, "amount")))))
             .then(Commands.literal("reload").requires(allowed(TraderyPermission.ADMIN_RELOAD))
                 .executes(EconomyCommands::reload))
             .then(Commands.literal("vendors").requires(allowed(TraderyPermission.ADMIN_VENDORS))
@@ -271,6 +275,7 @@ public final class EconomyCommands {
 
     private static int reload(CommandContext<CommandSourceStack> context) {
         EconomyService.INSTANCE.applyConfig(TraderyConfig.loadServer());
+        dev.eliasnvx.tradery.rewards.Rewards.load();
         context.getSource().sendSuccess(() -> tr("tradery.command.reloaded", "Tradery config reloaded (see the server log for problems)"), true);
         return 1;
     }

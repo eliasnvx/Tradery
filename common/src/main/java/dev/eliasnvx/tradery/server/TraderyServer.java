@@ -28,6 +28,7 @@ public final class TraderyServer {
 
     public static void onServerStarted(MinecraftServer server) {
         EconomyService.INSTANCE.start(server);
+        dev.eliasnvx.tradery.rewards.Rewards.load();
     }
 
     public static void onServerStopped(MinecraftServer server) {
@@ -41,6 +42,19 @@ public final class TraderyServer {
 
     public static void onPlayerLeave(ServerPlayer player) {
         VendingTrades.forget(player);
+        dev.eliasnvx.tradery.rewards.Rewards.forget(player);
+    }
+
+    /** A living entity died (not cancelled): kill rewards. */
+    public static void onLivingDeath(net.minecraft.world.entity.LivingEntity entity, net.minecraft.world.damagesource.DamageSource source) {
+        dev.eliasnvx.tradery.rewards.Rewards.onDeath(entity, source);
+    }
+
+    /** A player broke a block (not cancelled): mine rewards. */
+    public static void onBlockBroken(Player player, Level level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            dev.eliasnvx.tradery.rewards.Rewards.onBlockBroken(player, serverLevel, pos, state);
+        }
     }
 
     /** Serverbound payloads, on the server thread. */

@@ -46,6 +46,11 @@ public final class TraderyConfig {
         return client;
     }
 
+    /** GameTests only: swaps the server config in memory (tests restore it before they finish). */
+    public static void setServerForTests(ServerConfig config) {
+        server = config;
+    }
+
     /** Replaces the client config and writes it. */
     public static void saveClient(ClientConfig config) {
         client = config;

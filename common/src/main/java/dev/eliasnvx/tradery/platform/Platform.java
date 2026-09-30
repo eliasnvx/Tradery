@@ -61,6 +61,12 @@ public interface Platform {
     /** Opens a menu of a {@link #menuType} type, sending its opening data. */
     <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec, D data);
 
+    /** Positions ({@code BlockPos#asLong}) of player-placed blocks in this chunk that matter for rewards. Don't mutate. */
+    it.unimi.dsi.fastutil.longs.LongSet placedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk);
+
+    /** Replaces the marks of a chunk (and marks it for saving). */
+    void setPlacedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk, it.unimi.dsi.fastutil.longs.LongSet positions);
+
     /** A creative tab builder the loader accepts (Fabric needs its own). */
     CreativeModeTab.Builder creativeTabBuilder();
 

@@ -59,6 +59,16 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - NeoForge GameTest mock players don't have `neoforge:advanced_open_screen`; for such connections menus open the vanilla way (server-side menu is identical).
 - Screens are drawn with fills (`Panels`), no GUI textures.
 
+## 2026-09-30: Money sources
+- Coin ore payout lives in `CoinOreBlock#getDrops`: players, explosions and machines all come through it, so no path skips the rules. The loot table decides the coin count (data packs can add Fortune); the block decides where the money goes.
+- Coin ore textures are overlays on vanilla `block/stone` / `block/deepslate` (two coplanar elements, like grass block sides): no vanilla pixels are copied into the mod.
+- Coins are money in the world: withdrawals and coins minted by non-player mining add to "cash in the world", deposits subtract (stats, inflation damping).
+- `ore.dailyCap` limits direct mining; coins dropped by explosions/machines aren't capped (they need automation or TNT). Known and accepted.
+- Rewards hook through common mixins (craft: `ResultSlot`, fish: `FishingHook#retrieve`, advancement: `PlayerAdvancements#award`, spawner tag: `EntityType#loadEntityRecursive`, placed marks: `BlockItem#placeBlock`, coin pickup: `ItemEntity#playerTouch`) and loader events for kills and block breaks. A GameTest loads every mixin target.
+- `rewards.json5` sections are `{ enabled, rewards: { key: {min, max, chance} } }` instead of the spec's flat map: each type can be switched off without deleting its entries. `max` defaults to `min`, `chance` to 1.
+- Blocks moved by pistons lose their "placed" mark (the mark is per position). `mine` rewards are off by default and the config comment says so.
+- Server config and rewards config have test-only setters used by GameTests, restored in `finally`.
+
 ## API notes (26.3)
 - `ResourceLocation` → `Identifier`; `Identifier.read(String)` returns `DataResult`.
 - `SavedDataType(Identifier, Supplier, Codec, DataFixTypes)`; `MinecraftServer#getDataStorage()`.

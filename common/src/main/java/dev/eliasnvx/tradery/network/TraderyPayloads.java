@@ -43,9 +43,12 @@ public final class TraderyPayloads {
         return value.substring(0, end);
     }
 
-    /** How the client displays money. Sent on join (before the balance) and after /tradery reload. */
-    public record CurrencyInfoPayload(String currencyId, String name, String symbol, int decimals, String thousandsSeparator)
-        implements CustomPacketPayload {
+    /**
+     * How the client displays money, and what one coin of each tier is worth (for tooltips). Sent on join (before
+     * the balance) and after /tradery reload.
+     */
+    public record CurrencyInfoPayload(String currencyId, String name, String symbol, int decimals, String thousandsSeparator,
+                                      long copperValue, long silverValue, long goldValue) implements CustomPacketPayload {
         public static final Type<CurrencyInfoPayload> TYPE = payloadType("currency_info");
         public static final StreamCodec<ByteBuf, CurrencyInfoPayload> STREAM_CODEC = StreamCodec.of(
             (buf, p) -> {
@@ -54,6 +57,9 @@ public final class TraderyPayloads {
                 TEXT.encode(buf, clip(p.symbol, MAX_TEXT));
                 ByteBufCodecs.VAR_INT.encode(buf, p.decimals);
                 TEXT.encode(buf, clip(p.thousandsSeparator, MAX_TEXT));
+                ByteBufCodecs.VAR_LONG.encode(buf, p.copperValue);
+                ByteBufCodecs.VAR_LONG.encode(buf, p.silverValue);
+                ByteBufCodecs.VAR_LONG.encode(buf, p.goldValue);
             },
             buf -> {
                 String id = ID.decode(buf);
@@ -63,7 +69,8 @@ public final class TraderyPayloads {
                 if (decimals < 0 || decimals > 6) {
                     throw new IllegalArgumentException("Bad currency decimals: " + decimals);
                 }
-                return new CurrencyInfoPayload(id, name, symbol, decimals, TEXT.decode(buf));
+                return new CurrencyInfoPayload(id, name, symbol, decimals, TEXT.decode(buf),
+                    ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf));
             });
 
         @Override

@@ -146,6 +146,28 @@ final class NeoForgePlatform implements Platform {
         }
     }
 
+    /** Player-placed block marks per chunk; registered before the registers attach, saved with the chunk. */
+    private Supplier<net.neoforged.neoforge.attachment.AttachmentType<it.unimi.dsi.fastutil.longs.LongSet>> placedType;
+
+    void registerAttachments() {
+        placedType = register(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.ATTACHMENT_TYPES, "placed_blocks",
+            () -> net.neoforged.neoforge.attachment.AttachmentType.<it.unimi.dsi.fastutil.longs.LongSet>builder(
+                    () -> new it.unimi.dsi.fastutil.longs.LongOpenHashSet())
+                .serialize(dev.eliasnvx.tradery.rewards.PlacedBlocks.CODEC.fieldOf("positions"), set -> !set.isEmpty())
+                .build());
+    }
+
+    @Override
+    public it.unimi.dsi.fastutil.longs.LongSet placedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk) {
+        return chunk.hasData(placedType.get()) ? chunk.getData(placedType.get()) : it.unimi.dsi.fastutil.longs.LongSets.EMPTY_SET;
+    }
+
+    @Override
+    public void setPlacedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk, it.unimi.dsi.fastutil.longs.LongSet positions) {
+        chunk.setData(placedType.get(), positions);
+        chunk.markUnsaved();
+    }
+
     @Override
     public CreativeModeTab.Builder creativeTabBuilder() {
         return CreativeModeTab.builder();

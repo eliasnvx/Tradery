@@ -11,6 +11,9 @@ displayURL = "https://github.com/eliasnvx/Tradery"
 authors = "${mod_author}"
 description = '''${description}'''
 
+[[mixins]]
+config = "tradery.mixins.json"
+
 [[dependencies.${mod_id}]]
 modId = "neoforge"
 type = "required"

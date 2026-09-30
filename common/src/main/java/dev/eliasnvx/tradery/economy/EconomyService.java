@@ -250,7 +250,9 @@ public final class EconomyService implements TraderyEconomy {
     public void sendCurrency(ServerPlayer player) {
         SimpleCurrency c = currency;
         Platform.get().sendToPlayer(player, new TraderyPayloads.CurrencyInfoPayload(
-            c.id().toString(), c.displayName(), c.symbol(), c.decimals(), c.thousandsSeparator()));
+            c.id().toString(), c.displayName(), c.symbol(), c.decimals(), c.thousandsSeparator(),
+            dev.eliasnvx.tradery.ore.CoinTier.COPPER.value(), dev.eliasnvx.tradery.ore.CoinTier.SILVER.value(),
+            dev.eliasnvx.tradery.ore.CoinTier.GOLD.value()));
     }
 
     public void syncBalance(ServerPlayer player) {

@@ -1,6 +1,7 @@
 package dev.eliasnvx.tradery.fabric.gametest;
 
 import dev.eliasnvx.tradery.gametest.EconomyGameTests;
+import dev.eliasnvx.tradery.gametest.SourcesGameTests;
 import dev.eliasnvx.tradery.gametest.TraderyGameTests;
 import dev.eliasnvx.tradery.gametest.VendingGameTests;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -12,7 +13,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
  */
 public final class TraderyGameTestsFabric {
     /** Methods below that forward to a shared test (everything except {@link #allTestsRegistered}). */
-    private static final int WIRED = 15;
+    private static final int WIRED = 24;
 
     @GameTest
     public void economyTransferIsAtomic(GameTestHelper helper) {
@@ -87,6 +88,51 @@ public final class TraderyGameTestsFabric {
     @GameTest
     public void vendingNewPriceClosesBuyerScreens(GameTestHelper helper) {
         VendingGameTests.newPriceClosesBuyerScreens(helper);
+    }
+
+    @GameTest
+    public void oreFeaturePlacesOre(GameTestHelper helper) {
+        SourcesGameTests.oreFeaturePlacesOre(helper);
+    }
+
+    @GameTest
+    public void orePaysTheMiner(GameTestHelper helper) {
+        SourcesGameTests.orePaysTheMiner(helper);
+    }
+
+    @GameTest
+    public void oreDropsCoinsWithoutAPlayer(GameTestHelper helper) {
+        SourcesGameTests.oreDropsCoinsWithoutAPlayer(helper);
+    }
+
+    @GameTest
+    public void oreDailyCap(GameTestHelper helper) {
+        SourcesGameTests.oreDailyCap(helper);
+    }
+
+    @GameTest
+    public void coinPickupWithFullInventory(GameTestHelper helper) {
+        SourcesGameTests.coinPickupWithFullInventory(helper);
+    }
+
+    @GameTest
+    public void coinsWithdrawAndUse(GameTestHelper helper) {
+        SourcesGameTests.coinsWithdrawAndUse(helper);
+    }
+
+    @GameTest
+    public void rewardKillSkipsSpawnerMobs(GameTestHelper helper) {
+        SourcesGameTests.rewardKillSkipsSpawnerMobs(helper);
+    }
+
+    @GameTest
+    public void rewardMineSkipsPlacedBlocks(GameTestHelper helper) {
+        SourcesGameTests.rewardMineSkipsPlacedBlocks(helper);
+    }
+
+    @GameTest
+    public void mixinsApply(GameTestHelper helper) {
+        SourcesGameTests.mixinsApply(helper);
     }
 
     @GameTest
