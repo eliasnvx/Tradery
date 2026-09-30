@@ -23,5 +23,11 @@ dependencies {
     compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.3'))
 }
 
+// TraderyApi.API_VERSION must match api_version (ApiVersionTest); the lang test scans the sources
+tasks.named('test') {
+    systemProperty 'tradery.apiVersion', api_version
+    systemProperty 'tradery.sources', file('src/main/java').absolutePath
+}
+
 // The mod never publishes :common on its own
 tasks.withType(PublishToMavenRepository).configureEach { enabled = false }

@@ -10,7 +10,7 @@ public final class TraderyApi {
     /**
      * Version of this API (SemVer, independent of the mod version). Breaking changes only in a major release.
      */
-    public static final String API_VERSION = "0.1.0";
+    public static final String API_VERSION = "1.0.0";
 
     private TraderyApi() {
     }

@@ -11,6 +11,7 @@
     "issues": "https://github.com/eliasnvx/Tradery/issues"
   },
   "license": "${license}",
+  "icon": "assets/tradery/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": ["dev.eliasnvx.tradery.fabric.TraderyFabric"],
