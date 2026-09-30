@@ -2,6 +2,8 @@ package dev.eliasnvx.tradery.client;
 
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.util.Money;
+import dev.eliasnvx.tradery.util.MoneyText;
+import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,6 +25,11 @@ public final class ClientEconomy {
         /** The number alone, for places where the coin icon stands in for the symbol (the HUD). */
         public String formatNumber(long amount) {
             return Money.formatNumber(amount, decimals, thousandsSeparator);
+        }
+
+        /** Coin icon + number, for text in screens and tooltips. */
+        public MutableComponent money(long amount) {
+            return MoneyText.of(formatNumber(amount), symbol);
         }
 
         /** Short form without the symbol: "1.2K". */

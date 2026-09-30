@@ -3,6 +3,8 @@ package dev.eliasnvx.tradery.command;
 import dev.eliasnvx.tradery.api.FailReason;
 import dev.eliasnvx.tradery.api.TransactionResult;
 import dev.eliasnvx.tradery.economy.EconomyService;
+import dev.eliasnvx.tradery.util.Money;
+import dev.eliasnvx.tradery.util.MoneyText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -25,6 +27,13 @@ public final class Messages {
     /** An amount in the server's currency, highlighted. */
     public static MutableComponent money(long amount) {
         return Component.literal(EconomyService.INSTANCE.defaultCurrency().formatPlain(amount)).withStyle(ChatFormatting.GOLD);
+    }
+
+    /** An amount with the coin icon instead of the symbol, for Tradery's own screens: "(coin)2.50", gold. */
+    public static MutableComponent coins(long amount) {
+        var currency = EconomyService.INSTANCE.defaultCurrency();
+        return MoneyText.of(Money.formatNumber(amount, currency.decimals(), currency.thousandsSeparator()), currency.symbol())
+            .withStyle(ChatFormatting.GOLD);
     }
 
     /** A signed amount: green "+12.00 ₮" or red "-12.00 ₮". */
