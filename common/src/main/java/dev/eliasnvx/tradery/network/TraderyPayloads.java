@@ -8,6 +8,7 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -198,6 +199,24 @@ public final class TraderyPayloads {
         }
     }
 
+    /**
+     * A recipe viewer (JEI/REI) dropped an item on a sample slot of the open menu. Samples are copies, never real
+     * items, so the server only checks the slot is a sample that accepts this item.
+     */
+    public record GhostSamplePayload(int containerId, int slot, ItemStack stack) implements CustomPacketPayload {
+        public static final Type<GhostSamplePayload> TYPE = payloadType("ghost_sample");
+        public static final StreamCodec<RegistryFriendlyByteBuf, GhostSamplePayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, GhostSamplePayload::containerId,
+            ByteBufCodecs.VAR_INT, GhostSamplePayload::slot,
+            ItemStack.OPTIONAL_STREAM_CODEC, GhostSamplePayload::stack,
+            GhostSamplePayload::new);
+
+        @Override
+        public Type<GhostSamplePayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Server → client payloads. */
     public static final List<Entry<?>> CLIENTBOUND = List.of(
         new Entry<>(CurrencyInfoPayload.TYPE, CurrencyInfoPayload.STREAM_CODEC),
@@ -210,7 +229,8 @@ public final class TraderyPayloads {
 
     /** Client → server payloads. */
     public static final List<Entry<?>> SERVERBOUND = List.of(
-        new Entry<>(VendingSavePayload.TYPE, VendingSavePayload.STREAM_CODEC)
+        new Entry<>(VendingSavePayload.TYPE, VendingSavePayload.STREAM_CODEC),
+        new Entry<>(GhostSamplePayload.TYPE, GhostSamplePayload.STREAM_CODEC)
     );
 
     private TraderyPayloads() {

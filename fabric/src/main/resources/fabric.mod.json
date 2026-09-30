@@ -14,7 +14,10 @@
   "environment": "*",
   "entrypoints": {
     "main": ["dev.eliasnvx.tradery.fabric.TraderyFabric"],
-    "client": ["dev.eliasnvx.tradery.fabric.client.TraderyFabricClient"]
+    "client": ["dev.eliasnvx.tradery.fabric.client.TraderyFabricClient"],
+    "jade": ["dev.eliasnvx.tradery.compat.jade.TraderyJadePlugin"],
+    "jei_mod_plugin": ["dev.eliasnvx.tradery.compat.jei.TraderyJeiPlugin"],
+    "rei_client": ["dev.eliasnvx.tradery.compat.rei.TraderyReiPlugin"]
   },
   "mixins": ["tradery.mixins.json"],
   "depends": {
@@ -22,5 +25,11 @@
     "fabric-api": "*",
     "minecraft": "~${minecraft_version}",
     "java": ">=${java_version}"
+  },
+  "suggests": {
+    "placeholder-api": "*",
+    "jade": "*",
+    "jei": "*",
+    "roughlyenoughitems": "*"
   }
 }

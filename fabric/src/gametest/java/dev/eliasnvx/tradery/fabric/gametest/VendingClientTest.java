@@ -60,6 +60,15 @@ public final class VendingClientTest implements FabricClientGameTest {
                 + " facing " + (origin.getX() + 1.5) + " " + (origin.getY() + 0.5) + " " + (origin.getZ() + 3.5));
             context.waitTicks(20);
             context.takeScreenshot("vending_world");
+            // Close-up, crosshair on the bread vendor (Jade shows its tooltip when installed)
+            world.getServer().runCommand("tp @p " + (bread.getX() + 0.5) + " " + bread.getY() + " " + (bread.getZ() - 1.6) + " 0 25");
+            context.waitTicks(5);
+            context.runOnClient(mc -> {
+                mc.player.setYRot(0);
+                mc.player.setXRot(25);
+            });
+            context.waitTicks(15);
+            context.takeScreenshot("vending_closeup");
 
             long before = world.getServer().computeOnServer(server -> balance(server));
             world.getServer().runOnServer(server -> VendingMenus.openBuyer(player(server), vendor(server, bread)));

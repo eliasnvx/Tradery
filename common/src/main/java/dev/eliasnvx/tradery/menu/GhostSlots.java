@@ -5,7 +5,7 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 
 /** Click rules of {@link GhostSlot}s, shared by the menus. Runs on both sides with the same result. */
-final class GhostSlots {
+public final class GhostSlots {
     private GhostSlots() {
     }
 
@@ -24,6 +24,22 @@ final class GhostSlots {
         } else if (slot.accepts(carried)) {
             int count = button == 1 ? 1 : Math.min(carried.getCount(), carried.getMaxStackSize());
             slot.set(carried.copyWithCount(count));
+        }
+    }
+
+    /**
+     * A recipe viewer dropped {@code stack} on sample slot {@code index} of the player's open menu: accepted only for
+     * an active sample slot of a Tradery menu that is still valid, and only items the slot accepts.
+     */
+    public static void setFromViewer(net.minecraft.server.level.ServerPlayer player, AbstractContainerMenu menu, int index, ItemStack stack) {
+        if (!(menu instanceof VendingMenu) || index < 0 || index >= menu.slots.size() || !menu.stillValid(player)
+            || !(menu.slots.get(index) instanceof GhostSlot slot) || !slot.isActive()) {
+            return;
+        }
+        if (stack.isEmpty()) {
+            slot.set(ItemStack.EMPTY);
+        } else if (slot.accepts(stack)) {
+            slot.set(stack.copyWithCount(Math.max(1, Math.min(stack.getCount(), stack.getMaxStackSize()))));
         }
     }
 

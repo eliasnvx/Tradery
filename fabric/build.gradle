@@ -7,6 +7,21 @@ dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+
+    // Common Economy API: Tradery registers as a provider; shipped inside the jar (it's tiny, and other mods need it)
+    implementation include("eu.pb4:common-economy-api:${common_economy_api_version}")
+    // Text Placeholder API: optional (%tradery:balance% etc.)
+    compileOnly("eu.pb4:placeholder-api:${placeholder_api_version}") { transitive = false }
+
+    // Dev only: run with the optional mods installed: ./gradlew :fabric:runClient -Pcompat=true
+    if (project.hasProperty('compat')) {
+        runtimeOnly("mezz.jei:jei-26.3-fabric:${jei_version}")
+        runtimeOnly("maven.modrinth:jade:${jade_fabric_version}")
+        runtimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}")
+        runtimeOnly("dev.architectury:architectury-fabric:${architectury_version}")
+        runtimeOnly("me.shedaniel.cloth:cloth-config-fabric:${cloth_config_version}")
+        runtimeOnly("eu.pb4:placeholder-api:${placeholder_api_version}")
+    }
 }
 
 loom {

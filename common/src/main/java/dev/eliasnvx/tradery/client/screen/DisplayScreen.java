@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /** Display block settings: the shown item (a sample) and the animation. */
-public class DisplayScreen extends AbstractContainerScreen<DisplayMenu> {
+public class DisplayScreen extends AbstractContainerScreen<DisplayMenu> implements GhostTargets.TraderyGhostScreen {
     private Button animationButton;
 
     public DisplayScreen(DisplayMenu menu, Inventory inventory, Component title) {
@@ -49,5 +49,15 @@ public class DisplayScreen extends AbstractContainerScreen<DisplayMenu> {
         if (hoveredSlot != null && hoveredSlot.isFake() && !hoveredSlot.hasItem()) {
             graphics.setTooltipForNextFrame(font, Component.translatable("tradery.screen.display_tip"), mouseX, mouseY);
         }
+    }
+
+    @Override
+    public int left() {
+        return leftPos;
+    }
+
+    @Override
+    public int top() {
+        return topPos;
     }
 }

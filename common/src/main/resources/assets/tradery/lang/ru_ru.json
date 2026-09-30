@@ -151,5 +151,19 @@
   "tradery.withdraw.done": "Снято монетами: %s",
   "tag.item.tradery.coins": "Монеты",
   "tag.item.tradery.coin_ores": "Монетные руды",
-  "tag.block.tradery.coin_ores": "Монетные руды"
+  "tag.block.tradery.coin_ores": "Монетные руды",
+  "tradery.reason.tradery.bridge.common_economy": "Другой мод",
+  "tradery.jade.owner": "Владелец: %s",
+  "tradery.jade.sells": "Продаёт %s за %s",
+  "tradery.jade.buys": "Покупает %s за %s",
+  "tradery.jade.shows": "На витрине: %s",
+  "tradery.info.vending_block": "Магазин в блоке. Задайте образец товара и цену, заполните склад — игроки покупают, даже пока вас нет, за деньги или за предметы. В режиме скупки автомат сам покупает товар у игроков. Сломать его можете только вы.",
+  "tradery.info.display_block": "Стеклянная витрина для одного предмета. Ничего не продаёт: предмет внутри — лишь изображение.",
+  "tradery.info.coin_ore_title": "Монетная руда",
+  "tradery.info.coin_ore": "Встречается под землёй: медная на Y от 0 до 96, серебряная от -32 до 32, золотая от -64 до -16. Добыча сразу зачисляет номинал монет на баланс; машины и взрывы роняют монеты-предметы. Удача не помогает.",
+  "tradery.info.coin_title": "Монеты",
+  "tradery.info.coin": "Наличные. ПКМ — зачислить на баланс (с Shift — все монеты); /tradery withdraw выдаёт монеты. Ими можно платить в автоматах, которые принимают предметы.",
+  "config.jade.plugin_tradery.vending_block": "Торговый автомат",
+  "config.jade.plugin_tradery.display_block": "Витрина",
+  "config.jade.plugin_tradery.vending_stock": "Остаток в автомате"
 }

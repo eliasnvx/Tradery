@@ -42,8 +42,14 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] GameTests (both loaders): ore pays the miner, coins without a player, daily cap, pickup with a full inventory, withdraw/use, kill reward vs spawner mobs, mine reward vs placed blocks, ore feature places ore, all mixins apply; JUnit for the rewards config and diminishing
 - [x] Client check: ores and coins screenshot
 
-## Phase 4 — Integrations (active)
-Not started.
+## Phase 4 — Integrations ✅ (closed 2026-09-30)
+- [x] Common Economy API 2.0.0 (Fabric, jar-in-jar): Tradery is a provider; runtime-checked on 26.3 by a Fabric GameTest (read, increase, decrease, dry runs, formatting)
+- [x] Text Placeholder API (Fabric, optional): `%tradery:balance%`, `balance_short`, `balance_raw`, `top_name N`, `top_balance N`, `currency`
+- [x] Jade (both): owner, offer, stock (server data provider), display item
+- [x] JEI (both): drag items onto sample slots, info pages for vending/display blocks, coin ore, coins
+- [x] REI (both; NeoForge through an annotated subclass): drag onto sample slots, info pages
+- [x] `-Pcompat=true` dev runs: Fabric client tests with JEI + REI + Jade + Placeholder API (Jade tooltip screenshot), NeoForge GameTests and client start with JEI + REI + Jade
+- [ ] EMI / WTHIT: no 26.3 builds yet (SPEC)
 
-## Phase 5 — Release
+## Phase 5 — Release (active)
 Not started.

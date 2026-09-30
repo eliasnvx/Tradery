@@ -62,6 +62,8 @@ public final class TraderyServer {
         if (payload instanceof TraderyPayloads.VendingSavePayload save
             && player.containerMenu instanceof VendingOwnerMenu menu && menu.containerId == save.containerId()) {
             VendingConfigurator.save(player, menu, save.price());
+        } else if (payload instanceof TraderyPayloads.GhostSamplePayload ghost && player.containerMenu.containerId == ghost.containerId()) {
+            dev.eliasnvx.tradery.menu.GhostSlots.setFromViewer(player, player.containerMenu, ghost.slot(), ghost.stack());
         }
     }
 
