@@ -16,6 +16,7 @@ import dev.eliasnvx.tradery.vending.VendingBlockEntity;
 import dev.eliasnvx.tradery.vending.VendingConfigurator;
 import dev.eliasnvx.tradery.vending.VendingMenus;
 import dev.eliasnvx.tradery.vending.VendingProtection;
+import dev.eliasnvx.tradery.vending.VendingQuickTrade;
 import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.core.BlockPos;
@@ -52,7 +53,11 @@ public final class VendingGameTests {
         new TraderyGameTests.Entry("vending_protection", VendingGameTests::protection),
         new TraderyGameTests.Entry("vending_rate_limit", VendingGameTests::rateLimit),
         new TraderyGameTests.Entry("vending_offline_owner_gets_summary", VendingGameTests::offlineOwnerGetsSummary),
-        new TraderyGameTests.Entry("vending_new_price_closes_buyer_screens", VendingGameTests::newPriceClosesBuyerScreens));
+        new TraderyGameTests.Entry("vending_new_price_closes_buyer_screens", VendingGameTests::newPriceClosesBuyerScreens),
+        new TraderyGameTests.Entry("vending_quick_trade_buys_one_lot", VendingGameTests::quickTradeBuysOneLot),
+        new TraderyGameTests.Entry("vending_quick_trade_wrong_button", VendingGameTests::quickTradeWrongButton),
+        new TraderyGameTests.Entry("vending_quick_trade_sells_to_buyback", VendingGameTests::quickTradeSellsToBuyback),
+        new TraderyGameTests.Entry("vending_quick_trade_needs_reach", VendingGameTests::quickTradeNeedsReach));
 
     private VendingGameTests() {
     }
@@ -349,6 +354,82 @@ public final class VendingGameTests {
         helper.assertValueEqual(vendor.settings().price(), 900L, "new price saved");
         helper.assertTrue(buyer.containerMenu == buyer.inventoryMenu, "the buyer's screen closed: no buying at a price they didn't see");
         helper.assertTrue(owner.containerMenu instanceof VendingOwnerMenu, "the owner keeps editing");
+        helper.succeed();
+    }
+
+    // ------------------------------------------------------------------ quick trade (sneak + click)
+
+    public static void quickTradeBuysOneLot(GameTestHelper helper) {
+        UUID ownerId = UUID.randomUUID();
+        VendingBlockEntity vendor = vendor(helper, AccountId.player(ownerId), sell(Items.BREAD, 4, 250));
+        vendor.stock().setItem(0, new ItemStack(Items.BREAD, 64));
+        vendor.stock().setChanged();
+        ServerPlayer buyer = playerAtVendor(helper);
+        setBalance(buyer.getUUID(), 1_000);
+        BlockPos pos = helper.absolutePos(VENDOR);
+
+        VendingQuickTrade.handle(buyer, pos, false);
+        helper.assertValueEqual(count(buyer, Items.BREAD), 4, "one lot per request");
+        helper.assertValueEqual(balance(buyer.getUUID()), 750L, "paid for one lot");
+        VendingQuickTrade.handle(buyer, pos, false);
+        helper.assertValueEqual(count(buyer, Items.BREAD), 8, "a held button trades again");
+        helper.assertValueEqual(VendingQuickTrade.streakGoods(buyer), 8, "the action bar adds the streak up");
+        helper.assertValueEqual(count(vendor.stock(), Items.BREAD), 56, "stock lost 8 bread");
+        VendingQuickTrade.forget(buyer);
+        VendingTrades.forget(buyer);
+        helper.succeed();
+    }
+
+    public static void quickTradeWrongButton(GameTestHelper helper) {
+        VendingBlockEntity vendor = vendor(helper, AccountId.player(UUID.randomUUID()), sell(Items.BREAD, 4, 250));
+        vendor.stock().setItem(0, new ItemStack(Items.BREAD, 64));
+        vendor.stock().setChanged();
+        ServerPlayer buyer = playerAtVendor(helper);
+        setBalance(buyer.getUUID(), 1_000);
+        buyer.getInventory().add(new ItemStack(Items.BREAD, 4));
+
+        VendingQuickTrade.handle(buyer, helper.absolutePos(VENDOR), true);
+        helper.assertValueEqual(count(buyer, Items.BREAD), 4, "sneak + attack doesn't buy or sell at a selling block");
+        helper.assertValueEqual(balance(buyer.getUUID()), 1_000L, "no money moved");
+        helper.assertValueEqual(count(vendor.stock(), Items.BREAD), 64, "stock untouched");
+        VendingTrades.forget(buyer);
+        helper.succeed();
+    }
+
+    public static void quickTradeSellsToBuyback(GameTestHelper helper) {
+        UUID ownerId = UUID.randomUUID();
+        VendingBlockEntity vendor = vendor(helper, AccountId.player(ownerId),
+            new VendingSettings(new ItemStack(Items.COBBLESTONE, 8), PriceMode.CURRENCY, 100, ItemStack.EMPTY, true, DisplayAnimation.STATIC));
+        setBalance(ownerId, 1_000);
+        ServerPlayer seller = playerAtVendor(helper);
+        setBalance(seller.getUUID(), 0);
+        seller.getInventory().add(new ItemStack(Items.COBBLESTONE, 20));
+        BlockPos pos = helper.absolutePos(VENDOR);
+
+        VendingQuickTrade.handle(seller, pos, false);
+        helper.assertValueEqual(count(seller, Items.COBBLESTONE), 20, "sneak + use doesn't sell");
+        VendingQuickTrade.handle(seller, pos, true);
+        helper.assertValueEqual(count(seller, Items.COBBLESTONE), 12, "sold one lot of 8");
+        helper.assertValueEqual(count(vendor.stock(), Items.COBBLESTONE), 8, "the block got the 8");
+        helper.assertValueEqual(balance(ownerId), 900L, "the owner paid 1.00");
+        helper.assertValueEqual(balance(seller.getUUID()), 100L - 100 * 2 / 100, "the seller got 1.00 minus the fee");
+        VendingQuickTrade.forget(seller);
+        VendingTrades.forget(seller);
+        helper.succeed();
+    }
+
+    public static void quickTradeNeedsReach(GameTestHelper helper) {
+        VendingBlockEntity vendor = vendor(helper, AccountId.player(UUID.randomUUID()), sell(Items.BREAD, 4, 250));
+        vendor.stock().setItem(0, new ItemStack(Items.BREAD, 64));
+        vendor.stock().setChanged();
+        ServerPlayer buyer = playerAtVendor(helper);
+        setBalance(buyer.getUUID(), 1_000);
+        buyer.setPos(buyer.getX(), buyer.getY(), buyer.getZ() - 20);
+
+        VendingQuickTrade.handle(buyer, helper.absolutePos(VENDOR), false);
+        helper.assertValueEqual(count(buyer, Items.BREAD), 0, "out of reach: refused");
+        helper.assertValueEqual(balance(buyer.getUUID()), 1_000L, "no money moved");
+        VendingTrades.forget(buyer);
         helper.succeed();
     }
 }

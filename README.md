@@ -30,6 +30,8 @@ Tradery is a spiritual successor to the classic **Vending Block** mod: put a blo
 - **One block, one offer:** "4 bread for 2.50 ₮" or "1 golden apple for 2 diamonds". Up to 64 items per trade, 27 slots of stock.
 - **Money or items:** money goes straight to the owner's balance (minus a configurable fee); items land in 9 revenue slots.
 - **Buyback:** flip one switch and the block *buys* the goods from players with the owner's money — a market for your miners.
+- **Quick trade, no window:** sneak + right-click buys one lot, sneak + left-click sells one to a buying block; hold the button to keep trading (about 5 lots a second). A plain right-click opens the window with ×1 / ×8 / ×max.
+- **Look-at hint:** owner, goods and price with icons, the trade keys, or why it can't trade right now (sold out, not set up). Sneak to see the items' full tooltips. Off by default when Jade is installed, which shows the same.
 - **Sells while you're offline**; you get "Sold 16 × Bread for 40 ₮ (Steve)" when online and a summary when you join.
 - **Facades:** use any full block as the base. **Showcase animations:** static, spin, bob, spin & bob, or hidden.
 - **Display block:** a glass case that shows an item and sells nothing.
@@ -39,6 +41,10 @@ Tradery is a spiritual successor to the classic **Vending Block** mod: put a blo
 | Buyer | Owner |
 |---|---|
 | ![Buyer screen](docs/images/buyer.png) | ![Owner screen](docs/images/owner.png) |
+
+| Quick trade (sneak + hold right-click) | Look-at hint while sneaking |
+|---|---|
+| ![Quick trade: bought 20 bread in one hold](docs/images/quick_trade.png) | ![Hint with the item's tooltip and "Sold out"](docs/images/hint_details.png) |
 
 ## Balance HUD
 

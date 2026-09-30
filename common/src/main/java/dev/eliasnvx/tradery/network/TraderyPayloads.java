@@ -2,6 +2,7 @@ package dev.eliasnvx.tradery.network;
 
 import dev.eliasnvx.tradery.Tradery;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -217,6 +218,23 @@ public final class TraderyPayloads {
         }
     }
 
+    /**
+     * Sneak + use (buy) or sneak + attack (sell) on a vending block: one trade, no window. Sent again while the
+     * button is held, at most every 4 ticks; the server checks reach, the block and the trade rate limit.
+     */
+    public record VendingQuickTradePayload(BlockPos pos, boolean sell) implements CustomPacketPayload {
+        public static final Type<VendingQuickTradePayload> TYPE = payloadType("vending_quick_trade");
+        public static final StreamCodec<ByteBuf, VendingQuickTradePayload> STREAM_CODEC = StreamCodec.composite(
+            BlockPos.STREAM_CODEC, VendingQuickTradePayload::pos,
+            ByteBufCodecs.BOOL, VendingQuickTradePayload::sell,
+            VendingQuickTradePayload::new);
+
+        @Override
+        public Type<VendingQuickTradePayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Server → client payloads. */
     public static final List<Entry<?>> CLIENTBOUND = List.of(
         new Entry<>(CurrencyInfoPayload.TYPE, CurrencyInfoPayload.STREAM_CODEC),
@@ -230,7 +248,8 @@ public final class TraderyPayloads {
     /** Client → server payloads. */
     public static final List<Entry<?>> SERVERBOUND = List.of(
         new Entry<>(VendingSavePayload.TYPE, VendingSavePayload.STREAM_CODEC),
-        new Entry<>(GhostSamplePayload.TYPE, GhostSamplePayload.STREAM_CODEC)
+        new Entry<>(GhostSamplePayload.TYPE, GhostSamplePayload.STREAM_CODEC),
+        new Entry<>(VendingQuickTradePayload.TYPE, VendingQuickTradePayload.STREAM_CODEC)
     );
 
     private TraderyPayloads() {

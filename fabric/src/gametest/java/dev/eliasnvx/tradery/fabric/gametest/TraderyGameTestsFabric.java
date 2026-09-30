@@ -13,7 +13,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
  */
 public final class TraderyGameTestsFabric {
     /** Methods below that forward to a shared test (everything except {@link #allTestsRegistered}). */
-    private static final int WIRED = 25;
+    private static final int WIRED = 29;
 
     @GameTest
     public void economyTransferIsAtomic(GameTestHelper helper) {
@@ -88,6 +88,26 @@ public final class TraderyGameTestsFabric {
     @GameTest
     public void vendingNewPriceClosesBuyerScreens(GameTestHelper helper) {
         VendingGameTests.newPriceClosesBuyerScreens(helper);
+    }
+
+    @GameTest
+    public void vendingQuickTradeBuysOneLot(GameTestHelper helper) {
+        VendingGameTests.quickTradeBuysOneLot(helper);
+    }
+
+    @GameTest
+    public void vendingQuickTradeWrongButton(GameTestHelper helper) {
+        VendingGameTests.quickTradeWrongButton(helper);
+    }
+
+    @GameTest
+    public void vendingQuickTradeSellsToBuyback(GameTestHelper helper) {
+        VendingGameTests.quickTradeSellsToBuyback(helper);
+    }
+
+    @GameTest
+    public void vendingQuickTradeNeedsReach(GameTestHelper helper) {
+        VendingGameTests.quickTradeNeedsReach(helper);
     }
 
     @GameTest

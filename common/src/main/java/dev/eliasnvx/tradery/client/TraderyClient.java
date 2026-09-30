@@ -42,6 +42,7 @@ public final class TraderyClient {
     }
 
     public static void renderHud(net.minecraft.client.gui.GuiGraphicsExtractor graphics) {
+        VendingHint.render(graphics);
         BalanceHud.render(graphics);
     }
 

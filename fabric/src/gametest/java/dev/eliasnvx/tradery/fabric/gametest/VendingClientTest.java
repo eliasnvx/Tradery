@@ -26,6 +26,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.block.Blocks;
 
 import java.util.UUID;
@@ -55,7 +57,8 @@ public final class VendingClientTest implements FabricClientGameTest {
             BlockPos bread = origin.offset(-1, 0, 3);
             BlockPos apple = origin.offset(1, 0, 3);
             BlockPos display = origin.offset(3, 0, 3);
-            world.getServer().runOnServer(server -> setUp(server, bread, apple, display));
+            BlockPos cobble = origin.offset(-3, 0, 3);
+            world.getServer().runOnServer(server -> setUp(server, bread, apple, display, cobble));
             world.getServer().runCommand("tp @p " + (origin.getX() + 0.5) + " " + origin.getY() + " " + (origin.getZ() + 0.5)
                 + " facing " + (origin.getX() + 1.5) + " " + (origin.getY() + 0.5) + " " + (origin.getZ() + 3.5));
             context.waitTicks(20);
@@ -69,6 +72,29 @@ public final class VendingClientTest implements FabricClientGameTest {
             });
             context.waitTicks(15);
             context.takeScreenshot("vending_closeup");
+            context.getInput().holdShift();
+            context.waitTicks(3);
+            context.takeScreenshot("vending_hint_sneaking");
+            context.getInput().releaseShift();
+            // The potion vendor, sold out; sneaking adds the potion's own tooltip lines
+            world.getServer().runCommand("tp @p " + (apple.getX() + 0.5) + " " + apple.getY() + " " + (apple.getZ() - 1.6) + " 0 25");
+            context.waitTicks(5);
+            context.runOnClient(mc -> {
+                mc.player.setYRot(0);
+                mc.player.setXRot(25);
+            });
+            context.waitTicks(10);
+            context.getInput().holdShift();
+            context.waitTicks(3);
+            context.takeScreenshot("vending_hint_details_sold_out");
+            context.getInput().releaseShift();
+            world.getServer().runCommand("tp @p " + (bread.getX() + 0.5) + " " + bread.getY() + " " + (bread.getZ() - 1.6) + " 0 25");
+            context.waitTicks(5);
+            context.runOnClient(mc -> {
+                mc.player.setYRot(0);
+                mc.player.setXRot(25);
+            });
+            context.waitTicks(5);
 
             long before = world.getServer().computeOnServer(server -> balance(server));
             world.getServer().runOnServer(server -> VendingMenus.openBuyer(player(server), vendor(server, bread)));
@@ -84,6 +110,43 @@ public final class VendingClientTest implements FabricClientGameTest {
                 throw new AssertionError("purchase: bread " + breadCount + ", paid " + (before - after));
             }
             context.runOnClient(mc -> mc.player.closeContainer());
+            context.waitTicks(3);
+
+            // Quick buy: sneak + hold use on the bread vendor, a lot every 4 ticks
+            context.getInput().holdShift();
+            context.waitTicks(2);
+            context.getInput().holdKeyFor(options -> options.keyUse, 18);
+            context.waitTicks(2);
+            context.takeScreenshot("vending_quick_buy");
+            context.getInput().releaseShift();
+            long afterQuick = world.getServer().computeOnServer(server -> balance(server));
+            int breadQuick = world.getServer().computeOnServer(server -> player(server).getInventory().countItem(Items.BREAD)) - breadCount;
+            if (breadQuick < 8 || breadQuick % 4 != 0 || after - afterQuick != breadQuick / 4 * 250L) {
+                throw new AssertionError("quick buy: bread " + breadQuick + ", paid " + (after - afterQuick));
+            }
+
+            // Quick sell: sneak + hold attack on the buyback vendor
+            world.getServer().runCommand("give @p minecraft:cobblestone 32");
+            world.getServer().runCommand("tp @p " + (cobble.getX() + 0.5) + " " + cobble.getY() + " " + (cobble.getZ() - 1.6) + " 0 25");
+            context.waitTicks(5);
+            context.runOnClient(mc -> {
+                mc.player.setYRot(0);
+                mc.player.setXRot(25);
+            });
+            context.waitTicks(10);
+            context.takeScreenshot("vending_hint_buyback");
+            context.getInput().holdShift();
+            context.waitTicks(2);
+            context.getInput().holdKeyFor(options -> options.keyAttack, 10);
+            context.waitTicks(2);
+            context.takeScreenshot("vending_quick_sell");
+            context.getInput().releaseShift();
+            int cobbleLeft = world.getServer().computeOnServer(server -> player(server).getInventory().countItem(Items.COBBLESTONE));
+            if (cobbleLeft > 24 || cobbleLeft % 8 != 0) {
+                throw new AssertionError("quick sell: cobblestone left " + cobbleLeft);
+            }
+            world.getServer().runCommand("tp @p " + (bread.getX() + 0.5) + " " + bread.getY() + " " + (bread.getZ() - 1.6) + " 0 25");
+            context.waitTicks(5);
 
             world.getServer().runOnServer(server -> {
                 ServerPlayer player = player(server);
@@ -118,7 +181,7 @@ public final class VendingClientTest implements FabricClientGameTest {
         return (VendingBlockEntity) server.overworld().getBlockEntity(pos);
     }
 
-    private static void setUp(MinecraftServer server, BlockPos bread, BlockPos apple, BlockPos display) {
+    private static void setUp(MinecraftServer server, BlockPos bread, BlockPos apple, BlockPos display, BlockPos cobble) {
         ServerLevel level = server.overworld();
         level.setBlockAndUpdate(bread, TraderyBlocks.VENDING_BLOCK.get().defaultBlockState().setValue(VendingBlock.FACING, Direction.NORTH));
         VendingBlockEntity breadVendor = vendor(server, bread);
@@ -131,9 +194,18 @@ public final class VendingClientTest implements FabricClientGameTest {
         level.setBlockAndUpdate(apple, TraderyBlocks.VENDING_BLOCK.get().defaultBlockState().setValue(VendingBlock.FACING, Direction.NORTH));
         VendingBlockEntity appleVendor = vendor(server, apple);
         appleVendor.setOwner(AccountId.player(SHOPKEEPER), "Shopkeeper");
-        appleVendor.setSettings(new VendingSettings(new ItemStack(Items.GOLDEN_APPLE), PriceMode.ITEM, 0, new ItemStack(Items.DIAMOND, 2), false,
-            DisplayAnimation.SPIN));
+        // No stock: the hint says "sold out"; the potion's effect lines show in the sneaking hint
+        appleVendor.setSettings(new VendingSettings(PotionContents.createItemStack(Items.POTION, Potions.SWIFTNESS), PriceMode.ITEM, 0,
+            new ItemStack(Items.DIAMOND, 2), false, DisplayAnimation.SPIN));
         appleVendor.setFacade(Blocks.OAK_PLANKS.defaultBlockState());
+
+        level.setBlockAndUpdate(cobble, TraderyBlocks.VENDING_BLOCK.get().defaultBlockState().setValue(VendingBlock.FACING, Direction.NORTH));
+        VendingBlockEntity cobbleVendor = vendor(server, cobble);
+        cobbleVendor.setOwner(AccountId.player(SHOPKEEPER), "Shopkeeper");
+        cobbleVendor.setSettings(new VendingSettings(new ItemStack(Items.COBBLESTONE, 8), PriceMode.CURRENCY, 100, ItemStack.EMPTY, true,
+            DisplayAnimation.STATIC));
+        EconomyService.INSTANCE.deposit(EconomyService.INSTANCE.account(SHOPKEEPER), 10_000,
+            dev.eliasnvx.tradery.api.Reason.of(dev.eliasnvx.tradery.api.Reasons.ADMIN_GIVE, "test"));
 
         level.setBlockAndUpdate(display, TraderyBlocks.DISPLAY_BLOCK.get().defaultBlockState().setValue(DisplayBlock.FACING, Direction.NORTH));
         if (level.getBlockEntity(display) instanceof DisplayBlockEntity case_) {

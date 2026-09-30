@@ -63,10 +63,17 @@ public record ClientConfig(Hud hud, Notifications notifications, Vending vending
         ).apply(i, Notifications::new));
     }
 
-    public record Vending(AnimationOverride animationOverride) {
-        static final Vending DEFAULT = new Vending(AnimationOverride.SERVER);
+    /** The look-at hint of vending blocks. {@code AUTO}: on, unless Jade (which shows the same) is installed. */
+    public enum HintMode {
+        AUTO, ON, OFF
+    }
+
+    public record Vending(AnimationOverride animationOverride, HintMode hint, int hintY) {
+        static final Vending DEFAULT = new Vending(AnimationOverride.SERVER, HintMode.AUTO, 8);
         static final Codec<Vending> CODEC = RecordCodecBuilder.create(i -> i.group(
-            field(ConfigCodecs.enumCodec(AnimationOverride.class), "animationOverride", DEFAULT.animationOverride).forGetter(Vending::animationOverride)
+            field(ConfigCodecs.enumCodec(AnimationOverride.class), "animationOverride", DEFAULT.animationOverride).forGetter(Vending::animationOverride),
+            field(ConfigCodecs.enumCodec(HintMode.class), "hint", DEFAULT.hint).forGetter(Vending::hint),
+            field(Codec.intRange(0, 4096), "hintY", DEFAULT.hintY).forGetter(Vending::hintY)
         ).apply(i, Vending::new));
     }
 
@@ -97,6 +104,9 @@ public record ClientConfig(Hud hud, Notifications notifications, Vending vending
         Map.entry("hud.popups", "+120 / -40 lines on every change"),
         Map.entry("notifications", "Messages about your vending blocks"),
         Map.entry("notifications.offlineSummary", "Summary of sales made while you were away, shown when you join"),
-        Map.entry("vending.animationOverride", "SERVER (as the server says), STATIC, SPIN, BOB, SPIN_BOB or NONE")
+        Map.entry("vending.animationOverride", "SERVER (as the server says), STATIC, SPIN, BOB, SPIN_BOB or NONE"),
+        Map.entry("vending.hint", "Owner, offer and trade keys at the top of the screen while you look at a vending block: "
+            + "AUTO (off when Jade is installed, it shows the same), ON or OFF"),
+        Map.entry("vending.hintY", "Distance of the hint from the top of the screen, in GUI pixels")
     );
 }

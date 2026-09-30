@@ -45,15 +45,17 @@ public final class VendingTrades {
      * Result of a trade request.
      *
      * @param trades  trades done; 0 = nothing changed
+     * @param goods   goods moved (items)
+     * @param price   what changed hands for them: money the buyer paid or the seller got (minor units), or price items
      * @param message what to show the player
      */
-    public record Outcome(int trades, Component message) {
+    public record Outcome(int trades, int goods, long price, Component message) {
         public boolean success() {
             return trades > 0;
         }
 
         static Outcome fail(Component message) {
-            return new Outcome(0, message);
+            return new Outcome(0, 0, 0, message);
         }
     }
 
@@ -184,8 +186,7 @@ public final class VendingTrades {
         if (!admin.infiniteStock() && vendor.tradesInStock() == 0) {
             VendingNotifier.empty(vendor);
         }
-        return new Outcome(trades, Messages.tr("tradery.vending.bought", "Bought %s × %s for %s",
-            goodsCount, goods.getHoverName(), priceText(settings, price, trades)));
+        return new Outcome(trades, goodsCount, price * trades, describe(settings, goodsCount, price * trades));
     }
 
     // ------------------------------------------------------------------ buyback: goods from the player
@@ -258,8 +259,7 @@ public final class VendingTrades {
         VendingPurchaseEvent.Post.EVENT.post(new VendingPurchaseEvent.Post(player, (ServerLevel) vendor.getLevel(), vendor.getBlockPos(),
             vendor.owner(), TradeDirection.BUYBACK, goods, PriceMode.CURRENCY, ItemStack.EMPTY, price, trades, fee));
         VendingNotifier.boughtBack(vendor, player, goods, goodsCount, total);
-        return new Outcome(trades, Messages.tr("tradery.vending.sold", "Sold %s × %s for %s",
-            goodsCount, goods.getHoverName(), Messages.money(total - fee)));
+        return new Outcome(trades, goodsCount, total - fee, describe(settings, goodsCount, total - fee));
     }
 
     // ------------------------------------------------------------------ helpers
@@ -299,12 +299,24 @@ public final class VendingTrades {
         return (int) Math.min(UNLIMITED, economy.account(player.getUUID()).balance(economy.defaultCurrency()) / settings.price());
     }
 
-    private static Component priceText(VendingSettings settings, long price, int trades) {
-        if (settings.priceMode() == PriceMode.CURRENCY) {
-            // Shown in the buyer screen, next to prices drawn with the coin icon
-            return price == 0 ? Messages.tr("tradery.vending.free", "free") : Messages.coins(price * trades);
+    /**
+     * "Bought 4 × Bread for (coin)2.50" / "Sold 8 × Cobblestone for (coin)1.96": a trade (or several added up) as the
+     * player sees it in the buyer screen and the action bar.
+     *
+     * @param price total money (minor units) or price items, as in {@link Outcome#price()}
+     */
+    public static Component describe(VendingSettings settings, int goods, long price) {
+        String key = settings.isBuyback() ? "tradery.vending.sold" : "tradery.vending.bought";
+        String fallback = settings.isBuyback() ? "Sold %s × %s for %s" : "Bought %s × %s for %s";
+        return Messages.tr(key, fallback, goods, settings.goods().getHoverName(), priceText(settings, price));
+    }
+
+    private static Component priceText(VendingSettings settings, long price) {
+        if (settings.isBuyback() || settings.priceMode() == PriceMode.CURRENCY) {
+            // Shown next to prices drawn with the coin icon
+            return price == 0 ? Messages.tr("tradery.vending.free", "free") : Messages.coins(price);
         }
-        return Component.literal((price * trades) + " × ").append(settings.priceItem().getHoverName());
+        return Component.literal(price + " × ").append(settings.priceItem().getHoverName());
     }
 
     private static String note(ItemStack goods, int count) {
