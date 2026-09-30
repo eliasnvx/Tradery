@@ -10,7 +10,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ClientEconomy {
     /** Display settings of the server's currency. */
-    public record CurrencyView(String id, String name, String symbol, int decimals, String thousandsSeparator) {
+    public record CurrencyView(String id, String name, String symbol, int decimals, String thousandsSeparator,
+                               long copperValue, long silverValue, long goldValue) {
         public String format(long amount) {
             return Money.format(amount, decimals, thousandsSeparator, symbol);
         }
@@ -40,7 +41,8 @@ public final class ClientEconomy {
     }
 
     static void onCurrency(TraderyPayloads.CurrencyInfoPayload payload) {
-        currency = new CurrencyView(payload.currencyId(), payload.name(), payload.symbol(), payload.decimals(), payload.thousandsSeparator());
+        currency = new CurrencyView(payload.currencyId(), payload.name(), payload.symbol(), payload.decimals(), payload.thousandsSeparator(),
+            payload.copperValue(), payload.silverValue(), payload.goldValue());
         BalanceHud.invalidateText();
     }
 

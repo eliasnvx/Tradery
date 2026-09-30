@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "tradery:block/silver_coin_ore"
+    }
+  }
+}

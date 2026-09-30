@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "tradery:block/copper_coin_ore"
+    }
+  }
+}

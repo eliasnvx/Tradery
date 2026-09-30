@@ -27,6 +27,7 @@ public final class TraderyNeoForge {
         Platform.install(platform);
         Tradery.init();
         dev.eliasnvx.tradery.registry.TraderyBlocks.init();
+        platform.registerAttachments();
         platform.attach(modBus);
 
         modBus.addListener(TraderyNeoForge::registerPayloads);
@@ -50,6 +51,18 @@ public final class TraderyNeoForge {
                 event.setCanceled(true);
             }
         });
+        // Last, so protections of other mods had their say
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (BreakBlockEvent event) -> {
+            if (!event.isCanceled()) {
+                TraderyServer.onBlockBroken(event.getPlayer(), (net.minecraft.world.level.Level) event.getLevel(), event.getPos(), event.getState());
+            }
+        });
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST,
+            (net.neoforged.neoforge.event.entity.living.LivingDeathEvent event) -> {
+                if (!event.isCanceled()) {
+                    TraderyServer.onLivingDeath(event.getEntity(), event.getSource());
+                }
+            });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent event) -> {
             if (event.getEntity() instanceof ServerPlayer player) {
                 TraderyServer.onPlayerRespawnOrTravel(player);

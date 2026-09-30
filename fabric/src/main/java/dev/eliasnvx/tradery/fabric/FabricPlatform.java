@@ -125,6 +125,25 @@ final class FabricPlatform implements Platform {
         });
     }
 
+    /** Player-placed block marks per chunk; saved with the chunk. */
+    private static final net.fabricmc.fabric.api.attachment.v1.AttachmentType<it.unimi.dsi.fastutil.longs.LongSet> PLACED =
+        net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry.create(Tradery.id("placed_blocks"),
+            builder -> builder.persistent(dev.eliasnvx.tradery.rewards.PlacedBlocks.CODEC));
+
+    @Override
+    public it.unimi.dsi.fastutil.longs.LongSet placedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk) {
+        return chunk.getAttachedOrElse(PLACED, it.unimi.dsi.fastutil.longs.LongSets.EMPTY_SET);
+    }
+
+    @Override
+    public void setPlacedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk, it.unimi.dsi.fastutil.longs.LongSet positions) {
+        if (positions.isEmpty()) {
+            chunk.removeAttached(PLACED);
+        } else {
+            chunk.setAttached(PLACED, positions);
+        }
+    }
+
     @Override
     public CreativeModeTab.Builder creativeTabBuilder() {
         return FabricCreativeModeTab.builder();

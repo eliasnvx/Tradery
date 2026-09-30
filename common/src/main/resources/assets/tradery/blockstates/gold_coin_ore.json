@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "tradery:block/gold_coin_ore"
+    }
+  }
+}

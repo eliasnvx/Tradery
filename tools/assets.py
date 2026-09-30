@@ -180,6 +180,111 @@ def block_loot(name):
     }
 
 
+# ---------------------------------------------------------------- coins and coin ore
+
+TIERS = {
+    # tier: (vein size, veins per chunk, min y, max y, coins min, coins max, harder tool tag)
+    "copper": (5, 6, 0, 96, 1, 3, "minecraft:needs_stone_tool"),
+    "silver": (4, 3, -32, 32, 1, 2, "minecraft:needs_iron_tool"),
+    "gold": (3, 1, -64, -16, 1, 1, "minecraft:needs_iron_tool"),
+}
+
+
+def ore_model(base_texture, overlay_texture):
+    """Vanilla stone/deepslate with our transparent coin overlay on top (like grass block sides): no copied pixels."""
+    faces = lambda tex: {side: {"uv": [0, 0, 16, 16], "texture": tex, "cullface": side}
+                         for side in ("down", "up", "north", "south", "west", "east")}
+    return {
+        "parent": "minecraft:block/block",
+        "textures": {"particle": base_texture, "base": base_texture, "overlay": overlay_texture},
+        "elements": [
+            {"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces("#base")},
+            {"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces("#overlay")},
+        ],
+    }
+
+
+def ore_loot(block, coin, lo, hi):
+    count = {"type": "minecraft:set_count", "count": lo if lo == hi else {"type": "minecraft:uniform", "min": lo, "max": hi}}
+    return {
+        "type": "minecraft:block",
+        "pools": [{
+            "entries": [{
+                "type": "minecraft:alternatives",
+                "children": [
+                    {"type": "minecraft:item", "condition": "minecraft:tool/can_silk_touch", "name": f"{NS}:{block}"},
+                    # No apply_bonus: Fortune doesn't multiply money. A data pack can add it here.
+                    {"type": "minecraft:item", "modifier": [count, {"type": "minecraft:explosion_decay"}], "name": f"{NS}:{coin}"},
+                ],
+            }],
+            "rolls": 1,
+        }],
+        "random_sequence": f"{NS}:blocks/{block}",
+    }
+
+
+def ore_feature(tier, size):
+    return {
+        "type": "minecraft:ore",
+        "discard_chance_on_air_exposure": 0.0,
+        "size": size,
+        "targets": [
+            {"state": f"{NS}:{tier}_coin_ore",
+             "target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:stone_ore_replaceables"}},
+            {"state": f"{NS}:deepslate_{tier}_coin_ore",
+             "target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:deepslate_ore_replaceables"}},
+        ],
+    }
+
+
+def ore_placed(tier, count, lo, hi):
+    return {
+        "feature": f"{NS}:{tier}_coin_ore",
+        "placement": [
+            {"type": "minecraft:count", "count": count},
+            {"type": "minecraft:in_square"},
+            {"type": "minecraft:height_range",
+             "height": {"type": "minecraft:uniform", "min_inclusive": {"absolute": lo}, "max_inclusive": {"absolute": hi}}},
+            {"type": "minecraft:biome"},
+            {"type": f"{NS}:enabled_in_config"},
+        ],
+    }
+
+
+def coins_and_ores():
+    tool_tags = {}
+    ores = []
+    for tier, (size, count, lo, hi, cmin, cmax, tool) in TIERS.items():
+        coin = f"{tier}_coin"
+        write(f"assets/{NS}/models/item/{coin}.json", generated_item(f"{NS}:item/{coin}"))
+        write(f"assets/{NS}/items/{coin}.json", item_definition(f"{NS}:item/{coin}"))
+        for deepslate in (False, True):
+            block = f"deepslate_{tier}_coin_ore" if deepslate else f"{tier}_coin_ore"
+            base = "minecraft:block/deepslate" if deepslate else "minecraft:block/stone"
+            write(f"assets/{NS}/models/block/{block}.json", ore_model(base, f"{NS}:block/{tier}_coin_ore_overlay"))
+            write(f"assets/{NS}/blockstates/{block}.json", {"variants": {"": {"model": f"{NS}:block/{block}"}}})
+            write(f"assets/{NS}/items/{block}.json", item_definition(f"{NS}:block/{block}"))
+            write(f"data/{NS}/loot_table/blocks/{block}.json", ore_loot(block, coin, cmin, cmax))
+            tool_tags.setdefault(tool, []).append(f"{NS}:{block}")
+            ores.append(f"{NS}:{block}")
+        write(f"data/{NS}/worldgen/feature/{tier}_coin_ore.json", ore_feature(tier, size))
+        write(f"data/{NS}/worldgen/placed_feature/{tier}_coin_ore.json", ore_placed(tier, count, lo, hi))
+    for tag, blocks in tool_tags.items():
+        ns, path = tag.split(":")
+        write(f"data/{ns}/tags/block/{path}.json", {"values": blocks})
+    write(f"data/{NS}/tags/block/coin_ores.json", {"values": ores})
+    write(f"data/{NS}/tags/item/coin_ores.json", {"values": ores})
+    write(f"data/{NS}/tags/item/coins.json", {"values": [f"{NS}:{t}_coin" for t in TIERS]})
+    write(f"data/{NS}/tags/worldgen/biome/has_coin_ore.json", {"values": ["#minecraft:is_overworld"]})
+    write(f"data/{NS}/neoforge/biome_modifier/coin_ores.json", {
+        "type": "neoforge:add_features",
+        "biomes": f"#{NS}:has_coin_ore",
+        "features": [f"{NS}:{t}_coin_ore" for t in TIERS],
+        "step": "underground_ores",
+    })
+    return ores
+
+
 def main():
     write(f"assets/{NS}/blockstates/vending_block.json", vending_blockstate())
     write(f"assets/{NS}/models/block/vending_base.json", vending_base())
@@ -198,7 +303,8 @@ def main():
 
     for name in ("vending_block", "display_block"):
         write(f"data/{NS}/loot_table/blocks/{name}.json", block_loot(name))
-    write("data/minecraft/tags/block/mineable/pickaxe.json", {"values": [f"{NS}:vending_block", f"{NS}:display_block"]})
+    ores = coins_and_ores()
+    write("data/minecraft/tags/block/mineable/pickaxe.json", {"values": [f"{NS}:vending_block", f"{NS}:display_block"] + ores})
 
     write(f"data/{NS}/recipe/vending_block.json", {
         "type": "minecraft:crafting_shaped", "category": "misc",

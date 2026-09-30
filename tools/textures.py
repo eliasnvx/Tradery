@@ -188,6 +188,59 @@ VENDOR_KEY = [
 ]
 
 
+# ---------------------------------------------------------------- coins and coin ore overlays
+
+def coin_palette(outline, dark, body, light, emboss):
+    return {".": CLEAR, "o": rgba(outline), "s": rgba(dark), "b": rgba(body), "h": rgba(light), "t": rgba(emboss)}
+
+
+COIN_PALETTES = {
+    "copper": coin_palette("4a2410", "9c4f24", "d47a3f", "f2b27e", "7a3a18"),
+    "silver": coin_palette("3a3f46", "8a9199", "c4cad1", "f2f5f7", "6d747c"),
+    "gold": coin_palette("6b4300", "c98d10", "f2c230", "fff09a", "a86f00"),
+}
+
+# 16x16 coin: round, rim light top-left, embossed T
+COIN = [
+    "................",
+    "................",
+    ".....oooooo.....",
+    "....ohhhhbbo....",
+    "...ohhbbbbbso...",
+    "..ohbbttttbbso..",
+    "..ohbbbttbbbso..",
+    "..ohbbbttbbbso..",
+    "..ohbbbttbbbso..",
+    "..obbbbttbbbso..",
+    "..obbbbbbbbsso..",
+    "...obbbbbbsso...",
+    "....osssssso....",
+    ".....oooooo.....",
+    "................",
+    "................",
+]
+
+# Coin specks on transparent background, drawn over vanilla stone / deepslate by the block model
+ORE_OVERLAY = [
+    "................",
+    "..oo.......oo...",
+    ".ohbo.....ohbo..",
+    ".obso.....obso..",
+    "..oo.........oo.",
+    "............ohbo",
+    "......oo....obso",
+    ".....ohbo....oo.",
+    ".....obso.......",
+    "......oo........",
+    ".oo.........oo..",
+    "ohbo.......ohbo.",
+    "obso.......obso.",
+    ".oo....oo...oo..",
+    ".......ohbo.....",
+    ".......obso.....",
+]
+
+
 def main():
     png("gui/sprites/hud/coin.png", HUD_COIN, GOLD)
     png("block/vending_side.png", vending_side(), MACHINE)
@@ -200,6 +253,9 @@ def main():
     png("block/display_top.png", display_top(), DISPLAY)
     png("block/display_metal.png", display_metal(), DISPLAY)
     png("item/vendor_key.png", VENDOR_KEY, KEY)
+    for tier, palette in COIN_PALETTES.items():
+        png(f"item/{tier}_coin.png", COIN, palette)
+        png(f"block/{tier}_coin_ore_overlay.png", ORE_OVERLAY, palette)
 
 
 if __name__ == "__main__":

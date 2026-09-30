@@ -36,6 +36,13 @@ public final class TraderyFabric implements ModInitializer {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> TraderyServer.onPlayerJoin(handler.getPlayer()));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> TraderyServer.onPlayerLeave(handler.getPlayer()));
         PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> TraderyServer.mayBreak(player, level, pos));
+        PlayerBlockBreakEvents.AFTER.register((level, player, pos, state, blockEntity) -> TraderyServer.onBlockBroken(player, level, pos, state));
+        net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register(TraderyServer::onLivingDeath);
+        for (var feature : dev.eliasnvx.tradery.ore.CoinOreGeneration.ALL) {
+            net.fabricmc.fabric.api.biome.v1.BiomeModifications.addFeature(
+                net.fabricmc.fabric.api.biome.v1.BiomeSelectors.tag(dev.eliasnvx.tradery.ore.CoinOreGeneration.BIOMES),
+                net.minecraft.world.level.levelgen.GenerationStep.Decoration.UNDERGROUND_ORES, feature);
+        }
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> TraderyServer.onPlayerRespawnOrTravel(newPlayer));
         ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register((player, origin, destination) ->
             TraderyServer.onPlayerRespawnOrTravel(player));
