@@ -58,6 +58,7 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - Facade: rendered by the block entity renderer with `BlockModelResolver`, squeezed into the 6 px base; the blockstate `facade=true` hides the default base model.
 - NeoForge GameTest mock players don't have `neoforge:advanced_open_screen`; for such connections menus open the vanilla way (server-side menu is identical).
 - Screens are drawn with fills (`Panels`), no GUI textures.
+- Both cases are glass on top too: a 2 px metal frame holds a flat glass pane one pixel below its top (the pane has an up and a down face, so it shows through the walls). Walls and top use `tradery:block/case_glass` (faint tint + streaks) instead of vanilla glass, which is almost fully transparent and made the top look open.
 
 ## 2026-09-30: Money sources
 - Coin ore payout lives in `CoinOreBlock#getDrops`: players, explosions and machines all come through it, so no path skips the rules. The loot table decides the coin count (data packs can add Fortune); the block decides where the money goes.

@@ -157,6 +157,25 @@ def display_metal():
     return grid(["MmmmmmmmmmmmmmmM" if y % 5 == 0 else "mMmmmmmmmmmmmmnm" for y in range(16)])
 
 
+# ---------------------------------------------------------------- case glass (walls and top of both cases)
+
+GLASS = {
+    ".": rgba("d8ecf4", 40),   # faint tint, so the top reads as glass from above
+    "l": rgba("ffffff", 110),  # streak
+    "h": rgba("ffffff", 170),  # streak highlight
+}
+
+
+def case_glass():
+    """Two diagonal streaks kept inside the UV areas every face uses (walls x 1-15, y 1-10; top 2-14)."""
+    rows = [["."] * 16 for _ in range(16)]
+    for x in range(3, 10):   # long streak on x + y = 11
+        rows[11 - x][x] = "h" if 4 <= x <= 7 else "l"
+    for x in range(9, 14):   # short streak on x + y = 17
+        rows[17 - x][x] = "l"
+    return grid(["".join(r) for r in rows])
+
+
 # ---------------------------------------------------------------- vendor key (admin item)
 
 KEY = {
@@ -313,6 +332,7 @@ def main():
     png("block/display_base.png", display_base(), DISPLAY)
     png("block/display_top.png", display_top(), DISPLAY)
     png("block/display_metal.png", display_metal(), DISPLAY)
+    png("block/case_glass.png", case_glass(), GLASS)
     png("item/vendor_key.png", VENDOR_KEY, KEY)
     for tier, palette in COIN_PALETTES.items():
         png(f"item/{tier}_coin.png", COIN, palette)

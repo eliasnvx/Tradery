@@ -78,22 +78,27 @@ def vending_base():
 
 
 def case_elements(bottom):
-    """Glass case, corner posts and lid above a base of height `bottom`."""
+    """Glass case above a base of height `bottom`: glass walls, corner posts, and a metal frame holding a glass top."""
     glass = box([1, bottom, 1], [15, 15, 15], lambda s: None if s in ("up", "down") else "#glass",
                 lambda s: [1, 1, 15, 16 - bottom])
+    # A flat pane one pixel below the frame's top; the down face keeps it visible through the walls
+    glass_top = box([2, 15, 2], [14, 15, 14], lambda s: "#glass" if s in ("up", "down") else None, lambda s: [2, 2, 14, 14])
     posts = []
     for x, z in ((1, 1), (14, 1), (1, 14), (14, 14)):
         frm, to = [x, bottom, z], [x + 1, 15, z + 1]
         posts.append(box(frm, to, lambda s: "#metal", lambda s, f=frm, t=to: [0, 0, 1, 15 - bottom] if s not in ("up", "down") else [0, 0, 1, 1]))
-    lid = box([0, 15, 0], [16, 16, 16], lambda s: "#lid" if s in ("up", "down") else "#metal", uv_box([0, 15, 0], [16, 16, 16]), cull=True)
-    return [glass] + posts + [lid]
+    frame = []
+    for frm, to, hidden in (([0, 15, 0], [16, 16, 2], ()), ([0, 15, 14], [16, 16, 16], ()),
+                            ([0, 15, 2], [2, 16, 14], ("north", "south")), ([14, 15, 2], [16, 16, 14], ("north", "south"))):
+        frame.append(box(frm, to, lambda s, h=hidden: None if s in h else "#metal", uv_box(frm, to), cull=True))
+    return [glass, glass_top] + posts + frame
 
 
 def vending_case():
     return {
         "parent": "minecraft:block/block",
-        "textures": {"particle": f"{NS}:block/vending_metal", "glass": {"force_translucent": True, "sprite": "minecraft:block/glass"},
-                     "metal": f"{NS}:block/vending_metal", "lid": f"{NS}:block/vending_top"},
+        "textures": {"particle": f"{NS}:block/vending_metal", "glass": {"force_translucent": True, "sprite": f"{NS}:block/case_glass"},
+                     "metal": f"{NS}:block/vending_metal"},
         "elements": case_elements(6),
     }
 
@@ -150,8 +155,8 @@ def display_model():
     return {
         "parent": "minecraft:block/block",
         "textures": {"particle": f"{NS}:block/display_base", "base": f"{NS}:block/display_base", "top": f"{NS}:block/display_top",
-                     "glass": {"force_translucent": True, "sprite": "minecraft:block/glass"},
-                     "metal": f"{NS}:block/display_metal", "lid": f"{NS}:block/display_top"},
+                     "glass": {"force_translucent": True, "sprite": f"{NS}:block/case_glass"},
+                     "metal": f"{NS}:block/display_metal"},
         "elements": [base] + case_elements(4),
         "display": block_item_display(),
     }
