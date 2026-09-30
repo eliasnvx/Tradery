@@ -49,6 +49,11 @@ public abstract class ShowcaseRenderer<T extends BlockEntity> implements BlockEn
 
     protected abstract float itemY();
 
+    /** Middle of the glass case between a base of {@code baseHeight} pixels and the frame at 15 px. */
+    protected static float caseCenter(int baseHeight) {
+        return (baseHeight + 15) / 2f / 16f;
+    }
+
     protected float baseHeight() {
         return 0;
     }
