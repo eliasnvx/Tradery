@@ -23,9 +23,9 @@ public record ClientConfig(Hud hud, Notifications notifications, Vending vending
     }
 
     public enum Format {
-        /** "1 250.00 ₮" */
+        /** "1 250.00" */
         FULL,
-        /** "1.2K ₮" */
+        /** "1.2K" */
         SHORT
     }
 
