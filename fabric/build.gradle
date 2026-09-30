@@ -75,3 +75,5 @@ sourceSets.configureEach {
         }
     }
 }
+
+apply from: rootProject.file('gradle/publish-mod.gradle')

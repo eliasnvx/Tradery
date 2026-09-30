@@ -8,6 +8,7 @@ modId = "${mod_id}"
 version = "${version}"
 displayName = "${mod_name}"
 displayURL = "https://github.com/eliasnvx/Tradery"
+logoFile = "assets/tradery/icon.png"
 authors = "${mod_author}"
 description = '''${description}'''
 
@@ -17,7 +18,7 @@ config = "tradery.mixins.json"
 [[dependencies.${mod_id}]]
 modId = "neoforge"
 type = "required"
-versionRange = "[${neoforge_version},)"
+versionRange = "[26.3,)"
 ordering = "NONE"
 side = "BOTH"
 

@@ -46,6 +46,23 @@ public final class HudClientTest implements FabricClientGameTest {
             context.waitTicks(4);
             context.takeScreenshot("hud_loss_popup");
 
+            // Acceptance: the HUD stays clear of the hotbar at every GUI scale on 1280x720, even with a long balance
+            world.getServer().runCommand("eco set " + name + " 1234567.89");
+            context.waitTicks(40);
+            for (int scale = 1; scale <= 4; scale++) {
+                int guiScale = scale;
+                context.runOnClient(mc -> {
+                    mc.options.guiScale().set(guiScale);
+                    mc.resizeGui();
+                });
+                context.waitTicks(3);
+                context.takeScreenshot("hud_gui_scale_" + scale);
+            }
+            context.runOnClient(mc -> {
+                mc.options.guiScale().set(2);
+                mc.resizeGui();
+            });
+
             context.runOnClient(mc -> TraderyConfig.saveClient(original.withHud(new ClientConfig.Hud(true,
                 ClientConfig.Corner.TOP_LEFT, 4, 4, 1.5, ClientConfig.Format.SHORT, true, true))));
             context.waitTicks(2);

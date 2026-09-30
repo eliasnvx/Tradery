@@ -48,7 +48,8 @@ public final class SourcesGameTests {
         new TraderyGameTests.Entry("reward_kill_skips_spawner_mobs", SourcesGameTests::rewardKillSkipsSpawnerMobs),
         new TraderyGameTests.Entry("reward_mine_skips_placed_blocks", SourcesGameTests::rewardMineSkipsPlacedBlocks),
         new TraderyGameTests.Entry("ore_feature_places_ore", SourcesGameTests::oreFeaturePlacesOre),
-        new TraderyGameTests.Entry("mixins_apply", SourcesGameTests::mixinsApply));
+        new TraderyGameTests.Entry("mixins_apply", SourcesGameTests::mixinsApply),
+        new TraderyGameTests.Entry("coin_ore_in_overworld_biomes", SourcesGameTests::coinOreInOverworldBiomes));
 
     private SourcesGameTests() {
     }
@@ -251,6 +252,22 @@ public final class SourcesGameTests {
                 return;
             }
         }
+        helper.succeed();
+    }
+
+    /** The loader's biome modification (Fabric code / NeoForge biome modifier) added the coin ore features. */
+    public static void coinOreInOverworldBiomes(GameTestHelper helper) {
+        var registries = helper.getLevel().registryAccess();
+        var biomes = registries.lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+        var features = registries.lookupOrThrow(net.minecraft.core.registries.Registries.PLACED_FEATURE);
+        for (var biomeKey : List.of(net.minecraft.world.level.biome.Biomes.PLAINS, net.minecraft.world.level.biome.Biomes.DEEP_DARK)) {
+            var settings = biomes.getOrThrow(biomeKey).value().getGenerationSettings();
+            for (var featureKey : dev.eliasnvx.tradery.ore.CoinOreGeneration.ALL) {
+                helper.assertTrue(settings.hasFeature(features.getOrThrow(featureKey).value()), featureKey.identifier() + " in " + biomeKey.identifier());
+            }
+        }
+        var nether = biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.NETHER_WASTES).value().getGenerationSettings();
+        helper.assertFalse(nether.hasFeature(features.getOrThrow(dev.eliasnvx.tradery.ore.CoinOreGeneration.GOLD).value()), "no coin ore in the Nether");
         helper.succeed();
     }
 

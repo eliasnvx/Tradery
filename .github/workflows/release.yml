@@ -1,0 +1,80 @@
+name: release
+
+# Tag v<version> (e.g. v1.0.0) after the manual checks in docs/release-checklist.md.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release # secrets live here; add required reviewers in the repo settings
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Check tag matches the version
+        run: |
+          version=$(grep '^version=' gradle.properties | cut -d= -f2)
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match version=${version}"
+            exit 1
+          fi
+
+      - name: Check publishing setup
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: |
+          modrinth=$(grep '^modrinth_project_id=' gradle.properties | cut -d= -f2)
+          curseforge=$(grep '^curseforge_project_id=' gradle.properties | cut -d= -f2)
+          if [ "$modrinth" = "0" ] && [ "$curseforge" = "0" ]; then
+            echo "::error::Set modrinth_project_id and/or curseforge_project_id in gradle.properties"
+            exit 1
+          fi
+          if [ "$modrinth" != "0" ] && ! echo "$modrinth" | grep -Eq '^[A-Za-z0-9]{8}$'; then
+            echo "::error::modrinth_project_id must be the 8-character project ID, not the slug (got '$modrinth')"
+            exit 1
+          fi
+          if [ "$modrinth" != "0" ] && [ -z "$MODRINTH_TOKEN" ]; then
+            echo "::error::MODRINTH_TOKEN is not set in the 'release' environment"
+            exit 1
+          fi
+          if [ "$curseforge" != "0" ] && [ -z "$CURSEFORGE_TOKEN" ]; then
+            echo "::error::CURSEFORGE_TOKEN is not set in the 'release' environment"
+            exit 1
+          fi
+
+      # Full build incl. JUnit + GameTests on both loaders; nothing is published if it fails
+      - name: Build
+        run: ./gradlew build --console=plain
+
+      - name: Publish to Modrinth and CurseForge
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: ./gradlew :fabric:publishMods :neoforge:publishMods --console=plain
+
+      - name: Publish the API to Maven
+        if: ${{ vars.TRADERY_MAVEN_URL != '' }}
+        env:
+          TRADERY_MAVEN_URL: ${{ vars.TRADERY_MAVEN_URL }}
+          TRADERY_MAVEN_USER: ${{ secrets.TRADERY_MAVEN_USER }}
+          TRADERY_MAVEN_PASSWORD: ${{ secrets.TRADERY_MAVEN_PASSWORD }}
+        run: ./gradlew :api:publishMavenApiPublicationToReleaseRepository --console=plain
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            fabric/build/libs/tradery-fabric-*.jar
+            neoforge/build/libs/tradery-neoforge-*.jar
+            api/build/libs/tradery-api-*.jar

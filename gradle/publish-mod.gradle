@@ -1,0 +1,51 @@
+// Modrinth + CurseForge publishing, applied by :fabric and :neoforge.
+// Run by .github/workflows/release.yml on a v* tag. Without tokens (or project ids) it's a dry run:
+//   ./gradlew :fabric:publishMods   (prints what would be uploaded)
+apply plugin: 'me.modmuss50.mod-publish-plugin'
+
+def loader = project.name // "fabric" | "neoforge"
+def modrinthEnabled = rootProject.modrinth_project_id != '0'
+def curseforgeEnabled = rootProject.curseforge_project_id != '0'
+def changelogText = providers.provider {
+    // Section "## [<version>]" of CHANGELOG.md (Keep a Changelog), up to the next "## ["
+    def text = rootProject.file('CHANGELOG.md').getText('UTF-8')
+    def matcher = text =~ /(?s)## \[${java.util.regex.Pattern.quote(rootProject.version.toString())}\][^\n]*\n(.*?)(?=\n## \[|\z)/
+    matcher.find() ? matcher.group(1).trim() : 'See CHANGELOG.md'
+}
+
+publishMods {
+    file = tasks.named('jar').flatMap { it.archiveFile }
+    changelog = changelogText
+    version = "${rootProject.version}+${rootProject.minecraft_version}-${loader}"
+    displayName = "Tradery ${rootProject.version} (${loader == 'fabric' ? 'Fabric' : 'NeoForge'} ${rootProject.minecraft_version})"
+    def v = rootProject.version.toString()
+    type = v.contains('-alpha') ? ALPHA : (v.contains('-beta') || v.contains('-rc')) ? BETA : STABLE
+    modLoaders.add(loader)
+    dryRun = !modrinthEnabled && !curseforgeEnabled
+        || (modrinthEnabled && providers.environmentVariable('MODRINTH_TOKEN').orNull == null)
+        || (curseforgeEnabled && providers.environmentVariable('CURSEFORGE_TOKEN').orNull == null)
+
+    if (modrinthEnabled) modrinth {
+        accessToken = providers.environmentVariable('MODRINTH_TOKEN')
+        projectId = rootProject.modrinth_project_id
+        minecraftVersions.add(rootProject.minecraft_version)
+        if (loader == 'fabric') {
+            requires('fabric-api')
+            optional('placeholder-api')
+        }
+        optional('jei', 'rei', 'jade')
+    }
+
+    if (curseforgeEnabled) curseforge {
+        accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
+        projectId = rootProject.curseforge_project_id
+        minecraftVersions.add(rootProject.minecraft_version)
+        javaVersions.add(JavaVersion.VERSION_25)
+        clientRequired = true
+        serverRequired = true
+        if (loader == 'fabric') {
+            requires('fabric-api')
+        }
+        optional('jei', 'roughly-enough-items', 'jade')
+    }
+}

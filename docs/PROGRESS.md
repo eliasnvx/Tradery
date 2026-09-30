@@ -39,7 +39,7 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] Worldgen: configured + placed features (data-pack editable), `tradery:enabled_in_config` placement filter, `#tradery:has_coin_ore`, NeoForge biome modifier, Fabric `BiomeModifications`
 - [x] Rewards (`rewards.json5`): kill/mine/craft/fish/advancement, tags and `*`, chance, spawner mobs skipped, fake players skipped, diminishing returns, daily cap, `RewardGrantedEvent`
 - [x] Player-placed blocks marked per chunk (data attachment) so `mine` rewards can't be farmed by placing
-- [x] GameTests (both loaders): ore pays the miner, coins without a player, daily cap, pickup with a full inventory, withdraw/use, kill reward vs spawner mobs, mine reward vs placed blocks, ore feature places ore, all mixins apply; JUnit for the rewards config and diminishing
+- [x] GameTests (both loaders): ore pays the miner, coins without a player, daily cap, pickup with a full inventory, withdraw/use, kill reward vs spawner mobs, mine reward vs placed blocks, ore feature places ore, coin ore added to overworld biomes (not the Nether), all mixins apply; JUnit for the rewards config and diminishing
 - [x] Client check: ores and coins screenshot
 
 ## Phase 4 — Integrations ✅ (closed 2026-09-30)
@@ -51,5 +51,13 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] `-Pcompat=true` dev runs: Fabric client tests with JEI + REI + Jade + Placeholder API (Jade tooltip screenshot), NeoForge GameTests and client start with JEI + REI + Jade
 - [ ] EMI / WTHIT: no 26.3 builds yet (SPEC)
 
-## Phase 5 — Release (active)
-Not started.
+## Phase 5 — Release (active: manual checks left)
+- [x] Version 1.0.0, Economy API 1.0.0 (`ApiVersionTest` keeps the constant in sync)
+- [x] Mod icon (`tools/textures.py`), in fabric.mod.json and neoforge.mods.toml
+- [x] Publishing: `mod-publish-plugin` 2.2.1 (`gradle/publish-mod.gradle`), dry run until project ids and tokens exist
+- [x] CI: `.github/workflows/build.yml` (build + JUnit + GameTests), `release.yml` (tag `v*` → checks → build → Modrinth/CurseForge → API maven → GitHub release)
+- [x] README with screenshots, `docs/api/README.md`, CHANGELOG, `docs/release-checklist.md`
+- [x] Lang coverage test: every translation key used in the code exists
+- [x] HUD at GUI scale 1-4 on 1280x720 (client test screenshots)
+- [ ] Manual checks in `docs/release-checklist.md` (two clients per loader, kill -9, 50 vendors TPS, Create/Mekanism)
+- [ ] Create the Modrinth/CurseForge projects, set their ids, add tokens, tag `v1.0.0`
