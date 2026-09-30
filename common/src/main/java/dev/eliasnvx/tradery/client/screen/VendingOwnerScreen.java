@@ -6,6 +6,7 @@ import dev.eliasnvx.tradery.menu.VendingOwnerMenu;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.util.Money;
+import dev.eliasnvx.tradery.util.MoneyText;
 import dev.eliasnvx.tradery.vending.AdminFlags;
 import dev.eliasnvx.tradery.vending.DisplayAnimation;
 import net.minecraft.ChatFormatting;
@@ -197,7 +198,9 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
         boolean currency = menu.priceMode() == PriceMode.CURRENCY;
         if (currency) {
             ClientEconomy.CurrencyView view = ClientEconomy.currency();
-            graphics.text(font, view != null ? view.symbol() : "", VendingOwnerMenu.PRICE_X + 82, VendingOwnerMenu.PRICE_Y + 4, Panels.LABEL, false);
+            if (view != null) {
+                graphics.text(font, MoneyText.coin(view.symbol()), VendingOwnerMenu.PRICE_X + 82, VendingOwnerMenu.PRICE_Y + 4, Panels.LABEL, false);
+            }
             graphics.text(font, Component.translatable("tradery.screen.fee", menu.data().feePercent()), PANEL_INNER + 2,
                 VendingOwnerMenu.PRICE_Y + 19, GRAY, false);
         } else {

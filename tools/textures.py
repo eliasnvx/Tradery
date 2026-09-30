@@ -65,6 +65,19 @@ HUD_COIN = [
 ]
 
 
+# 8x8 text glyph (MoneyText): a 7x7 coin at the font's cap height, 1 px gap on the right, empty descender row
+TEXT_COIN = [
+    ".ooooo..",
+    "ohhbbbo.",
+    "ohtttso.",
+    "obbtbso.",
+    "obbtbso.",
+    "obbbsso.",
+    ".ooooo..",
+    "........",
+]
+
+
 # ---------------------------------------------------------------- vending block (red machine, brass trim)
 
 MACHINE = {
@@ -321,6 +334,7 @@ def scale(rows, factor):
 
 def main():
     png("gui/sprites/hud/coin.png", HUD_COIN, GOLD)
+    png("gui/sprites/icon/coin.png", TEXT_COIN, GOLD)
     icon = os.path.join(ROOT, "..", "icon.png")
     png(os.path.relpath(icon, ROOT), scale(mod_icon(), 4), ICON)
     png("block/vending_side.png", vending_side(), MACHINE)

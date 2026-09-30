@@ -47,8 +47,9 @@ enum VendingJadeProvider implements IBlockComponentProvider {
             price = Component.literal(settings.pricePerTrade() + " × ").append(settings.priceItem().getHoverName());
         } else {
             ClientEconomy.CurrencyView currency = ClientEconomy.currency();
-            price = Component.literal(settings.price() == 0 ? Component.translatable("tradery.vending.free").getString()
-                : currency != null ? currency.format(settings.price()) : String.valueOf(settings.price())).withStyle(ChatFormatting.GOLD);
+            price = (settings.price() == 0 ? Component.translatable("tradery.vending.free")
+                : currency != null ? currency.money(settings.price()) : Component.literal(String.valueOf(settings.price())))
+                .withStyle(ChatFormatting.GOLD);
         }
         tooltip.add(Component.translatable(settings.isBuyback() ? "tradery.jade.buys" : "tradery.jade.sells", goods, price));
         VendingStockData.INSTANCE.decodeFromData(accessor).ifPresent(count -> tooltip.add(Component.translatable(

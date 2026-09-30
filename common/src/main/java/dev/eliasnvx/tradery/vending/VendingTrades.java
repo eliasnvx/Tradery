@@ -301,7 +301,8 @@ public final class VendingTrades {
 
     private static Component priceText(VendingSettings settings, long price, int trades) {
         if (settings.priceMode() == PriceMode.CURRENCY) {
-            return price == 0 ? Messages.tr("tradery.vending.free", "free") : Messages.money(price * trades);
+            // Shown in the buyer screen, next to prices drawn with the coin icon
+            return price == 0 ? Messages.tr("tradery.vending.free", "free") : Messages.coins(price * trades);
         }
         return Component.literal((price * trades) + " × ").append(settings.priceItem().getHoverName());
     }

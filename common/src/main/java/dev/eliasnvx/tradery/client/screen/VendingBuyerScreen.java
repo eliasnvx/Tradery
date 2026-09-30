@@ -84,8 +84,8 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
             graphics.itemDecorations(font, price, PRICE_X, rowY);
         } else {
             ClientEconomy.CurrencyView currency = ClientEconomy.currency();
-            String text = settings.price() == 0 ? Component.translatable("tradery.vending.free").getString()
-                : currency != null ? currency.format(settings.price()) : String.valueOf(settings.price());
+            Component text = settings.price() == 0 ? Component.translatable("tradery.vending.free")
+                : currency != null ? currency.money(settings.price()) : Component.literal(String.valueOf(settings.price()));
             graphics.text(font, text, PRICE_X - 20 + 16, rowY + 4, GOLD, true);
         }
 
@@ -100,7 +100,7 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
         graphics.text(font, Component.translatable("tradery.screen.per_trade", settings.perTrade()), 8, 62, 0xFF707070, false);
 
         if (settings.priceMode() == PriceMode.CURRENCY && ClientEconomy.currency() != null) {
-            Component balance = Component.translatable("tradery.screen.balance", ClientEconomy.currency().format(ClientEconomy.balance()));
+            Component balance = Component.translatable("tradery.screen.balance", ClientEconomy.currency().money(ClientEconomy.balance()));
             graphics.text(font, balance, 8, 100, Panels.LABEL, false);
         }
         if (!resultMessage.getString().isEmpty() && System.currentTimeMillis() - resultAt < 6000) {
