@@ -19,6 +19,16 @@ public final class ClientEconomy {
         public String formatShort(long amount) {
             return Money.formatShort(amount, decimals, symbol);
         }
+
+        /** The number alone, for places where the coin icon stands in for the symbol (the HUD). */
+        public String formatNumber(long amount) {
+            return Money.formatNumber(amount, decimals, thousandsSeparator);
+        }
+
+        /** Short form without the symbol: "1.2K". */
+        public String formatShortNumber(long amount) {
+            return Money.formatShort(amount, decimals, "");
+        }
     }
 
     private static @Nullable CurrencyView currency;

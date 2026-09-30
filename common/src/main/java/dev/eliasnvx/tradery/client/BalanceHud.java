@@ -44,6 +44,8 @@ public final class BalanceHud {
     private static long lastShown = Long.MIN_VALUE;
     private static String text = "";
     private static boolean textDirty = true;
+    /** Format the cached text was built with; a config change (file, key, command) rebuilds it. */
+    private static ClientConfig.Format textFormat = ClientConfig.Format.FULL;
 
     private BalanceHud() {
     }
@@ -97,9 +99,11 @@ public final class BalanceHud {
         }
         long now = Util.getMillis();
         long shown = current(now);
-        if (textDirty || shown != lastShown) {
-            text = config.format() == ClientConfig.Format.SHORT ? currency.formatShort(shown) : currency.format(shown);
+        if (textDirty || shown != lastShown || config.format() != textFormat) {
+            // No symbol: the coin icon already says what the number is
+            text = config.format() == ClientConfig.Format.SHORT ? currency.formatShortNumber(shown) : currency.formatNumber(shown);
             lastShown = shown;
+            textFormat = config.format();
             textDirty = false;
         }
 
@@ -142,7 +146,7 @@ public final class BalanceHud {
             float progress = age / (float) POPUP_MS;
             int alpha = Mth.clamp((int) (255 * (1 - progress * progress)), 8, 255);
             String line = (popup.delta() > 0 ? "+" : "-")
-                + (config.format() == ClientConfig.Format.SHORT ? currency.formatShort(Math.abs(popup.delta())) : currency.format(Math.abs(popup.delta())));
+                + (config.format() == ClientConfig.Format.SHORT ? currency.formatShortNumber(Math.abs(popup.delta())) : currency.formatNumber(Math.abs(popup.delta())));
             int color = (alpha << 24) | (popup.delta() > 0 ? GAIN : LOSS);
             int lineX = corner.right() ? width - font.width(line) : 0;
             int lineY = baseY + direction * (i * (font.lineHeight + 1) + Math.round(progress * POPUP_RISE));

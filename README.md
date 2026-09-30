@@ -44,7 +44,7 @@ Tradery is a spiritual successor to the classic **Vending Block** mod: put a blo
 
 ![Balance HUD with a +1 234.50 popup](docs/images/hud.png)
 
-Your balance in any corner, with a rolling counter and `+120 ₮` / `-40 ₮` popups. Scale 0.5–2, full (`1 250.00 ₮`) or short (`1.2K ₮`) format, hidden with F1 or a key (unbound by default) or `/tradery hud`. It moves above the hotbar on small screens.
+Your balance in any corner, with a coin icon, a rolling counter and `+120` / `-40` popups. Scale 0.5–2, full (`1 250.00`) or short (`1.2K`) format, hidden with F1 or a key (unbound by default) or `/tradery hud`. It moves above the hotbar on small screens.
 
 ## Where money comes from
 
