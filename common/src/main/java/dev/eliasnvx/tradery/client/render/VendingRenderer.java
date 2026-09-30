@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-/** Vending block: goods in the glass case, facade in the 6 px base. */
+/** Vending block: goods in the glass case, facade in the base. */
 public class VendingRenderer extends ShowcaseRenderer<VendingBlockEntity> {
     public VendingRenderer(BlockEntityRendererProvider.Context context) {
         super(context);
@@ -37,11 +37,11 @@ public class VendingRenderer extends ShowcaseRenderer<VendingBlockEntity> {
 
     @Override
     protected float itemY() {
-        return 10.5f / 16f;
+        return caseCenter(VendingBlock.BASE_HEIGHT);
     }
 
     @Override
     protected float baseHeight() {
-        return 6f / 16f;
+        return VendingBlock.BASE_HEIGHT / 16f;
     }
 }

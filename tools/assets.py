@@ -63,7 +63,10 @@ def uv_box(frm, to):
 
 # ---------------------------------------------------------------- vending block
 
-BASE = ([0, 0, 0], [16, 6, 16])
+# Base heights in pixels; VendingBlock.BASE_HEIGHT and DisplayBlock.BASE_HEIGHT must match
+VENDING_BASE = 4
+DISPLAY_BASE = 3
+BASE = ([0, 0, 0], [16, VENDING_BASE, 16])
 
 
 def vending_base():
@@ -99,12 +102,13 @@ def vending_case():
         "parent": "minecraft:block/block",
         "textures": {"particle": f"{NS}:block/vending_metal", "glass": {"force_translucent": True, "sprite": f"{NS}:block/case_glass"},
                      "metal": f"{NS}:block/vending_metal"},
-        "elements": case_elements(6),
+        "elements": case_elements(VENDING_BASE),
     }
 
 
 def vending_light(on):
-    frm, to = [3, 2, -0.05], [8, 3, 0]
+    # Seen from the front the face is mirrored: x 8-13 is the left side, clear of the coin slot at texture x 10-12
+    frm, to = [8, 2, -0.05], [13, 3, 0]
     return {
         "parent": "minecraft:block/block",
         "textures": {"particle": f"{NS}:block/vending_light_{'on' if on else 'off'}", "light": f"{NS}:block/vending_light_{'on' if on else 'off'}"},
@@ -150,14 +154,14 @@ def vending_blockstate():
 # ---------------------------------------------------------------- display block
 
 def display_model():
-    frm, to = [0, 0, 0], [16, 4, 16]
+    frm, to = [0, 0, 0], [16, DISPLAY_BASE, 16]
     base = box(frm, to, lambda s: "#top" if s in ("up", "down") else "#base", uv_box(frm, to), cull=True)
     return {
         "parent": "minecraft:block/block",
         "textures": {"particle": f"{NS}:block/display_base", "base": f"{NS}:block/display_base", "top": f"{NS}:block/display_top",
                      "glass": {"force_translucent": True, "sprite": f"{NS}:block/case_glass"},
                      "metal": f"{NS}:block/display_metal"},
-        "elements": [base] + case_elements(4),
+        "elements": [base] + case_elements(DISPLAY_BASE),
         "display": block_item_display(),
     }
 

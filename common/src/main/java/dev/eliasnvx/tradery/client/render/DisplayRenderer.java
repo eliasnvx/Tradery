@@ -30,6 +30,6 @@ public class DisplayRenderer extends ShowcaseRenderer<DisplayBlockEntity> {
 
     @Override
     protected float itemY() {
-        return 9.5f / 16f;
+        return caseCenter(DisplayBlock.BASE_HEIGHT);
     }
 }

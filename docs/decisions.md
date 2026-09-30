@@ -55,9 +55,10 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - Buyer screens get stock and affordability through two data slots (16-bit, capped at 9999), recomputed in `broadcastChanges`.
 - Contents drop in `BlockEntity#preRemoveSideEffects` (removal, not unload), which also closes the menus and updates the vendor index.
 - Protection: destroy progress 0 for strangers; creative-mode instant breaking is blocked through Fabric `PlayerBlockBreakEvents.BEFORE` / NeoForge `BreakBlockEvent`; `PushReaction.IMMOVEABLE`; bedrock-level blast resistance.
-- Facade: rendered by the block entity renderer with `BlockModelResolver`, squeezed into the 6 px base; the blockstate `facade=true` hides the default base model.
+- Facade: rendered by the block entity renderer with `BlockModelResolver`, squeezed into the base; the blockstate `facade=true` hides the default base model.
 - NeoForge GameTest mock players don't have `neoforge:advanced_open_screen`; for such connections menus open the vanilla way (server-side menu is identical).
 - Screens are drawn with fills (`Panels`), no GUI textures.
+- Case proportions: base 4 px (vending: coin slot and stock light) / 3 px (display), glass up to the 1 px frame at 15-16 px. `VendingBlock.BASE_HEIGHT` / `DisplayBlock.BASE_HEIGHT` drive the shapes, the facade height and the item's height (middle of the glass); `tools/assets.py` has the same numbers.
 - Both cases are glass on top too: a 2 px metal frame holds a flat glass pane one pixel below its top (the pane has an up and a down face, so it shows through the walls). Walls and top use `tradery:block/case_glass` (faint tint + streaks) instead of vanilla glass, which is almost fully transparent and made the top look open.
 
 ## 2026-09-30: Money sources
