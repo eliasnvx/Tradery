@@ -9,9 +9,11 @@ import dev.eliasnvx.tradery.vending.VendingBlock;
 import dev.eliasnvx.tradery.vending.VendingBlockEntity;
 import dev.eliasnvx.tradery.vending.VendingSettings;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -26,51 +28,54 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * What a vending block offers, shown at the top of the screen while the crosshair is on it: the owner, the goods and
- * the price with item icons, and the quick-trade keys or why no trade is possible. Holding sneak (the quick-trade
- * modifier) adds the items' full tooltips. With Jade installed it's off by default: Jade's Tradery plugin shows the same.
+ * What a vending block offers, shown at the top of the screen while the crosshair is on it. A small tooltip card,
+ * everything centered: the owner, "Sells [goods] for [price]" with item icons and counts (no names, so it stays
+ * narrow), and the quick-trade keys or why no trade is possible. Holding sneak (the quick-trade modifier) adds the
+ * item names and their full tooltips. With Jade installed it's off by default: Jade's Tradery plugin shows the same.
  * The rows are rebuilt only when the target or what it shows changes.
  */
 public final class VendingHint {
-    private static final int PANEL = 0x90000000;
     private static final int TITLE = 0xFFFFD75E;
-    private static final int LABEL = 0xFFA0A0A0;
+    private static final int LABEL = 0xFFA8A8A8;
     private static final int TEXT = 0xFFFFFFFF;
     private static final int GOLD = 0xFFFFC23A;
     private static final int KEYS = 0xFFB8B8B8;
     private static final int WARN = 0xFFFF6060;
-    private static final int PAD = 4;
     private static final int ICON = 16;
     private static final int GAP = 4;
-    private static final int ITEM_ROW = 18;
-    private static final int TEXT_ROW = 10;
+    private static final int INDENT = 6;
+    private static final int OFFER_ROW = 19;
+    private static final int TEXT_ROW = 11;
     private static final int DETAIL_LINES = 6;
 
     private static final int CENTERED = 0;
-    private static final int ITEM = 1;
-    private static final int MONEY = 2;
-    private static final int DETAIL = 3;
+    private static final int DETAIL = 1;
 
-    private record Row(int kind, @Nullable Component label, ItemStack icon, Component text, int color) {
-        int height() {
-            return kind == ITEM ? ITEM_ROW : TEXT_ROW;
-        }
+    /** A text row: centered, or left-aligned with an indent (item details). */
+    private record Row(int kind, Component text, int color, int indent) {
     }
 
-    private static final List<Row> rows = new ArrayList<>();
+    private static final List<Row> top = new ArrayList<>();
+    private static final List<Row> bottom = new ArrayList<>();
+    private static boolean hasOffer;
+    private static Component offerLabel = Component.empty();
+    private static Component offerFor = Component.empty();
+    private static ItemStack offerGoods = ItemStack.EMPTY;
+    private static ItemStack offerPriceItem = ItemStack.EMPTY;
+    private static @Nullable Component offerMoney;
+    private static int offerWidth;
+
     private static @Nullable Boolean jadeLoaded;
     private static @Nullable BlockPos shownPos;
     private static @Nullable VendingSettings shownSettings;
     private static @Nullable AdminFlags shownAdmin;
-    private static @Nullable ClientEconomy.CurrencyView shownCurrency;
+    private static ClientEconomy.@Nullable CurrencyView shownCurrency;
     private static String shownOwner = "";
     private static boolean shownStocked;
     private static boolean shownIsOwner;
     private static boolean shownDetailed;
     private static int width;
     private static int height;
-    private static int iconX;
-    private static int textX;
 
     private VendingHint() {
     }
@@ -87,41 +92,35 @@ public final class VendingHint {
 
         Font font = minecraft.font;
         int x = (graphics.guiWidth() - width) / 2;
-        int y = TraderyConfig.client().vending().hintY();
-        graphics.fill(x, y, x + width, y + height, PANEL);
-        int rowY = y + PAD;
-        for (int i = 0; i < rows.size(); i++) {
-            Row row = rows.get(i);
-            switch (row.kind()) {
-                case CENTERED -> graphics.text(font, row.text(), x + (width - font.width(row.text())) / 2, rowY + 1, row.color(), true);
-                case ITEM -> {
-                    label(graphics, font, row, x, rowY + 5);
-                    graphics.item(row.icon(), x + iconX, rowY + 1);
-                    graphics.text(font, row.text(), x + textX, rowY + 5, row.color(), true);
-                }
-                case MONEY -> {
-                    label(graphics, font, row, x, rowY + 1);
-                    graphics.text(font, row.text(), x + iconX, rowY + 1, row.color(), true);
-                }
-                default -> graphics.text(font, row.text(), x + textX, rowY + 1, row.color(), true);
-            }
-            rowY += row.height();
+        int y = TraderyConfig.client().vending().hintY() + TooltipRenderUtil.PADDING_TOP;
+        TooltipRenderUtil.extractTooltipBackground(graphics, x, y, width, height, null);
+        int rowY = drawRows(graphics, font, top, x, y);
+        if (hasOffer) {
+            drawOffer(graphics, font, x + (width - offerWidth) / 2, rowY);
+            rowY += OFFER_ROW;
         }
+        drawRows(graphics, font, bottom, x, rowY);
     }
 
-    /**
-     * The keys line for this block and viewer, e.g. "Left Shift + Right Button: buy · Right Button: window". Also
-     * used by the Jade plugin.
-     */
+    /** The quick-trade keys for this block and viewer: "Shift + RMB: buy". Also used by the Jade plugin. */
     public static Component keys(VendingSettings settings, boolean owner) {
-        Component sneak = Component.keybind("key.sneak");
-        Component use = Component.keybind("key.use");
+        var options = Minecraft.getInstance().options;
         if (owner) {
-            return Component.translatable("tradery.hint.owner_keys", use, sneak);
+            return Component.translatable("tradery.hint.owner_keys", keyName(options.keyUse));
         }
         return settings.isBuyback()
-            ? Component.translatable("tradery.hint.sell_keys", sneak, Component.keybind("key.attack"), use)
-            : Component.translatable("tradery.hint.buy_keys", sneak, use);
+            ? Component.translatable("tradery.hint.sell_keys", keyName(options.keyShift), keyName(options.keyAttack))
+            : Component.translatable("tradery.hint.buy_keys", keyName(options.keyShift), keyName(options.keyUse));
+    }
+
+    /** Short key names for the usual bindings ("Shift", "RMB"); the game's own name for anything else. */
+    private static Component keyName(KeyMapping key) {
+        return switch (key.saveString()) {
+            case "key.keyboard.left.shift", "key.keyboard.right.shift" -> Component.literal("Shift");
+            case "key.mouse.left" -> Component.translatable("tradery.key.lmb");
+            case "key.mouse.right" -> Component.translatable("tradery.key.rmb");
+            default -> key.getTranslatedKeyMessage();
+        };
     }
 
     private static boolean enabled() {
@@ -135,9 +134,31 @@ public final class VendingHint {
         return !jadeLoaded;
     }
 
-    private static void label(GuiGraphicsExtractor graphics, Font font, Row row, int x, int y) {
-        if (row.label() != null) {
-            graphics.text(font, row.label(), x + PAD, y, LABEL, true);
+    private static int drawRows(GuiGraphicsExtractor graphics, Font font, List<Row> rows, int x, int y) {
+        for (int i = 0; i < rows.size(); i++) {
+            Row row = rows.get(i);
+            int rowX = row.kind() == CENTERED ? x + (width - font.width(row.text())) / 2 : x + row.indent();
+            graphics.text(font, row.text(), rowX, y, row.color(), true);
+            y += TEXT_ROW;
+        }
+        return y;
+    }
+
+    /** "Sells [icon×4] for (coin)2.50", centered; the counts are drawn on the icons as in an inventory. */
+    private static void drawOffer(GuiGraphicsExtractor graphics, Font font, int x, int y) {
+        int textY = y + 5;
+        graphics.text(font, offerLabel, x, textY, LABEL, true);
+        x += font.width(offerLabel) + GAP;
+        graphics.item(offerGoods, x, y + 1);
+        graphics.itemDecorations(font, offerGoods, x, y + 1);
+        x += ICON + GAP;
+        graphics.text(font, offerFor, x, textY, LABEL, true);
+        x += font.width(offerFor) + GAP;
+        if (offerMoney != null) {
+            graphics.text(font, offerMoney, x, textY, GOLD, true);
+        } else {
+            graphics.item(offerPriceItem, x, y + 1);
+            graphics.itemDecorations(font, offerPriceItem, x, y + 1);
         }
     }
 
@@ -165,47 +186,49 @@ public final class VendingHint {
     }
 
     private static void build(Minecraft minecraft, VendingBlockEntity vendor, ClientEconomy.@Nullable CurrencyView currency) {
-        rows.clear();
+        top.clear();
+        bottom.clear();
         VendingSettings settings = vendor.settings();
-        String owner = vendor.ownerName().isEmpty() ? "?" : vendor.ownerName();
-        rows.add(new Row(CENTERED, null, ItemStack.EMPTY, Component.literal(owner), TITLE));
-        if (!settings.isConfigured()) {
-            rows.add(new Row(CENTERED, null, ItemStack.EMPTY, Component.translatable("tradery.hint.not_set_up"), WARN));
+        top.add(centered(Component.literal(vendor.ownerName().isEmpty() ? "?" : vendor.ownerName()), TITLE));
+        hasOffer = settings.isConfigured();
+        if (!hasOffer) {
+            bottom.add(centered(Component.translatable("tradery.hint.not_set_up"), WARN));
             if (shownIsOwner) {
-                rows.add(new Row(CENTERED, null, ItemStack.EMPTY, keys(settings, true), KEYS));
+                bottom.add(centered(keys(settings, true), KEYS));
             }
             return;
         }
-        boolean buyback = settings.isBuyback();
-        rows.add(new Row(ITEM, Component.translatable(buyback ? "tradery.hint.buys" : "tradery.hint.sells"), settings.goods(),
-            amount(settings.goods(), settings.perTrade()), TEXT));
+
+        boolean money = settings.isBuyback() || settings.priceMode() == PriceMode.CURRENCY;
+        offerLabel = Component.translatable(settings.isBuyback() ? "tradery.hint.buys" : "tradery.hint.sells");
+        offerFor = Component.translatable("tradery.hint.for");
+        offerGoods = settings.goods();
+        offerPriceItem = money ? ItemStack.EMPTY : settings.priceItem();
+        offerMoney = !money ? null
+            : settings.price() == 0 ? Component.translatable("tradery.vending.free")
+            : currency != null ? currency.money(settings.price()) : Component.literal(String.valueOf(settings.price()));
+
         if (shownDetailed) {
-            details(minecraft, settings.goods());
-        }
-        Component priceLabel = Component.translatable(buyback ? "tradery.hint.pays" : "tradery.hint.for");
-        if (buyback || settings.priceMode() == PriceMode.CURRENCY) {
-            Component price = settings.price() == 0 ? Component.translatable("tradery.vending.free")
-                : currency != null ? currency.money(settings.price()) : Component.literal(String.valueOf(settings.price()));
-            rows.add(new Row(MONEY, priceLabel, ItemStack.EMPTY, price, GOLD));
-        } else {
-            rows.add(new Row(ITEM, priceLabel, settings.priceItem(), amount(settings.priceItem(), settings.pricePerTrade()), TEXT));
-            if (shownDetailed) {
-                details(minecraft, settings.priceItem());
+            details(minecraft, settings.goods(), settings.perTrade());
+            if (!money) {
+                details(minecraft, settings.priceItem(), settings.pricePerTrade());
             }
         }
-        if (!shownIsOwner && !buyback && !shownStocked && !vendor.admin().infiniteStock()) {
-            rows.add(new Row(CENTERED, null, ItemStack.EMPTY, Component.translatable("tradery.hint.sold_out"), WARN));
+        if (!shownIsOwner && !settings.isBuyback() && !shownStocked && !vendor.admin().infiniteStock()) {
+            bottom.add(centered(Component.translatable("tradery.hint.sold_out"), WARN));
         } else {
-            rows.add(new Row(CENTERED, null, ItemStack.EMPTY, keys(settings, shownIsOwner), KEYS));
+            bottom.add(centered(keys(settings, shownIsOwner), KEYS));
         }
     }
 
-    private static Component amount(ItemStack stack, int count) {
-        return Component.empty().append(stack.getHoverName()).append(Component.literal(" ×" + count).withStyle(ChatFormatting.GRAY));
+    private static Row centered(Component text, int color) {
+        return new Row(CENTERED, text, color, 0);
     }
 
-    /** The item's own tooltip without its name line, as in an inventory. */
-    private static void details(Minecraft minecraft, ItemStack stack) {
+    /** Sneaking: the item's name and count, then its own tooltip lines, as in an inventory. */
+    private static void details(Minecraft minecraft, ItemStack stack, int count) {
+        bottom.add(new Row(DETAIL, Component.empty().append(stack.getHoverName())
+            .append(Component.literal(" ×" + count).withStyle(ChatFormatting.GRAY)), TEXT, 0));
         List<Component> lines = stack.getTooltipLines(Item.TooltipContext.of(minecraft.level), minecraft.player, TooltipFlag.NORMAL);
         int added = 0;
         for (int i = 1; i < lines.size(); i++) {
@@ -214,34 +237,28 @@ public final class VendingHint {
                 continue;
             }
             if (added == DETAIL_LINES) {
-                rows.add(new Row(DETAIL, null, ItemStack.EMPTY, Component.literal("…"), LABEL));
+                bottom.add(new Row(DETAIL, Component.literal("…"), LABEL, INDENT));
                 return;
             }
-            rows.add(new Row(DETAIL, null, ItemStack.EMPTY, line, LABEL));
+            bottom.add(new Row(DETAIL, line, LABEL, INDENT));
             added++;
         }
     }
 
     private static void layout(Font font) {
-        int labelWidth = 0;
-        for (Row row : rows) {
-            if (row.label() != null) {
-                labelWidth = Math.max(labelWidth, font.width(row.label()));
+        width = 0;
+        height = -2;
+        for (List<Row> rows : List.of(top, bottom)) {
+            for (Row row : rows) {
+                width = Math.max(width, row.indent() + font.width(row.text()));
+                height += TEXT_ROW;
             }
         }
-        iconX = PAD + (labelWidth > 0 ? labelWidth + GAP : 0);
-        textX = iconX + ICON + 3;
-        int contentWidth = 0;
-        height = PAD * 2 - 1;
-        for (Row row : rows) {
-            int rowWidth = switch (row.kind()) {
-                case CENTERED -> PAD + font.width(row.text()) + PAD;
-                case MONEY -> iconX + font.width(row.text()) + PAD;
-                default -> textX + font.width(row.text()) + PAD;
-            };
-            contentWidth = Math.max(contentWidth, rowWidth);
-            height += row.height();
+        if (hasOffer) {
+            offerWidth = font.width(offerLabel) + GAP + ICON + GAP + font.width(offerFor) + GAP
+                + (offerMoney != null ? font.width(offerMoney) : ICON);
+            width = Math.max(width, offerWidth);
+            height += OFFER_ROW;
         }
-        width = contentWidth;
     }
 }
