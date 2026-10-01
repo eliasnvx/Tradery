@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class DisplayBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     /** Height of the base under the glass case, in pixels; the model in tools/assets.py uses the same value. */
-    public static final int BASE_HEIGHT = 3;
+    public static final int BASE_HEIGHT = 2;
 
     private static final VoxelShape SHAPE = Shapes.or(
         Block.box(0, 0, 0, 16, BASE_HEIGHT, 16),

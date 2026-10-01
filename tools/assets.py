@@ -64,8 +64,8 @@ def uv_box(frm, to):
 # ---------------------------------------------------------------- vending block
 
 # Base heights in pixels; VendingBlock.BASE_HEIGHT and DisplayBlock.BASE_HEIGHT must match
-VENDING_BASE = 4
-DISPLAY_BASE = 3
+VENDING_BASE = 3
+DISPLAY_BASE = 2
 BASE = ([0, 0, 0], [16, VENDING_BASE, 16])
 
 
@@ -107,8 +107,8 @@ def vending_case():
 
 
 def vending_light(on):
-    # Seen from the front the face is mirrored: x 8-13 is the left side, clear of the coin slot at texture x 10-12
-    frm, to = [8, 2, -0.05], [13, 3, 0]
+    # Seen from the front the face is mirrored: x 8-13 is the left side, clear of the coin slot at texture x 10-13
+    frm, to = [8, 1, -0.05], [13, 2, 0]
     return {
         "parent": "minecraft:block/block",
         "textures": {"particle": f"{NS}:block/vending_light_{'on' if on else 'off'}", "light": f"{NS}:block/vending_light_{'on' if on else 'off'}"},

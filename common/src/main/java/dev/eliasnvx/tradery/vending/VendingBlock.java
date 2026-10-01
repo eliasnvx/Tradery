@@ -45,7 +45,7 @@ public class VendingBlock extends BaseEntityBlock {
     public static final BooleanProperty FACADE = BooleanProperty.create("facade");
 
     /** Height of the base under the glass case, in pixels; the models in tools/assets.py use the same value. */
-    public static final int BASE_HEIGHT = 4;
+    public static final int BASE_HEIGHT = 3;
 
     private static final VoxelShape SHAPE = Shapes.or(
         Block.box(0, 0, 0, 16, BASE_HEIGHT, 16),

@@ -100,18 +100,17 @@ def grid(rows):
 
 
 def vending_side():
-    """Rows 12-15 are the 4 px base: brass band on top, red body, brass band below. Rows 0-11 only fill unused UV space."""
-    body = ["kRRRRRRRRRRRRRRk"] + ["krrrrrrrrrrrrrdk"] * 11
-    base = ["BBBBBBBBBBBBBBBB", "bRRRRRRRRRRRRRRb", "brrrrrrrrrrrrrdb", "nnnnnnnnnnnnnnnn"]
+    """Rows 13-15 are the 3 px base: brass band on top, red body, shadow. Rows 0-12 only fill unused UV space."""
+    body = ["kRRRRRRRRRRRRRRk"] + ["krrrrrrrrrrrrrdk"] * 12
+    base = ["BBBBBBBBBBBBBBBB", "bRRRRRRRRRRRRRRb", "nddddddddddddddn"]
     return grid(body + base)
 
 
 def vending_front():
     rows = vending_side()
     rows = rows[:]
-    # coin slot at x 10..12, rows 13..14 (y 1..3 from the bottom), between the brass bands
-    rows[13] = rows[13][:10] + "gsg" + rows[13][13:]
-    rows[14] = rows[14][:10] + "gsg" + rows[14][13:]
+    # coin slit at x 10..13 in the middle row (y 1 from the bottom), next to the stock light at x 3..7
+    rows[14] = rows[14][:10] + "gssg" + rows[14][14:]
     return grid(rows)
 
 
@@ -156,8 +155,8 @@ DISPLAY = {
 
 
 def display_base():
-    """Rows 13-15 are the 3 px base: silver band, quartz, dark edge."""
-    rows = ["qqqqqqqqqqqqqqqq"] * 13 + ["MMMMMMMMMMMMMMMM", "QqqqqqqqqqqqqqqQ", "kddddddddddddddk"]
+    """Rows 14-15 are the 2 px base: quartz and a shadow edge (the silver trim is on its top face)."""
+    rows = ["qqqqqqqqqqqqqqqq"] * 14 + ["QqqqqqqqqqqqqqqQ", "kddddddddddddddk"]
     return grid(rows)
 
 
@@ -180,7 +179,7 @@ GLASS = {
 
 
 def case_glass():
-    """Two diagonal streaks kept inside the UV areas every face uses (walls x 1-15, y 1-12; top 2-14)."""
+    """Two diagonal streaks kept inside the UV areas every face uses (walls x 1-15 from y 1 down to the base; top 2-14)."""
     rows = [["."] * 16 for _ in range(16)]
     for x in range(3, 10):   # long streak on x + y = 11
         rows[11 - x][x] = "h" if 4 <= x <= 7 else "l"
