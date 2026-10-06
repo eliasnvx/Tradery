@@ -1,0 +1,39 @@
+Tradery — gallery titles & descriptions (Modrinth / CurseForge)
+Order = suggested gallery order. Files: docs/images/gallery/ (1920x1080, real in-game screenshots,
+taken by DocsShotsClientTest: TRADERY_DOCS_SHOTS=1 ./gradlew :fabric:runClientGameTest).
+
+01_market.jpg  ★ featured
+Title:       A Market Street
+Description: Five vending blocks and two display cases: bread for money, a diamond sword for diamonds, a server-run golden apple stall, potions, and a stall that buys cobblestone.
+
+02_market_sunset.jpg
+Title:       Open After Sunset
+Description: Vending blocks sell while their owners are away — mining, sleeping or offline.
+
+03_hint.jpg
+Title:       Look Before You Buy
+Description: Look at a vending block: who sells what and for how much, plus the keys to trade — no window needed.
+
+04_quick_buy.jpg
+Title:       Hold to Buy
+Description: Sneak and hold right-click to keep buying, about five lots a second. The action bar adds the whole streak up.
+
+05_hint_sneaking.jpg
+Title:       Every Detail
+Description: Sneak while looking and the hint shows the item's full tooltip: enchantments, potion effects, durability.
+
+06_buyer_screen.jpg
+Title:       ×1, ×8 or Max
+Description: A plain right-click opens the buyer window: exact stock, what you can afford and your balance. No item slots, nothing to exploit.
+
+07_owner_screen.jpg
+Title:       Your Shop, Your Rules
+Description: Goods and price by example, money or item price, buyback, a facade from any full block, the showcase animation.
+
+08_market_side.jpg
+Title:       Facades & Showcases
+Description: Any full block as the base — spruce, birch, cobblestone, polished andesite — and goods that spin and bob in the glass.
+
+09_ore_wall.jpg
+Title:       Coin Ore
+Description: Copper, silver and gold coin ore in stone and deepslate. Mining it puts money straight on your balance.

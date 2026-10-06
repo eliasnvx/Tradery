@@ -26,3 +26,6 @@ logs/
 
 # Local agent notes
 CLAUDE.local.md
+
+# texgen drafts (mod page art), never shipped
+art/generated/
