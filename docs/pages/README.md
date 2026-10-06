@@ -6,8 +6,10 @@
 - `gallery.txt`: gallery titles and descriptions, in order; the files are `docs/images/gallery/`.
 - Download badges point at `modrinth.com/mod/tradery` and `curseforge.com/minecraft/mc-mods/tradery`: check the slugs
   when the projects exist.
-- Modrinth tags: Economy, Storage, Utility, Game Mechanics; environment: client + server (required on both).
-- CurseForge categories: Server Utility, Storage, Miscellaneous; loaders Fabric + NeoForge, MC 26.3.
+- Modrinth tags: Economy, Game Mechanics, Utility, Storage, Worldgen; environment: client + server (required on both).
+- CurseForge (no "Economy" category there): main **Server Utility**; additional **Miscellaneous** (where the original
+  Vending Block and Lightman's Currency are), **Utility & QoL**, **Ores and Resources** (World Gen), **Storage**.
+  Loaders Fabric + NeoForge, MC 26.3. Checked against the category list on 2026-10-06.
 
 ## Images
 
