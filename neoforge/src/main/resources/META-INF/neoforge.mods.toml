@@ -8,7 +8,7 @@ modId = "${mod_id}"
 version = "${version}"
 displayName = "${mod_name}"
 displayURL = "https://github.com/eliasnvx/Tradery"
-logoFile = "assets/tradery/icon.png"
+iconFile = "assets/tradery/icon.png"
 authors = "${mod_author}"
 description = '''${description}'''
 
