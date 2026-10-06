@@ -13,7 +13,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
  */
 public final class TraderyGameTestsFabric {
     /** Methods below that forward to a shared test (everything except {@link #allTestsRegistered}). */
-    private static final int WIRED = 29;
+    private static final int WIRED = 31;
 
     @GameTest
     public void economyTransferIsAtomic(GameTestHelper helper) {
@@ -158,6 +158,16 @@ public final class TraderyGameTestsFabric {
     @GameTest
     public void coinOreInOverworldBiomes(GameTestHelper helper) {
         SourcesGameTests.coinOreInOverworldBiomes(helper);
+    }
+
+    @GameTest
+    public void coinOreNotProcessable(GameTestHelper helper) {
+        SourcesGameTests.coinOreNotProcessable(helper);
+    }
+
+    @GameTest
+    public void vendingTradesSavedWithChunk(GameTestHelper helper) {
+        VendingGameTests.tradesSavedWithChunk(helper);
     }
 
     @GameTest

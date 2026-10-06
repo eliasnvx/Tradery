@@ -12,7 +12,9 @@
     "fabric-client-gametest": [
       "dev.eliasnvx.tradery.fabric.gametest.HudClientTest",
       "dev.eliasnvx.tradery.fabric.gametest.VendingClientTest",
-      "dev.eliasnvx.tradery.fabric.gametest.OreClientTest"
+      "dev.eliasnvx.tradery.fabric.gametest.OreClientTest",
+      "dev.eliasnvx.tradery.fabric.gametest.NetworkClientTest",
+      "dev.eliasnvx.tradery.fabric.gametest.PerformanceClientTest"
     ]
   },
   "depends": {
