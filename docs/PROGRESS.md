@@ -61,5 +61,6 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] HUD at GUI scale 1-4 on 1280x720 (client test screenshots)
 - [x] Polish after review: glass tops, thinner bases, coin icon instead of the symbol in the HUD, vending screens and Jade
 - [x] Quick trade (sneak + use buys, sneak + attack sells, hold to repeat) and the look-at hint; GameTests on both loaders, Fabric client test holds the keys
-- [ ] Manual checks in `docs/release-checklist.md` (two clients per loader, kill -9, 50 vendors TPS, Create/Mekanism)
+- [x] Release checks automated (2026-10-06): NeoForge client harness (`runClientTest`), dedicated-server network test, 50-vendor performance test, real `kill -9` crash test (`tools/crash-test.sh`), coin ore processing GameTest. Found and fixed: trades saved apart from their chunk (crash dupe/loss), NeoForge `logoFile` warning screen
+- [ ] Optional: two real players on a dedicated server; Create/Mekanism in game once they exist for 26.3
 - [ ] Create the Modrinth/CurseForge projects, set their ids, add tokens, tag `v1.0.0`
