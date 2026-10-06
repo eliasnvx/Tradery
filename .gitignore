@@ -24,8 +24,12 @@ logs/
 # macOS
 .DS_Store
 
-# Local agent notes
+# Local tooling notes (never in the repo)
+.claude/
+.agents/
+CLAUDE.md
 CLAUDE.local.md
+AGENTS.md
 
 # texgen drafts (mod page art), never shipped
 art/generated/

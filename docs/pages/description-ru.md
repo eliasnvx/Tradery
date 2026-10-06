@@ -1,6 +1,6 @@
 <div align="center">
 
-![Tradery — торговые автоматы и экономика](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/banner.png)
+![Tradery — торговые автоматы и экономика](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/banner.png)
 
 **Магазин игрока в одном блоке, валюта, которую видно на экране, и монетная руда как источник денег.<br>Духовный наследник Vending Block — для Fabric и NeoForge, с публичным Economy API.**
 
@@ -20,11 +20,11 @@
 
 **Языки:** English, Русский, Українська, Беларуская, Polski, Deutsch, Nederlands, Svenska, Français, Español, Português (Brasil), 日本語, 简体中文, 繁體中文 (台灣), 繁體中文 (香港)
 
-![Рыночная улица с автоматами и витринами](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/market.jpg)
+![Рыночная улица с автоматами и витринами](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/market.jpg)
 
 ---
 
-![Vending Blocks](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_vending.png)
+![Vending Blocks](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_vending.png)
 
 ## Торговые автоматы
 
@@ -42,17 +42,17 @@
 
 | Покупатель | Владелец |
 |---|---|
-| ![Окно покупателя](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/buyer_screen.jpg) | ![Окно владельца](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/owner_screen.jpg) |
+| ![Окно покупателя](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/buyer_screen.jpg) | ![Окно владельца](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/owner_screen.jpg) |
 
 ---
 
-![Quick Trade & Hint](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_quick_trade.png)
+![Quick Trade & Hint](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_quick_trade.png)
 
 ## Быстрая торговля и подсказка
 
 **Наведись на автомат** — маленькая карточка покажет, кто что продаёт и почём. Без окна и без догадок.
 
-![Подсказка при наведении: владелец, товар, цена и клавиши](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/hint.jpg)
+![Подсказка при наведении: владелец, товар, цена и клавиши](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/hint.jpg)
 
 | | |
 |---|---|
@@ -65,15 +65,15 @@
 - Над хотбаром — итог всей серии: *«Куплено 20 × Хлеб за 12.50»*.
 - Товар кончился или автомат не настроен — карточка скажет об этом красным ещё до клика.
 
-![Зажатый Shift + ПКМ: 20 хлеба за раз](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/quick_buy.jpg)
+![Зажатый Shift + ПКМ: 20 хлеба за раз](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/quick_buy.jpg)
 
 ---
 
-![Balance HUD](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_hud.png)
+![Balance HUD](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_hud.png)
 
 ## Баланс на экране
 
-![Баланс с всплывающим +1 234.50](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/hud.png)
+![Баланс с всплывающим +1 234.50](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/hud.png)
 
 Баланс в любом углу: иконка монеты, «бегущий» счётчик и всплывающие `+120` / `-40`.
 
@@ -83,11 +83,11 @@
 
 ---
 
-![Where Money Comes From](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_money.png)
+![Where Money Comes From](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_money.png)
 
 ## Откуда берутся деньги
 
-![Медная, серебряная и золотая монетная руда в камне и глубинном сланце](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/ore_wall.jpg)
+![Медная, серебряная и золотая монетная руда в камне и глубинном сланце](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/ore_wall.jpg)
 
 - **Монетная руда** трёх видов — медная, серебряная, золотая — в камне и глубинном сланце. Добыча кладёт стоимость монет **сразу на баланс**; механизмы и взрывы роняют монеты предметами.
 - **Без удвоения:** «Удача» не умножает деньги, руда не входит в `c:ores` и не плавится в печи — дробилки и обогатители её не удвоят.
@@ -98,7 +98,7 @@
 
 ---
 
-![Commands](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_commands.png)
+![Commands](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_commands.png)
 
 ## Команды
 
@@ -120,7 +120,7 @@
 
 ---
 
-![For Servers](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_servers.png)
+![For Servers](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_servers.png)
 
 ## Для серверов
 
@@ -134,15 +134,15 @@
 
 ---
 
-![For Developers](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_developers.png)
+![For Developers](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_developers.png)
 
 ## Для разработчиков
 
-`dev.eliasnvx:tradery-api:1.0.0+26.3` — счета, атомарные транзакции и события, один API для Fabric и NeoForge. Руководство: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/dev/docs/api/README.md). На Fabric Tradery ещё и провайдер **Common Economy API**: моды, которые его используют, сразу видят балансы Tradery.
+`dev.eliasnvx:tradery-api:1.0.0+26.3` — счета, атомарные транзакции и события, один API для Fabric и NeoForge. Руководство: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md). На Fabric Tradery ещё и провайдер **Common Economy API**: моды, которые его используют, сразу видят балансы Tradery.
 
 ---
 
-![Compatibility](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_compat.png)
+![Compatibility](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_compat.png)
 
 ## Совместимость
 
@@ -158,7 +158,7 @@
 
 ---
 
-![Installation](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_install.png)
+![Installation](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_install.png)
 
 ## Установка
 
@@ -194,4 +194,4 @@
 
 ## Лицензия
 
-[MIT](https://github.com/eliasnvx/Tradery/blob/dev/LICENSE) © eliasnvx
+[MIT](https://github.com/eliasnvx/Tradery/blob/26.3-dev/LICENSE) © eliasnvx

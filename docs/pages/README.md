@@ -1,7 +1,7 @@
 # Project pages
 
-- `curseforge.md`: the main page (CurseForge and Modrinth, EN). Images use absolute `raw.githubusercontent.com/.../dev/...`
-  URLs, so they show up once the images are on the `dev` branch.
+- `curseforge.md`: the main page (CurseForge and Modrinth, EN). Images use absolute `raw.githubusercontent.com/.../26.3-dev/...`
+  URLs, so they show up once the images are on the `26.3-dev` branch.
 - `description-ru.md`: the Russian page (link it in RU posts: Modrinth is blocked in Russia, CurseForge isn't).
 - `gallery.txt`: gallery titles and descriptions, in order; the files are `docs/images/gallery/`.
 - Download badges point at `modrinth.com/mod/tradery` and `curseforge.com/minecraft/mc-mods/tradery`: check the slugs

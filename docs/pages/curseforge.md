@@ -1,13 +1,13 @@
 <div align="center">
 
-![Tradery — Vending Blocks & Economy](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/banner.png)
+![Tradery — Vending Blocks & Economy](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/banner.png)
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-26.3-62B47A?style=for-the-badge&logo=minecraft&logoColor=white)](https://www.minecraft.net/)
 [![Fabric](https://img.shields.io/badge/Fabric-0.19.5+-DBD0B4?style=for-the-badge)](https://fabricmc.net/)
 [![NeoForge](https://img.shields.io/badge/NeoForge-26.3-E68A00?style=for-the-badge)](https://neoforged.net/)
-[![Economy API](https://img.shields.io/badge/Economy%20API-1.0.0-C9962C?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/dev/docs/api/README.md)
-[![License](https://img.shields.io/badge/License-MIT-A3302B?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/dev/LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-F0C95A?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/dev/CHANGELOG.md)
+[![Economy API](https://img.shields.io/badge/Economy%20API-1.0.0-C9962C?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md)
+[![License](https://img.shields.io/badge/License-MIT-A3302B?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/26.3-dev/LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.0-F0C95A?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/26.3-dev/CHANGELOG.md)
 
 [![Modrinth](https://img.shields.io/badge/Modrinth-Download-1BD96A?style=for-the-badge&logo=modrinth&logoColor=white)](https://modrinth.com/mod/tradery)
 [![CurseForge](https://img.shields.io/badge/CurseForge-Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/minecraft/mc-mods/tradery)
@@ -32,11 +32,11 @@ Remember **Vending Block**? Put a block down, stock it, set a price — and peop
 
 **Languages:** English, Русский, Українська, Беларуская, Polski, Deutsch, Nederlands, Svenska, Français, Español, Português (Brasil), 日本語, 简体中文, 繁體中文 (台灣), 繁體中文 (香港)
 
-![A small market street with vending blocks and display cases](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/market.jpg)
+![A small market street with vending blocks and display cases](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/market.jpg)
 
 ---
 
-![Vending Blocks](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_vending.png)
+![Vending Blocks](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_vending.png)
 
 ## Vending Blocks
 
@@ -54,17 +54,17 @@ A red-and-brass machine with a glass case on top — the goods float inside so e
 
 | Buyer | Owner |
 |---|---|
-| ![Buyer screen](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/buyer_screen.jpg) | ![Owner screen](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/owner_screen.jpg) |
+| ![Buyer screen](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/buyer_screen.jpg) | ![Owner screen](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/owner_screen.jpg) |
 
 ---
 
-![Quick Trade & Hint](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_quick_trade.png)
+![Quick Trade & Hint](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_quick_trade.png)
 
 ## Quick Trade & Look-at Hint
 
 **Look at a vending block** and a small card shows who sells what and for how much — no window, no guessing.
 
-![The look-at hint: owner, goods, price and the keys](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/hint.jpg)
+![The look-at hint: owner, goods, price and the keys](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/hint.jpg)
 
 | | |
 |---|---|
@@ -77,15 +77,15 @@ A red-and-brass machine with a glass case on top — the goods float inside so e
 - The action bar adds the whole streak up: *"Bought 20 × Bread for 12.50"*.
 - Sold out or not set up? The card says so in red before you click.
 
-![A held Shift + Right-click: 20 bread in one go](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/quick_buy.jpg)
+![A held Shift + Right-click: 20 bread in one go](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/quick_buy.jpg)
 
 ---
 
-![Balance HUD](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_hud.png)
+![Balance HUD](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_hud.png)
 
 ## Balance HUD
 
-![Balance HUD with a +1 234.50 popup](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/hud.png)
+![Balance HUD with a +1 234.50 popup](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/hud.png)
 
 Your balance in any corner, with a coin icon, a rolling counter and `+120` / `-40` popups.
 
@@ -95,11 +95,11 @@ Your balance in any corner, with a coin icon, a rolling counter and `+120` / `-4
 
 ---
 
-![Where Money Comes From](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_money.png)
+![Where Money Comes From](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_money.png)
 
 ## Where Money Comes From
 
-![Copper, silver and gold coin ore in stone and deepslate](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/page/ore_wall.jpg)
+![Copper, silver and gold coin ore in stone and deepslate](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/ore_wall.jpg)
 
 - **Coin ore** in three tiers — copper, silver, gold — in stone and deepslate. Mining it puts the coins' value **straight on your balance**; machines and explosions drop coin items instead.
 - **No doubling:** Fortune doesn't multiply money, coin ore isn't a `c:ores` ore and has no furnace recipe, so crushers and ore processors can't double it.
@@ -110,7 +110,7 @@ Your balance in any corner, with a coin icon, a rolling counter and `+120` / `-4
 
 ---
 
-![Commands](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_commands.png)
+![Commands](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_commands.png)
 
 ## Commands
 
@@ -132,7 +132,7 @@ Amounts are typed in normal units (`/pay Steve 12.50`). Permissions work with Lu
 
 ---
 
-![For Servers](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_servers.png)
+![For Servers](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_servers.png)
 
 ## For Servers
 
@@ -146,7 +146,7 @@ Amounts are typed in normal units (`/pay Steve 12.50`). Permissions work with Lu
 
 ---
 
-![For Developers](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_developers.png)
+![For Developers](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_developers.png)
 
 ## For Developers
 
@@ -164,11 +164,11 @@ VendingPurchaseEvent.Pre.EVENT.register(e -> {
 });
 ```
 
-Guide: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/dev/docs/api/README.md). On Fabric, Tradery is also a **Common Economy API** provider, so mods that use it work with Tradery balances out of the box.
+Guide: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md). On Fabric, Tradery is also a **Common Economy API** provider, so mods that use it work with Tradery balances out of the box.
 
 ---
 
-![Compatibility](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_compat.png)
+![Compatibility](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_compat.png)
 
 ## Compatibility
 
@@ -184,7 +184,7 @@ All optional. EMI and WTHIT support will follow when they update to 26.3.
 
 ---
 
-![Installation](https://raw.githubusercontent.com/eliasnvx/Tradery/dev/docs/images/header_install.png)
+![Installation](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_install.png)
 
 ## Installation
 
@@ -221,7 +221,7 @@ All optional. EMI and WTHIT support will follow when they update to 26.3.
 
 ## License
 
-[MIT](https://github.com/eliasnvx/Tradery/blob/dev/LICENSE) © eliasnvx
+[MIT](https://github.com/eliasnvx/Tradery/blob/26.3-dev/LICENSE) © eliasnvx
 
 <div align="center">
 
