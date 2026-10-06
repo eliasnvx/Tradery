@@ -33,6 +33,7 @@ publishMods {
             requires('fabric-api')
             optional('placeholder-api')
         }
+        // Common Economy API is bundled in the Fabric jar and isn't on Modrinth or CurseForge: no relation
         optional('jei', 'rei', 'jade')
     }
 
@@ -45,6 +46,7 @@ publishMods {
         serverRequired = true
         if (loader == 'fabric') {
             requires('fabric-api')
+            optional('text-placeholder-api')
         }
         optional('jei', 'roughly-enough-items', 'jade')
     }
