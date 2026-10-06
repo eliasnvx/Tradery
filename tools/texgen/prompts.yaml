@@ -1,0 +1,41 @@
+# texgen manifest for Tradery's mod page art (the tool lives in the Femboy Mod repo: tools/texgen).
+#   texgen --root <Tradery> batch --tag header --n 2 --yes   -> art/generated/<id>/ (git-ignored drafts)
+#   texgen --root <Tradery> pixelize <id> --size 32x32
+# Only the mod page uses these (section header icons); the mod's own textures are drawn by tools/textures.py.
+
+style_prefix: >-
+  A single 32x32 pixel art game item icon in the style of Minecraft Java Edition inventory items.
+  Crisp hard-edged square pixels on a strict 32x32 grid: no anti-aliasing, no smooth gradients, no blur.
+  Limited warm palette of about 12 colours: deep red, brass gold, warm wood brown, cream, with small accents.
+  A clean 1-pixel outline in a dark tone of the object's own colour (never pure black), simple 3-4 step shading
+  with light from the top-left, the object centred and filling about 85% of the canvas, fully transparent
+  background, no drop shadow.
+
+assets:
+  header_vending:
+    tags: [header]
+    prompt: "A small shop vending block seen at a slight three-quarter angle like a Minecraft block item: a short red base with a brass trim band, a tiny green indicator light and a dark coin slot on the front, and a tall glass display case with thin brass corner posts on top, with a loaf of bread floating inside the glass."
+  header_quick_trade:
+    tags: [header]
+    prompt: "A brass shop price tag with a round hole and a short red string, and one shiny gold coin resting on the tag."
+  header_hud:
+    tags: [header]
+    prompt: "One big shiny gold coin seen from the front, with a raised rim and a simple embossed star in the middle, a bright highlight on the top-left edge."
+  header_money:
+    tags: [header]
+    prompt: "A chunk of grey stone ore with a few shiny gold coins embedded in it, like a Minecraft ore block icon, with an iron pickaxe resting diagonally across the front."
+  header_commands:
+    tags: [header]
+    prompt: "A rolled cream parchment scroll, half unrolled, with a red wax seal and a short red ribbon."
+  header_servers:
+    tags: [header]
+    prompt: "A brass cogwheel with a small steel wrench crossed over it."
+  header_developers:
+    tags: [header]
+    prompt: "An open book with a red leather cover and cream pages covered in short abstract grey lines, and a brass bookmark ribbon."
+  header_compat:
+    tags: [header]
+    prompt: "Two interlocking jigsaw puzzle pieces, one deep red and one brass gold, fitted together at a slight angle."
+  header_install:
+    tags: [header]
+    prompt: "A small open wooden crate with a bold red arrow pointing down into it and a gold coin peeking out of the crate."

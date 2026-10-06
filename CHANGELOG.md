@@ -33,4 +33,4 @@ First release for Minecraft 26.3 (Fabric and NeoForge). Economy API 1.0.0.
 - Common Economy API provider (Fabric, included), Text Placeholder API placeholders, Jade tooltips, JEI and REI drag-and-drop and information pages.
 
 ### Languages
-- English, Russian.
+- English, Russian, Ukrainian, Belarusian, Polish, German, Dutch, Swedish, French, Spanish, Portuguese (Brazil), Japanese, Simplified Chinese, Traditional Chinese (Taiwan, Hong Kong).
