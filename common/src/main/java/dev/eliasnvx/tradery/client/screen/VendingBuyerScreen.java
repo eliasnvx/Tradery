@@ -8,6 +8,7 @@ import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -19,6 +20,7 @@ import java.util.List;
 /** The buyer's window: the offer, how much is left, and ×1 / ×8 / ×max. */
 public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu> implements VendingResultView {
     private static final int OFFER_Y = 18;
+    private static final int BUTTON_WIDTH = 50;
     private static final int GOODS_X = 14;
     private static final int PRICE_X = 104;
     private static final int GOLD = 0xFFE0A800;
@@ -30,7 +32,7 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
     private long resultAt;
 
     public VendingBuyerScreen(VendingBuyerMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 176, 128);
+        super(menu, inventory, title, 176, 134);
     }
 
     @Override
@@ -38,14 +40,21 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
         super.init();
         VendingSettings settings = menu.data().settings();
         String verb = settings.isBuyback() ? "sell" : "buy";
-        addRenderableWidget(button(Component.translatable("tradery.screen." + verb + "_one"), VendingBuyerMenu.BUY_ONE, 8));
-        addRenderableWidget(button(Component.translatable("tradery.screen." + verb + "_eight"), VendingBuyerMenu.BUY_EIGHT, 63));
-        addRenderableWidget(button(Component.translatable("tradery.screen." + verb + "_max"), VendingBuyerMenu.BUY_MAX, 118));
+        addRenderableWidget(button(Component.translatable("tradery.screen." + verb + "_one"), Component.literal("×1"), VendingBuyerMenu.BUY_ONE, 8));
+        addRenderableWidget(button(Component.translatable("tradery.screen." + verb + "_eight"), Component.literal("×8"), VendingBuyerMenu.BUY_EIGHT, 63));
+        addRenderableWidget(button(Component.translatable("tradery.screen." + verb + "_max"), Component.translatable("tradery.screen.max_short"),
+            VendingBuyerMenu.BUY_MAX, 118));
     }
 
-    private Button button(Component label, int id, int x) {
-        return Button.builder(label, b -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id))
-            .bounds(leftPos + x, topPos + 74, 50, 20).build();
+    /** "Buy ×1" if it fits the button; otherwise "×1" with the full label as the tooltip (long words in some languages). */
+    private Button button(Component label, Component shortLabel, int id, int x) {
+        boolean fits = font.width(label) <= BUTTON_WIDTH - 6;
+        Button.Builder builder = Button.builder(fits ? label : shortLabel, b -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id))
+            .bounds(leftPos + x, topPos + 81, BUTTON_WIDTH, 20);
+        if (!fits) {
+            builder.tooltip(Tooltip.create(label));
+        }
+        return builder.build();
     }
 
     @Override
@@ -93,19 +102,20 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
         Component stock = settings.isBuyback()
             ? Component.translatable("tradery.screen.room", count(available))
             : Component.translatable("tradery.screen.in_stock", count(available));
-        graphics.text(font, stock, 8, 52, Panels.LABEL, false);
+        // One fact per line: side by side they collide in languages with long words
+        graphics.text(font, stock, 8, 50, Panels.LABEL, false);
         Component can = Component.translatable(settings.isBuyback() ? "tradery.screen.you_have" : "tradery.screen.you_afford",
             count(menu.affordable()));
-        graphics.text(font, can, imageWidth - 8 - font.width(can), 52, Panels.LABEL, false);
-        graphics.text(font, Component.translatable("tradery.screen.per_trade", settings.perTrade()), 8, 62, 0xFF707070, false);
+        graphics.text(font, can, 8, 60, Panels.LABEL, false);
+        graphics.text(font, Component.translatable("tradery.screen.per_trade", settings.perTrade()), 8, 70, 0xFF707070, false);
 
         if (settings.priceMode() == PriceMode.CURRENCY && ClientEconomy.currency() != null) {
             Component balance = Component.translatable("tradery.screen.balance", ClientEconomy.currency().money(ClientEconomy.balance()));
-            graphics.text(font, balance, 8, 100, Panels.LABEL, false);
+            graphics.text(font, balance, 8, 106, Panels.LABEL, false);
         }
         if (!resultMessage.getString().isEmpty() && System.currentTimeMillis() - resultAt < 6000) {
             List<FormattedCharSequence> lines = font.split(resultMessage, imageWidth - 16);
-            int y = 111;
+            int y = 117;
             for (FormattedCharSequence line : lines.subList(0, Math.min(1, lines.size()))) {
                 graphics.text(font, line, 8, y, resultSuccess ? OK : ERROR, false);
                 y += 10;

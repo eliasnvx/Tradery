@@ -1,6 +1,7 @@
 package dev.eliasnvx.tradery.client.screen;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
 /** Vanilla-looking panels and slot frames drawn with fills: no GUI texture to keep in sync with the layout. */
 public final class Panels {
@@ -14,6 +15,15 @@ public final class Panels {
     private static final int INSET_DARK = 0xFF8B8B8B;
 
     private Panels() {
+    }
+
+    /** {@code text} if it fits {@code width}, otherwise cut with an ellipsis (labels in languages with long words). */
+    public static Component fit(net.minecraft.client.gui.Font font, Component text, int width) {
+        if (font.width(text) <= width) {
+            return text;
+        }
+        String cut = font.plainSubstrByWidth(text.getString(), width - font.width("…"));
+        return Component.literal(cut.stripTrailing() + "…").withStyle(text.getStyle());
     }
 
     /** A raised panel with rounded corners, like container backgrounds. */

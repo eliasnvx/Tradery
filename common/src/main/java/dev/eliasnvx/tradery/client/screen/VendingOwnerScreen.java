@@ -35,6 +35,8 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
     private static final int PANEL_X = 176;
     private static final int PANEL_WIDTH = 124;
     private static final int PANEL_INNER = 184;
+    /** From the -/+ buttons to the panel's edge. */
+    private static final int PER_TRADE_WIDTH = 54;
     private static final int GRAY = 0xFF707070;
     private static final int OK = 0xFF207020;
     private static final int ERROR = 0xFFA02020;
@@ -149,15 +151,22 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
         }
         buybackButton.visible = currency;
         buybackButton.setMessage(Component.translatable(menu.buyback() ? "tradery.screen.buyback_on" : "tradery.screen.buyback_off"));
-        animationButton.setMessage(Component.translatable("tradery.screen.animation",
-            Component.translatable("tradery.animation." + menu.animation().name().toLowerCase(Locale.ROOT))));
+        // "Show: spin & bob"; just "spin & bob" (full text as the tooltip) where the language makes it too long
+        Component animation = Component.translatable("tradery.animation." + menu.animation().name().toLowerCase(Locale.ROOT));
+        Component full = Component.translatable("tradery.screen.animation", animation);
+        boolean fits = font.width(full) <= animationButton.getWidth() - 8;
+        animationButton.setMessage(fits ? full : Panels.fit(font, animation, animationButton.getWidth() - 8));
+        animationButton.setTooltip(fits ? null : Tooltip.create(full));
         if (menu.adminMode()) {
             AdminFlags flags = menu.adminFlags();
             boolean[] on = {flags.infiniteStock(), flags.burnPayment(), flags.noFee(), menu.serverOwned()};
             String[] keys = {"infinite", "burn", "no_fee", "server"};
             for (int i = 0; i < 4; i++) {
-                adminButtons[i].setMessage(Component.translatable("tradery.screen.admin." + keys[i])
-                    .withStyle(on[i] ? ChatFormatting.GREEN : ChatFormatting.GRAY));
+                // 26 px: a label too long for it is cut to what fits (the tooltip explains the button)
+                Component label = Component.translatable("tradery.screen.admin." + keys[i]);
+                String text = font.width(label) <= adminButtons[i].getWidth() - 4 ? label.getString()
+                    : font.plainSubstrByWidth(label.getString(), adminButtons[i].getWidth() - 4);
+                adminButtons[i].setMessage(Component.literal(text).withStyle(on[i] ? ChatFormatting.GREEN : ChatFormatting.GRAY));
             }
         }
     }
@@ -193,7 +202,7 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
         graphics.text(font, revenue, CHEST_WIDTH - 8 - font.width(revenue), VendingOwnerMenu.GRID_TOP + 4 * 18 + 2, GRAY, false);
 
         graphics.text(font, Component.translatable("tradery.screen.goods"), PANEL_INNER, 6, Panels.LABEL, false);
-        graphics.text(font, Component.translatable("tradery.screen.per_trade_short"), VendingOwnerMenu.GOODS_X + 56,
+        graphics.text(font, Panels.fit(font, Component.translatable("tradery.screen.per_trade_short"), PER_TRADE_WIDTH), VendingOwnerMenu.GOODS_X + 56,
             VendingOwnerMenu.GOODS_Y + 4, GRAY, false);
         boolean currency = menu.priceMode() == PriceMode.CURRENCY;
         if (currency) {
@@ -204,7 +213,7 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
             graphics.text(font, Component.translatable("tradery.screen.fee", menu.data().feePercent()), PANEL_INNER + 2,
                 VendingOwnerMenu.PRICE_Y + 19, GRAY, false);
         } else {
-            graphics.text(font, Component.translatable("tradery.screen.per_trade_short"), VendingOwnerMenu.PRICE_X + 56,
+            graphics.text(font, Panels.fit(font, Component.translatable("tradery.screen.per_trade_short"), PER_TRADE_WIDTH), VendingOwnerMenu.PRICE_X + 56,
                 VendingOwnerMenu.PRICE_Y + 4, GRAY, false);
         }
         graphics.text(font, Component.translatable("tradery.screen.facade"), PANEL_INNER, VendingOwnerMenu.FACADE_Y - 11, Panels.LABEL, false);
