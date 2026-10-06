@@ -17,6 +17,7 @@ import dev.eliasnvx.tradery.vending.VendingConfigurator;
 import dev.eliasnvx.tradery.vending.VendingMenus;
 import dev.eliasnvx.tradery.vending.VendingProtection;
 import dev.eliasnvx.tradery.vending.VendingQuickTrade;
+import dev.eliasnvx.tradery.vending.TradePersistence;
 import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.core.BlockPos;
@@ -57,7 +58,8 @@ public final class VendingGameTests {
         new TraderyGameTests.Entry("vending_quick_trade_buys_one_lot", VendingGameTests::quickTradeBuysOneLot),
         new TraderyGameTests.Entry("vending_quick_trade_wrong_button", VendingGameTests::quickTradeWrongButton),
         new TraderyGameTests.Entry("vending_quick_trade_sells_to_buyback", VendingGameTests::quickTradeSellsToBuyback),
-        new TraderyGameTests.Entry("vending_quick_trade_needs_reach", VendingGameTests::quickTradeNeedsReach));
+        new TraderyGameTests.Entry("vending_quick_trade_needs_reach", VendingGameTests::quickTradeNeedsReach),
+        new TraderyGameTests.Entry("vending_trades_saved_with_chunk", VendingGameTests::tradesSavedWithChunk));
 
     private VendingGameTests() {
     }
@@ -429,6 +431,23 @@ public final class VendingGameTests {
         VendingQuickTrade.handle(buyer, helper.absolutePos(VENDOR), false);
         helper.assertValueEqual(count(buyer, Items.BREAD), 0, "out of reach: refused");
         helper.assertValueEqual(balance(buyer.getUUID()), 1_000L, "no money moved");
+        VendingTrades.forget(buyer);
+        helper.succeed();
+    }
+
+    /** A trade waits for its chunk's save; when Minecraft writes the chunk, the money and the trader are saved too. */
+    public static void tradesSavedWithChunk(GameTestHelper helper) {
+        VendingBlockEntity vendor = vendor(helper, AccountId.player(UUID.randomUUID()), sell(Items.BREAD, 4, 250));
+        vendor.stock().setItem(0, new ItemStack(Items.BREAD, 64));
+        vendor.stock().setChanged();
+        ServerPlayer buyer = playerAtVendor(helper);
+        setBalance(buyer.getUUID(), 1_000);
+        BlockPos pos = helper.absolutePos(VENDOR);
+
+        helper.assertTrue(VendingTrades.execute(buyer, vendor, 1).success(), "bought");
+        helper.assertTrue(TradePersistence.pending(helper.getLevel(), pos).contains(buyer.getUUID()), "the trader waits for the chunk save");
+        helper.getLevel().getChunkSource().save(true);
+        helper.assertTrue(TradePersistence.pending(helper.getLevel(), pos).isEmpty(), "saving the chunk saved the trade's money and trader");
         VendingTrades.forget(buyer);
         helper.succeed();
     }

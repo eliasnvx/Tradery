@@ -179,6 +179,7 @@ public final class VendingTrades {
         warnIfShort("delivery", given, goodsCount);
         player.getInventory().setChanged();
 
+        TradePersistence.traded((ServerLevel) vendor.getLevel(), vendor.getBlockPos(), player);
         VendingPurchaseEvent.Post.EVENT.post(new VendingPurchaseEvent.Post(player, (ServerLevel) vendor.getLevel(), vendor.getBlockPos(),
             vendor.owner(), TradeDirection.SALE, goods, settings.priceMode(), settings.priceItem(), price, trades, fee));
         VendingNotifier.sold(vendor, player, goods, goodsCount, settings.priceMode() == PriceMode.CURRENCY ? moneyPaid - fee : -1,
@@ -256,6 +257,7 @@ public final class VendingTrades {
             vendor.stock().setChanged();
         }
 
+        TradePersistence.traded((ServerLevel) vendor.getLevel(), vendor.getBlockPos(), player);
         VendingPurchaseEvent.Post.EVENT.post(new VendingPurchaseEvent.Post(player, (ServerLevel) vendor.getLevel(), vendor.getBlockPos(),
             vendor.owner(), TradeDirection.BUYBACK, goods, PriceMode.CURRENCY, ItemStack.EMPTY, price, trades, fee));
         VendingNotifier.boughtBack(vendor, player, goods, goodsCount, total);

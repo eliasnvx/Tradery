@@ -5,10 +5,12 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "BlockItemMixin",
+    "ChunkMapMixin",
     "EntityTypeMixin",
     "FishingHookMixin",
     "ItemEntityMixin",
     "PlayerAdvancementsMixin",
+    "PlayerListAccessor",
     "ResultSlotMixin"
   ],
   "injectors": {

@@ -49,7 +49,8 @@ public final class SourcesGameTests {
         new TraderyGameTests.Entry("reward_mine_skips_placed_blocks", SourcesGameTests::rewardMineSkipsPlacedBlocks),
         new TraderyGameTests.Entry("ore_feature_places_ore", SourcesGameTests::oreFeaturePlacesOre),
         new TraderyGameTests.Entry("mixins_apply", SourcesGameTests::mixinsApply),
-        new TraderyGameTests.Entry("coin_ore_in_overworld_biomes", SourcesGameTests::coinOreInOverworldBiomes));
+        new TraderyGameTests.Entry("coin_ore_in_overworld_biomes", SourcesGameTests::coinOreInOverworldBiomes),
+        new TraderyGameTests.Entry("coin_ore_not_processable", SourcesGameTests::coinOreNotProcessable));
 
     private SourcesGameTests() {
     }
@@ -271,6 +272,40 @@ public final class SourcesGameTests {
         helper.succeed();
     }
 
+    /**
+     * Ore doublers (Create crushing, Mekanism enriching, mods that smelt "#c:ores") must not multiply money: coin ore
+     * is in no conventional ore/raw/dust tag, and no furnace recipe takes it or a coin.
+     */
+    public static void coinOreNotProcessable(GameTestHelper helper) {
+        List<String> processingTags = List.of("ores", "raw_materials", "dusts", "ingots", "nuggets");
+        var level = helper.getLevel();
+        for (CoinTier tier : CoinTier.values()) {
+            for (boolean deepslate : new boolean[] {false, true}) {
+                var block = TraderyItems.ore(tier, deepslate);
+                var stack = new ItemStack(block.asItem());
+                for (String tag : processingTags) {
+                    var id = net.minecraft.resources.Identifier.fromNamespaceAndPath("c", tag);
+                    helper.assertFalse(block.defaultBlockState().is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, id)),
+                        block + " is not in #c:" + tag);
+                    helper.assertFalse(stack.is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, id)),
+                        stack.getItem() + " is not in #c:" + tag);
+                }
+                assertNoFurnaceRecipe(helper, level, stack);
+            }
+            assertNoFurnaceRecipe(helper, level, new ItemStack(TraderyItems.coin(tier)));
+        }
+        helper.succeed();
+    }
+
+    private static void assertNoFurnaceRecipe(GameTestHelper helper, ServerLevel level, ItemStack stack) {
+        var input = new net.minecraft.world.item.crafting.SingleRecipeInput(stack);
+        var recipes = level.getServer().getRecipeManager();
+        helper.assertTrue(recipes.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.SMELTING, input, level).isEmpty(),
+            "no smelting recipe for " + stack.getItem());
+        helper.assertTrue(recipes.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.BLASTING, input, level).isEmpty(),
+            "no blasting recipe for " + stack.getItem());
+    }
+
     public static void oreFeaturePlacesOre(GameTestHelper helper) {
         for (int x = 0; x < 5; x++) {
             for (int y = 0; y < 5; y++) {
@@ -281,14 +316,17 @@ public final class SourcesGameTests {
         }
         BlockPos center = helper.absolutePos(new BlockPos(2, 2, 2));
         var source = helper.getLevel().getServer().createCommandSourceStack().withSuppressedOutput();
-        helper.getLevel().getServer().getCommands().performPrefixedCommand(source,
-            "place feature tradery:copper_coin_ore " + center.getX() + " " + center.getY() + " " + center.getZ());
+        // A vein is a random blob: in a 5x5x5 cube it can fall outside or next to air, so try a few times
         int found = 0;
-        for (int x = 0; x < 5; x++) {
-            for (int y = 0; y < 5; y++) {
-                for (int z = 0; z < 5; z++) {
-                    if (helper.getBlockState(new BlockPos(x, y, z)).is(TraderyItems.ore(CoinTier.COPPER, false))) {
-                        found++;
+        for (int attempt = 0; attempt < 10 && found == 0; attempt++) {
+            helper.getLevel().getServer().getCommands().performPrefixedCommand(source,
+                "place feature tradery:copper_coin_ore " + center.getX() + " " + center.getY() + " " + center.getZ());
+            for (int x = 0; x < 5; x++) {
+                for (int y = 0; y < 5; y++) {
+                    for (int z = 0; z < 5; z++) {
+                        if (helper.getBlockState(new BlockPos(x, y, z)).is(TraderyItems.ore(CoinTier.COPPER, false))) {
+                            found++;
+                        }
                     }
                 }
             }

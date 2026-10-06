@@ -3,16 +3,34 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+// The NeoForge counterpart of Fabric's client GameTests (NeoForge has no client test framework)
+sourceSets {
+    clientTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
 neoForge {
     version = neoforge_version
     def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
     }
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+        tradery_client_test {
+            sourceSet sourceSets.clientTest
+        }
+    }
     runs {
         configureEach {
             systemProperty('neoforge.enabledGameTestNamespaces', mod_id)
             ideName = "NeoForge ${it.name.capitalize()} (${project.path})"
+            // Runs load every mod in `mods` by default; the dev-only test mod only goes into its own runs below
+            loadedMods = [mods."${mod_id}"]
         }
         client {
             client()
@@ -26,13 +44,24 @@ neoForge {
             type = 'gameTestServer'
             gameDirectory = project.file('build/run/gameTest')
         }
-    }
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
+        // Dev only, needs a display: drives a client through quick trade and the hint, then quits.
+        // ./gradlew :neoforge:runClientTest (screenshots in build/run/clientTest/screenshots)
+        clientTest {
+            client()
+            sourceSet = sourceSets.clientTest
+            loadedMods = [mods."${mod_id}", mods.tradery_client_test]
+            gameDirectory = project.file('build/run/clientTest')
+        }
+        // Dev only: two launches with a kill -9 in between, driven by tools/crash-test.sh
+        crashTest {
+            server()
+            sourceSet = sourceSets.clientTest
+            loadedMods = [mods."${mod_id}", mods.tradery_client_test]
+            gameDirectory = project.file('build/run/crashTest')
         }
     }
 }
+neoForge.addModdingDependenciesTo(sourceSets.clientTest)
 
 dependencies {
     // REI finds NeoForge plugins by an annotation that only its NeoForge jar has

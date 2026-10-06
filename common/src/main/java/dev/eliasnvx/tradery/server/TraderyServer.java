@@ -34,6 +34,7 @@ public final class TraderyServer {
 
     public static void onServerStopped(MinecraftServer server) {
         EconomyService.INSTANCE.stop();
+        dev.eliasnvx.tradery.vending.TradePersistence.clear();
     }
 
     public static void onPlayerJoin(ServerPlayer player) {
