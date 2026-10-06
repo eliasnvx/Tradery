@@ -22,6 +22,7 @@ First release for Minecraft 26.3 (Fabric and NeoForge). Economy API 1.0.0.
 - Display block: shows an item in a glass case.
 - Vendor key: admin vendors with infinite stock, burned payment, no fee, server ownership.
 - Protection from strangers, explosions, pistons and hoppers; no item slots in the buyer screen.
+- Crash-safe trades: when a vending block's chunk is saved, the money and the traders' inventories are saved with it.
 
 ### Money sources
 - Copper, silver and gold coin ore in stone and deepslate; payout straight to the balance or as coins; daily cap and inflation damping; data-pack worldgen.
