@@ -19,8 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** EN and RU must have exactly the same keys, and every Tradery reason needs a name. */
+/** Every language has exactly the English keys and placeholders, and every Tradery reason needs a name. */
 class LangFilesTest {
+    /** Every shipped language; a new lang file must be listed here (and in README / the mod page). */
+    static final List<String> LANGUAGES = List.of("en_us", "ru_ru", "uk_ua", "be_by", "pl_pl", "de_de", "nl_nl", "sv_se", "fr_fr",
+        "es_es", "pt_br", "ja_jp", "zh_cn", "zh_tw", "zh_hk");
+    private static final java.util.regex.Pattern PLACEHOLDER = java.util.regex.Pattern.compile("%(\\d+\\$)?[sd%]");
+
     private static JsonObject lang(String code) throws IOException {
         try (InputStream in = LangFilesTest.class.getResourceAsStream("/assets/tradery/lang/" + code + ".json")) {
             assertNotNull(in, code + ".json missing");
@@ -28,16 +33,45 @@ class LangFilesTest {
         }
     }
 
+    private static List<String> placeholders(String text) {
+        List<String> found = new java.util.ArrayList<>();
+        java.util.regex.Matcher m = PLACEHOLDER.matcher(text);
+        while (m.find()) {
+            found.add(m.group());
+        }
+        java.util.Collections.sort(found);
+        return found;
+    }
+
     @Test
-    void englishAndRussianHaveTheSameKeys() throws IOException {
-        Set<String> en = new TreeSet<>(lang("en_us").keySet());
-        Set<String> ru = new TreeSet<>(lang("ru_ru").keySet());
-        Set<String> missingInRu = new TreeSet<>(en);
-        missingInRu.removeAll(ru);
-        Set<String> missingInEn = new TreeSet<>(ru);
-        missingInEn.removeAll(en);
-        assertEquals(Set.of(), missingInRu, "missing in ru_ru");
-        assertEquals(Set.of(), missingInEn, "missing in en_us");
+    void everyLanguageHasTheEnglishKeysAndPlaceholders() throws IOException {
+        JsonObject en = lang("en_us");
+        for (String code : LANGUAGES) {
+            JsonObject other = lang(code);
+            Set<String> missing = new TreeSet<>(en.keySet());
+            missing.removeAll(other.keySet());
+            Set<String> extra = new TreeSet<>(other.keySet());
+            extra.removeAll(en.keySet());
+            assertEquals(Set.of(), missing, "missing in " + code);
+            assertEquals(Set.of(), extra, "not in en_us but in " + code);
+            for (String key : en.keySet()) {
+                String text = other.get(key).getAsString();
+                assertTrue(!text.isBlank(), code + " " + key + " is empty");
+                assertEquals(placeholders(en.get(key).getAsString()), placeholders(text), code + " " + key + " placeholders");
+            }
+        }
+    }
+
+    /** Lang files on disk and {@link #LANGUAGES} agree, so a new language is never half-added. */
+    @Test
+    void everyLangFileIsListed() throws IOException {
+        java.nio.file.Path dir = java.nio.file.Path.of(System.getProperty("tradery.sources")).getParent()
+            .resolve("resources/assets/tradery/lang");
+        Set<String> onDisk = new TreeSet<>();
+        try (var files = java.nio.file.Files.list(dir)) {
+            files.map(f -> f.getFileName().toString()).filter(n -> n.endsWith(".json")).forEach(n -> onDisk.add(n.substring(0, n.length() - 5)));
+        }
+        assertEquals(new TreeSet<>(LANGUAGES), onDisk);
     }
 
     /**

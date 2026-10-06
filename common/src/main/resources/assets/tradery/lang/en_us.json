@@ -106,6 +106,7 @@
   "tradery.screen.sell_one": "Sell ×1",
   "tradery.screen.sell_eight": "Sell ×8",
   "tradery.screen.sell_max": "Sell all",
+  "tradery.screen.max_short": "Max",
   "tradery.screen.for": "for",
   "tradery.screen.you_get": "you get",
   "tradery.screen.in_stock": "In stock: %s",

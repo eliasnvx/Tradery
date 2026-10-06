@@ -106,6 +106,7 @@
   "tradery.screen.sell_one": "Продать ×1",
   "tradery.screen.sell_eight": "Продать ×8",
   "tradery.screen.sell_max": "Продать всё",
+  "tradery.screen.max_short": "Макс.",
   "tradery.screen.for": "за",
   "tradery.screen.you_get": "вы получите",
   "tradery.screen.in_stock": "В наличии: %s",
