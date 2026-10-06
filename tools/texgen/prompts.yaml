@@ -39,3 +39,15 @@ assets:
   header_install:
     tags: [header]
     prompt: "A small open wooden crate with a bold red arrow pointing down into it and a gold coin peeking out of the crate."
+
+  # ---------- mod icon (platforms: art/icon/icon_512.png; in game: assets/tradery/icon.png, 128 px) ----------
+  mod_icon:
+    tags: [icon]
+    size: 128
+    style: >-
+      Square app icon for a Minecraft mod about player shops and money. Chunky pixel art on a visible grid of about
+      32x32 large square pixels, no anti-aliasing, no blur. A rounded-square background with a warm vertical gradient
+      from deep burgundy red at the bottom to warm amber gold at the top, like a sunset, filling the whole canvas.
+      One bold subject centred and filling about 80% of the icon, clean dark brown outline (never pure black),
+      3-4 step shading with light from the top-left, a couple of small golden sparkles. Must stay readable at 32x32 pixels.
+    prompt: "A shop vending block seen from the front at a slight angle: a short deep-red base with a brass trim band and a small green light, and a tall glass display case with thin brass corner posts on top; inside the glass floats one big shiny gold coin with a simple embossed star."

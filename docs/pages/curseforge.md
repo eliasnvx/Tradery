@@ -216,7 +216,7 @@ All optional. EMI and WTHIT support will follow when they update to 26.3.
 ## Credits & Notes
 
 - **Author:** eliasnvx
-- Screenshots are real in-game renders. The banner background and the section icons were generated with an AI image model and composed by hand; the mod's own textures are hand-made pixel art.
+- Screenshots are real in-game renders. The mod icon, the banner background and the section icons were generated with an AI image model, picked and composed by hand; the textures in the game are hand-made pixel art.
 - Inspired by the classic Vending Block mod. Tradery is written from scratch; no code from Vending Block or its ports is used.
 
 ## License

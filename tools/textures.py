@@ -3,7 +3,8 @@
 
 Run from the repo root:  python3 tools/textures.py
 Every texture in common/src/main/resources/assets/tradery/textures is generated here, so the art stays
-reviewable in diffs and consistent in palette. Edit a map, re-run, commit both.
+reviewable in diffs and consistent in palette. Edit a map, re-run, commit both. The mod icon (assets/tradery/icon.png)
+is not: it comes from art/icon/ (see docs/pages/README.md).
 """
 import os
 import struct
@@ -272,70 +273,9 @@ ORE_OVERLAY = [
 ]
 
 
-# ---------------------------------------------------------------- mod icon (32x32 pixel art, scaled x4)
-
-def mod_icon():
-    """A gold coin with a T over a red vending panel with brass corners."""
-    size = 32
-    cx = cy = 15.5
-    rows = []
-    for y in range(size):
-        row = ""
-        for x in range(size):
-            dx, dy = x - cx, y - cy
-            dist = (dx * dx + dy * dy) ** 0.5
-            # background: red panel with a darker frame and brass corners
-            edge = min(x, y, size - 1 - x, size - 1 - y)
-            if edge == 0:
-                ch = "k"
-            elif edge == 1:
-                ch = "B" if (x < 5 or x > 26) and (y < 5 or y > 26) else "b"
-            elif edge <= 3:
-                ch = "d"
-            else:
-                ch = "r" if (x + y) % 7 else "R"
-            if dist <= 12.5:
-                light = -dx - dy  # light from the top-left
-                if dist > 11.5:
-                    ch = "o"
-                elif dist > 10.2:
-                    ch = "h" if light > 4 else ("s" if light < -4 else "b")
-                else:
-                    ch = "h" if light > 11 else ("s" if light < -9 else "g")
-            row += ch
-        rows.append(row)
-    # embossed T
-    for y in range(9, 12):
-        rows[y] = rows[y][:10] + "t" * 12 + rows[y][22:]
-    for y in range(12, 23):
-        rows[y] = rows[y][:14] + "tt" * 2 + rows[y][18:]
-    for y in range(12, 23):
-        rows[y] = rows[y][:18] + "n" + rows[y][19:]
-    rows[12] = rows[12][:10] + "n" * 4 + rows[12][14:18] + "n" * 4 + rows[12][22:]
-    return rows
-
-
-ICON = {
-    "k": rgba("1c0d0d"), "d": rgba("5c1a17"), "r": rgba("a3302b"), "R": rgba("b23a33"),
-    "b": rgba("c9962c"), "B": rgba("f0c95a"),
-    "o": rgba("4a2e00"), "s": rgba("b07a0c"), "g": rgba("f2c230"), "h": rgba("fff2a8"),
-    "t": rgba("a86f00"), "n": rgba("7a4f00"),
-}
-
-
-def scale(rows, factor):
-    out = []
-    for row in rows:
-        wide = "".join(ch * factor for ch in row)
-        out.extend([wide] * factor)
-    return out
-
-
 def main():
     png("gui/sprites/hud/coin.png", HUD_COIN, GOLD)
     png("gui/sprites/icon/coin.png", TEXT_COIN, GOLD)
-    icon = os.path.join(ROOT, "..", "icon.png")
-    png(os.path.relpath(icon, ROOT), scale(mod_icon(), 4), ICON)
     png("block/vending_side.png", vending_side(), MACHINE)
     png("block/vending_front.png", vending_front(), MACHINE)
     png("block/vending_top.png", vending_top(), MACHINE)
