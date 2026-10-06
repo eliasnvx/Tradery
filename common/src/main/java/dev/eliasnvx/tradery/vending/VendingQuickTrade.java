@@ -76,13 +76,17 @@ public final class VendingQuickTrade {
         STREAKS.remove(player.getUUID());
     }
 
-    /** The block trades the other way: say which keys do. */
+    /**
+     * The block trades the other way: say which keys do. The client normally says this itself (with short key names)
+     * and doesn't send the request; this covers clients that do.
+     */
     private static Component wrongButton(boolean blockBuys) {
+        Component keys = blockBuys
+            ? Messages.tr("tradery.hint.sell_keys", "%1$s + %2$s: sell", Component.keybind("key.sneak"), Component.keybind("key.attack"))
+            : Messages.tr("tradery.hint.buy_keys", "%1$s + %2$s: buy", Component.keybind("key.sneak"), Component.keybind("key.use"));
         return blockBuys
-            ? Messages.tr("tradery.vending.wrong_button_buys", "This vending block buys: %s + %s to sell",
-                Component.keybind("key.sneak"), Component.keybind("key.attack"))
-            : Messages.tr("tradery.vending.wrong_button_sells", "This vending block sells: %s + %s to buy",
-                Component.keybind("key.sneak"), Component.keybind("key.use"));
+            ? Messages.tr("tradery.vending.wrong_button_buys", "This vending block buys: %s", keys)
+            : Messages.tr("tradery.vending.wrong_button_sells", "This vending block sells: %s", keys);
     }
 
     private static void refuse(ServerPlayer player, BlockPos pos) {

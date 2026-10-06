@@ -3,10 +3,14 @@ package dev.eliasnvx.tradery.client;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.vending.VendingBlockEntity;
+import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.VendorKeyItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
@@ -55,9 +59,17 @@ public final class QuickTradeInput {
         }
         long now = minecraft.level.getGameTime();
         if (now - lastSent >= INTERVAL_TICKS || now < lastSent || !pos.equals(lastPos) || sell != lastSell) {
-            Platform.get().sendToServer(new TraderyPayloads.VendingQuickTradePayload(pos, sell));
-            ItemStack held = player.getMainHandItem();
-            player.swing(InteractionHand.MAIN_HAND, sell ? held.getAttackAnimation() : held.getInteractAnimation(), false);
+            VendingSettings settings = vendor.settings();
+            if (settings.isConfigured() && settings.isBuyback() != sell) {
+                // The block trades the other way: say so here, with the same key names as the hint (the server checks too)
+                player.sendOverlayMessage(Component.translatable(settings.isBuyback()
+                    ? "tradery.vending.wrong_button_buys" : "tradery.vending.wrong_button_sells", VendingHint.keys(settings, false)));
+                minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2f, 0.5f));
+            } else {
+                Platform.get().sendToServer(new TraderyPayloads.VendingQuickTradePayload(pos, sell));
+                ItemStack held = player.getMainHandItem();
+                player.swing(InteractionHand.MAIN_HAND, sell ? held.getAttackAnimation() : held.getInteractAnimation(), false);
+            }
             lastSent = now;
             lastPos = pos.immutable();
             lastSell = sell;
