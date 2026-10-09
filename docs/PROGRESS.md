@@ -72,3 +72,11 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] NeoForge client test: quick buy/sell by held keys, wrong button, owner breaking, buyer and owner screens; screenshots reviewed
 - [x] `tools/crash-test.sh` (kill -9) on 1.21.1: PASS, one consistent state; found and fixed the NeoForge fake-player crash
 
+## Port to 1.20.1 (branch `1.20.1-dev`) ✅ (2026-10-09)
+- [x] Fabric (remapping Loom) + Forge 47 (ModDevGradle legacyforge), Java 17; ported from 1.21.1 in six areas, shared network/menu contract first (differences: `docs/decisions.md`, 2026-10-09)
+- [x] `./gradlew build` green: JUnit 32, GameTests Forge 32/32, Fabric 33/33
+- [x] Forge client test: quick buy/sell, wrong button, owner breaking, buyer and owner screens; screenshots reviewed (same as 1.21.1)
+- [x] Fabric client test (`:fabric:runClientTest`, the same scenario as Forge): HUD mixin, key mappings, client networking, screens, render layers; PASS, screenshots match Forge
+- [x] `tools/crash-test.sh` on Forge: PASS; found and fixed the economy start racing other mods' ServerStarted listeners
+- [x] Production jars: Forge reobf jar with the SRG refmap and `MixinConfigs`; Fabric remapped jar with an intermediary refmap
+
