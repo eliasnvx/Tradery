@@ -62,6 +62,8 @@ neoForge {
     }
 }
 neoForge.addModdingDependenciesTo(sourceSets.clientTest)
+// -Pcompat=true puts the optional mods into the client test too
+configurations.clientTestRuntimeOnly.extendsFrom(configurations.runtimeOnly)
 
 dependencies {
     // REI finds NeoForge plugins by an annotation that only its NeoForge jar has
@@ -69,7 +71,7 @@ dependencies {
 
     // Dev only: run with the optional mods installed: ./gradlew :neoforge:runClient -Pcompat=true
     if (project.hasProperty('compat')) {
-        runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
+        runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}") { transitive = false } // the full mod jar; its POM lists dev-only modules
         runtimeOnly("maven.modrinth:jade:${jade_neoforge_version}")
         runtimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}")
         runtimeOnly("dev.architectury:architectury-neoforge:${architectury_version}")
