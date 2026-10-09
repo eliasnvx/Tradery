@@ -1,6 +1,7 @@
 package dev.eliasnvx.tradery.fabric;
 
 import dev.eliasnvx.tradery.Tradery;
+import dev.eliasnvx.tradery.network.TraderyPacket;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.server.TraderyServer;
@@ -8,12 +9,12 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.resources.ResourceLocation;
 
 public final class TraderyFabric implements ModInitializer {
     @Override
@@ -27,17 +28,18 @@ public final class TraderyFabric implements ModInitializer {
             dev.eliasnvx.tradery.fabric.compat.placeholders.TraderyPlaceholders.register();
         }
 
-        for (TraderyPayloads.Entry<?> entry : TraderyPayloads.CLIENTBOUND) {
-            registerClientbound(entry);
-        }
+        // Clientbound channels need no server registration on 1.20.1: the client announces what it receives
         for (TraderyPayloads.Entry<?> entry : TraderyPayloads.SERVERBOUND) {
-            registerServerbound(entry);
-            registerServerReceiver(entry.type());
+            registerServerReceiver(entry);
         }
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registries, environment) -> TraderyServer.registerCommands(dispatcher));
-        ServerLifecycleEvents.SERVER_STARTED.register(TraderyServer::onServerStarted);
-        ServerLifecycleEvents.SERVER_STOPPED.register(TraderyServer::onServerStopped);
+        // The economy is up before other mods' SERVER_STARTED listeners and still up in their SERVER_STOPPED ones
+        ResourceLocation economyPhase = Tradery.id("economy");
+        ServerLifecycleEvents.SERVER_STARTED.addPhaseOrdering(economyPhase, Event.DEFAULT_PHASE);
+        ServerLifecycleEvents.SERVER_STARTED.register(economyPhase, TraderyServer::onServerStarted);
+        ServerLifecycleEvents.SERVER_STOPPED.addPhaseOrdering(Event.DEFAULT_PHASE, economyPhase);
+        ServerLifecycleEvents.SERVER_STOPPED.register(economyPhase, TraderyServer::onServerStopped);
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> TraderyServer.onPlayerJoin(handler.getPlayer()));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> TraderyServer.onPlayerLeave(handler.getPlayer()));
         PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> TraderyServer.mayBreak(player, level, pos));
@@ -53,16 +55,14 @@ public final class TraderyFabric implements ModInitializer {
             TraderyServer.onPlayerRespawnOrTravel(player));
     }
 
-    private static <T extends CustomPacketPayload> void registerClientbound(TraderyPayloads.Entry<T> entry) {
-        PayloadTypeRegistry.playS2C().register(entry.type(), entry.codec());
-    }
-
-    private static <T extends CustomPacketPayload> void registerServerbound(TraderyPayloads.Entry<T> entry) {
-        PayloadTypeRegistry.playC2S().register(entry.type(), entry.codec());
-    }
-
-    /** Fabric runs play payload handlers on the server thread. */
-    private static <T extends CustomPacketPayload> void registerServerReceiver(CustomPacketPayload.Type<T> type) {
-        ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> TraderyServer.handle(context.player(), payload));
+    /**
+     * The body is decoded on the network thread (the buffer is released after the handler returns; the reader bounds
+     * every size and throws on garbage, which disconnects the sender), then handled on the server thread.
+     */
+    private static <T extends TraderyPacket> void registerServerReceiver(TraderyPayloads.Entry<T> entry) {
+        ServerPlayNetworking.registerGlobalReceiver(entry.id(), (server, player, handler, buf, sender) -> {
+            T packet = entry.reader().apply(buf);
+            server.execute(() -> TraderyServer.handle(player, packet));
+        });
     }
 }

@@ -2,7 +2,8 @@
   "required": true,
   "minVersion": "0.8",
   "package": "dev.eliasnvx.tradery.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "refmap": "${mod_id}.refmap.json",
+  "compatibilityLevel": "JAVA_17",
   "mixins": [
     "BaseSpawnerMixin",
     "BlockItemMixin",
@@ -11,8 +12,7 @@
     "ItemEntityMixin",
     "PlayerAdvancementsMixin",
     "PlayerListAccessor",
-    "ResultSlotMixin",
-    "TrialSpawnerMixin"
+    "ResultSlotMixin"
   ],
   "injectors": {
     "defaultRequire": 1

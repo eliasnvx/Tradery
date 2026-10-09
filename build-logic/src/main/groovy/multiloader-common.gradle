@@ -33,19 +33,9 @@ repositories {
     }
 }
 
-// Optional integrations: plugin classes live in :common and are only loaded by the mods they plug into.
-// Every module compiles :common's sources, so each gets the same compile-only APIs.
-dependencies {
-    // 1.21.1 is obfuscated: :common compiles against Mojang names, so it uses the Mojang-named (NeoForge) jars
-    compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}") { transitive = false }
-    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}") { transitive = false }
-    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:${rei_version}") { transitive = false }
-    // REI's API signatures mention these (Rectangle, FluidStack)
-    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}") { transitive = false }
-    compileOnly("me.shedaniel.cloth:basic-math:0.6.1") { transitive = false }
-    compileOnly("dev.architectury:architectury-neoforge:${architectury_version}") { transitive = false }
-    compileOnly("maven.modrinth:jade:${jade_neoforge_version}") { transitive = false }
-}
+// Optional integrations: plugin classes live in :common and are only loaded by the mods they plug into. Every module
+// compiles :common's sources, so each declares the same compile-only APIs, remapped to Mojang names by its own
+// toolchain (Loom: the Fabric jars, legacyforge: the SRG Forge jars); see common/build.gradle.
 
 dependencies {
     compileOnly "org.jetbrains:annotations:${jetbrains_annotations_version}"
@@ -100,8 +90,8 @@ processResources {
             'mod_id'                       : mod_id,
             'license'                      : license,
             'description'                  : project.description ?: rootProject.property('description'),
-            'neoforge_version'             : neoforge_version,
-            'neoforge_loader_version_range': neoforge_loader_version_range,
+            'forge_version'                : forge_version,
+            'forge_loader_version_range'   : forge_loader_version_range,
             'java_version'                 : java_version,
             'api_version'                  : api_version
     ]
@@ -110,7 +100,7 @@ processResources {
         key, value -> [(key): value instanceof String ? value.replace('\n', '\\\\n') : value]
     }
 
-    filesMatching(['META-INF/neoforge.mods.toml']) {
+    filesMatching(['META-INF/mods.toml']) {
         expand expandProps
     }
 

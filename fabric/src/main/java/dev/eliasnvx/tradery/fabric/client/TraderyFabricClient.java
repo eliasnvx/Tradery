@@ -8,6 +8,7 @@ import dev.eliasnvx.tradery.client.render.VendingRenderer;
 import dev.eliasnvx.tradery.client.screen.DisplayScreen;
 import dev.eliasnvx.tradery.client.screen.VendingBuyerScreen;
 import dev.eliasnvx.tradery.client.screen.VendingOwnerScreen;
+import dev.eliasnvx.tradery.network.TraderyPacket;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.ore.CoinTier;
 import dev.eliasnvx.tradery.registry.TraderyBlocks;
@@ -26,13 +27,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 
 /**
- * Fabric client glue. The balance HUD is drawn by {@code mixin.client.GuiMixin}, right under the chat layer
- * (Fabric API 1.21.1 has no HUD layer API; {@code HudRenderCallback} would draw over the chat).
+ * Fabric client glue. The balance HUD is drawn by {@code mixin.client.GuiMixin}, right under the subtitles and the
+ * chat (Fabric API 1.20.1 has no HUD layer API; {@code HudRenderCallback} draws after the whole HUD, over the chat).
  */
 public final class TraderyFabricClient implements ClientModInitializer {
     @Override
@@ -45,7 +45,7 @@ public final class TraderyFabricClient implements ClientModInitializer {
         BlockEntityRenderers.register(TraderyBlocks.DISPLAY_BLOCK_ENTITY.get(), DisplayRenderer::new);
         registerRenderLayers();
         for (TraderyPayloads.Entry<?> entry : TraderyPayloads.CLIENTBOUND) {
-            registerReceiver(entry.type());
+            registerReceiver(entry);
         }
         for (KeyMapping key : TraderyKeyMappings.ALL) {
             KeyBindingHelper.registerKeyBinding(key);
@@ -59,7 +59,7 @@ public final class TraderyFabricClient implements ClientModInitializer {
     }
 
     /**
-     * 1.21.1 picks a block's render layer in code (NeoForge reads the models' {@code render_type}): the glass of the
+     * Fabric picks a block's render layer in code (Forge reads the models' {@code render_type}): the glass of the
      * vending and display blocks is translucent, the ore overlays are cut out.
      */
     private static void registerRenderLayers() {
@@ -69,8 +69,11 @@ public final class TraderyFabricClient implements ClientModInitializer {
         }
     }
 
-    /** Fabric runs play payload handlers on the client thread. */
-    private static <T extends CustomPacketPayload> void registerReceiver(CustomPacketPayload.Type<T> type) {
-        ClientPlayNetworking.registerGlobalReceiver(type, (payload, context) -> TraderyClient.handle(payload));
+    /** Decoded on the network thread (the buffer is released after the handler returns), handled on the client thread. */
+    private static <T extends TraderyPacket> void registerReceiver(TraderyPayloads.Entry<T> entry) {
+        ClientPlayNetworking.registerGlobalReceiver(entry.id(), (client, handler, buf, sender) -> {
+            T packet = entry.reader().apply(buf);
+            client.execute(() -> TraderyClient.handle(packet));
+        });
     }
 }

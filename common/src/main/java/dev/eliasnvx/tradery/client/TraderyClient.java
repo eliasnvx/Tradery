@@ -3,13 +3,13 @@ package dev.eliasnvx.tradery.client;
 import dev.eliasnvx.tradery.client.screen.VendingResultView;
 import dev.eliasnvx.tradery.config.ClientConfig;
 import dev.eliasnvx.tradery.config.TraderyConfig;
+import dev.eliasnvx.tradery.network.TraderyPacket;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /** Client entry points, called by the loaders on the client thread. */
 public final class TraderyClient {
@@ -20,17 +20,20 @@ public final class TraderyClient {
         TraderyConfig.loadClient();
     }
 
-    /** Every clientbound payload lands here, on the client thread. */
-    public static void handle(CustomPacketPayload payload) {
-        switch (payload) {
-            case TraderyPayloads.CurrencyInfoPayload p -> ClientEconomy.onCurrency(p);
-            case TraderyPayloads.BalanceSyncPayload p -> ClientEconomy.onSync(p);
-            case TraderyPayloads.BalanceDeltaPayload p -> ClientEconomy.onDelta(p);
-            case TraderyPayloads.NotificationPayload p -> showNotification(p);
-            case TraderyPayloads.HudTogglePayload ignored -> toggleHud();
-            case TraderyPayloads.VendingResultPayload p -> showVendingResult(p);
-            default -> {
-            }
+    /** Every clientbound packet lands here, on the client thread. */
+    public static void handle(TraderyPacket payload) {
+        if (payload instanceof TraderyPayloads.CurrencyInfoPayload p) {
+            ClientEconomy.onCurrency(p);
+        } else if (payload instanceof TraderyPayloads.BalanceSyncPayload p) {
+            ClientEconomy.onSync(p);
+        } else if (payload instanceof TraderyPayloads.BalanceDeltaPayload p) {
+            ClientEconomy.onDelta(p);
+        } else if (payload instanceof TraderyPayloads.NotificationPayload p) {
+            showNotification(p);
+        } else if (payload instanceof TraderyPayloads.HudTogglePayload) {
+            toggleHud();
+        } else if (payload instanceof TraderyPayloads.VendingResultPayload p) {
+            showVendingResult(p);
         }
     }
 

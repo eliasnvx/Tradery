@@ -68,6 +68,8 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // 1.20.1 container screens don't dim the world themselves
+        renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
     }

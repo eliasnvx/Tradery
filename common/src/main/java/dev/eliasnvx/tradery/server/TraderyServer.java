@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import dev.eliasnvx.tradery.command.EconomyCommands;
 import dev.eliasnvx.tradery.economy.EconomyService;
 import dev.eliasnvx.tradery.menu.VendingOwnerMenu;
+import dev.eliasnvx.tradery.network.TraderyPacket;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.vending.VendingConfigurator;
 import dev.eliasnvx.tradery.vending.VendingNotifier;
@@ -12,7 +13,6 @@ import dev.eliasnvx.tradery.vending.VendingQuickTrade;
 import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -60,8 +60,11 @@ public final class TraderyServer {
         }
     }
 
-    /** Serverbound payloads, on the server thread. */
-    public static void handle(ServerPlayer player, CustomPacketPayload payload) {
+    /**
+     * Serverbound packets, on the server thread. Each one is checked against the menu the player really has open
+     * (and its container id); reach, ownership and rate limits are checked by the handlers.
+     */
+    public static void handle(ServerPlayer player, TraderyPacket payload) {
         if (payload instanceof TraderyPayloads.VendingSavePayload save
             && player.containerMenu instanceof VendingOwnerMenu menu && menu.containerId == save.containerId()) {
             VendingConfigurator.save(player, menu, save.price());

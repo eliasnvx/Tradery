@@ -8,8 +8,7 @@ import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.VendingTrades;
 import dev.eliasnvx.tradery.command.Messages;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -35,11 +34,18 @@ public class VendingBuyerMenu extends AbstractContainerMenu implements VendingMe
      * @param ownerName shown as the shop name
      */
     public record Data(BlockPos pos, VendingSettings settings, String ownerName) {
-        public static final StreamCodec<RegistryFriendlyByteBuf, Data> STREAM_CODEC = StreamCodec.composite(
-            BlockPos.STREAM_CODEC, Data::pos,
-            VendingSettings.STREAM_CODEC, Data::settings,
-            net.minecraft.network.codec.ByteBufCodecs.stringUtf8(64), Data::ownerName,
-            Data::new);
+        /** Longest shop name sent (player names are 16 characters). */
+        public static final int MAX_OWNER_NAME = 64;
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeBlockPos(pos);
+            settings.write(buf);
+            buf.writeUtf(ownerName, MAX_OWNER_NAME);
+        }
+
+        public static Data read(FriendlyByteBuf buf) {
+            return new Data(buf.readBlockPos(), VendingSettings.read(buf), buf.readUtf(MAX_OWNER_NAME));
+        }
     }
 
     private final @Nullable VendingBlockEntity vendor;

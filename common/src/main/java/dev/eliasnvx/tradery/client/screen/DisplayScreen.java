@@ -1,6 +1,7 @@
 package dev.eliasnvx.tradery.client.screen;
 
 import dev.eliasnvx.tradery.menu.DisplayMenu;
+import dev.eliasnvx.tradery.menu.GhostSlot;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -39,6 +40,8 @@ public class DisplayScreen extends AbstractContainerScreen<DisplayMenu> implemen
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // 1.20.1 container screens don't dim the world themselves
+        renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
     }
@@ -53,7 +56,7 @@ public class DisplayScreen extends AbstractContainerScreen<DisplayMenu> implemen
     @Override
     protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         super.renderTooltip(graphics, mouseX, mouseY);
-        if (hoveredSlot != null && hoveredSlot.isFake() && !hoveredSlot.hasItem()) {
+        if (hoveredSlot instanceof GhostSlot && !hoveredSlot.hasItem()) {
             graphics.renderTooltip(font, Component.translatable("tradery.screen.display_tip"), mouseX, mouseY);
         }
     }

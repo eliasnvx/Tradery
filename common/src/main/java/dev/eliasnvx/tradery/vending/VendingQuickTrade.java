@@ -5,9 +5,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 import java.util.UUID;
@@ -31,7 +33,7 @@ public final class VendingQuickTrade {
 
     /** One request from {@code VendingQuickTradePayload}, on the server thread. */
     public static void handle(ServerPlayer player, BlockPos pos, boolean sell) {
-        if (player.isSpectator() || !player.isAlive() || !player.level().isLoaded(pos) || !player.canInteractWithBlock(pos, 1.0)
+        if (player.isSpectator() || !player.isAlive() || !player.level().isLoaded(pos) || !canReach(player, pos)
             || !(player.level().getBlockEntity(pos) instanceof VendingBlockEntity vendor)) {
             return;
         }
@@ -62,6 +64,11 @@ public final class VendingQuickTrade {
         player.displayClientMessage(VendingTrades.describe(settings, streak.goods(), streak.price()), true);
         player.level().playSound(null, pos, SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.BLOCKS, 0.4f,
             1.3f + player.getRandom().nextFloat() * 0.2f);
+    }
+
+    /** The reach vanilla accepts for using a block (1.20.1 has no {@code Player#canInteractWithBlock}). */
+    private static boolean canReach(ServerPlayer player, BlockPos pos) {
+        return player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) <= ServerGamePacketListenerImpl.MAX_INTERACTION_DISTANCE;
     }
 
     /** Goods added up in the player's current streak (for tests and the action bar). */

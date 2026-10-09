@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Locale;
 
 /**
- * Permission nodes. The node is {@code tradery.<path>} (NeoForge PermissionAPI, the Fabric permission API and what
+ * Permission nodes. The node is {@code tradery.<path>} (Forge PermissionAPI, the Fabric permission API and what
  * LuckPerms shows on both loaders). Without a permission mod, the fallback op level decides.
  */
 public enum TraderyPermission {

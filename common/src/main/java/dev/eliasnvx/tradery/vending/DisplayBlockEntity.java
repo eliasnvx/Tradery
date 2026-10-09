@@ -5,8 +5,8 @@ import dev.eliasnvx.tradery.api.AccountId;
 import dev.eliasnvx.tradery.config.ConfigCodecs;
 import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -67,23 +67,25 @@ public class DisplayBlockEntity extends BlockEntity implements OwnedBlockEntity 
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        owner = TagCodecs.read(tag, "owner", AccountId.CODEC, registries).orElse(null);
-        shown = TagCodecs.read(tag, "shown", ItemStack.OPTIONAL_CODEC, registries).orElse(ItemStack.EMPTY);
-        animation = TagCodecs.read(tag, "animation", ANIMATION_CODEC, registries).orElse(DisplayAnimation.SPIN_BOB);
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        owner = TagCodecs.read(tag, "owner", AccountId.CODEC).orElse(null);
+        shown = tag.contains("shown", Tag.TAG_COMPOUND) ? ItemStack.of(tag.getCompound("shown")) : ItemStack.EMPTY;
+        animation = TagCodecs.read(tag, "animation", ANIMATION_CODEC).orElse(DisplayAnimation.SPIN_BOB);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        write(tag, registries);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        write(tag);
     }
 
-    private void write(CompoundTag tag, HolderLookup.Provider registries) {
-        TagCodecs.putNullable(tag, "owner", AccountId.CODEC, owner, registries);
-        TagCodecs.put(tag, "shown", ItemStack.OPTIONAL_CODEC, shown, registries);
-        TagCodecs.put(tag, "animation", ANIMATION_CODEC, animation, registries);
+    private void write(CompoundTag tag) {
+        TagCodecs.putNullable(tag, "owner", AccountId.CODEC, owner);
+        if (!shown.isEmpty()) {
+            tag.put("shown", shown.save(new CompoundTag()));
+        }
+        TagCodecs.put(tag, "animation", ANIMATION_CODEC, animation);
     }
 
     @Override
@@ -92,9 +94,9 @@ public class DisplayBlockEntity extends BlockEntity implements OwnedBlockEntity 
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        write(tag, registries);
+        write(tag);
         return tag;
     }
 }

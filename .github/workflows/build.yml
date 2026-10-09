@@ -14,14 +14,14 @@ jobs:
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          # 21 compiles the 1.21.1 mod (Gradle toolchain), 25 runs Gradle itself
+          # 17 compiles the 1.20.1 mod (Gradle toolchain), 25 runs Gradle itself
           java-version: |
-            21
+            17
             25
 
       - uses: gradle/actions/setup-gradle@v6
 
-      # api, common, fabric, neoforge + JUnit + GameTests on both loaders (headless)
+      # api, common, fabric, forge + JUnit + GameTests on both loaders (headless)
       - name: Build
         run: ./gradlew build --console=plain
 
@@ -30,6 +30,6 @@ jobs:
           name: tradery-jars
           path: |
             fabric/build/libs/tradery-fabric-*.jar
-            neoforge/build/libs/tradery-neoforge-*.jar
+            forge/build/libs/tradery-forge-*.jar
             api/build/libs/tradery-api-*.jar
           if-no-files-found: error

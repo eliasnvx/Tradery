@@ -4,9 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.eliasnvx.tradery.api.vending.PriceMode;
 import dev.eliasnvx.tradery.config.ConfigCodecs;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -22,30 +20,33 @@ public record VendingSettings(ItemStack goods, PriceMode priceMode, long price, 
         DisplayAnimation.SPIN_BOB);
 
     public static final Codec<VendingSettings> CODEC = RecordCodecBuilder.create(i -> i.group(
-        ItemStack.OPTIONAL_CODEC.optionalFieldOf("goods", ItemStack.EMPTY).forGetter(VendingSettings::goods),
+        TagCodecs.ITEM.optionalFieldOf("goods", ItemStack.EMPTY).forGetter(VendingSettings::goods),
         ConfigCodecs.enumCodec(PriceMode.class).optionalFieldOf("price_mode", PriceMode.CURRENCY).forGetter(VendingSettings::priceMode),
         Codec.LONG.optionalFieldOf("price", 0L).forGetter(VendingSettings::price),
-        ItemStack.OPTIONAL_CODEC.optionalFieldOf("price_item", ItemStack.EMPTY).forGetter(VendingSettings::priceItem),
+        TagCodecs.ITEM.optionalFieldOf("price_item", ItemStack.EMPTY).forGetter(VendingSettings::priceItem),
         Codec.BOOL.optionalFieldOf("buyback", false).forGetter(VendingSettings::buyback),
         ConfigCodecs.enumCodec(DisplayAnimation.class).optionalFieldOf("animation", DisplayAnimation.SPIN_BOB).forGetter(VendingSettings::animation)
     ).apply(i, VendingSettings::new));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, VendingSettings> STREAM_CODEC = StreamCodec.of(
-        (buf, s) -> {
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, s.goods);
-            buf.writeVarInt(s.priceMode.ordinal());
-            buf.writeVarLong(s.price);
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, s.priceItem);
-            buf.writeBoolean(s.buyback);
-            buf.writeVarInt(s.animation.ordinal());
-        },
-        buf -> new VendingSettings(
-            ItemStack.OPTIONAL_STREAM_CODEC.decode(buf),
+    /** Network form (menu opening data); item stacks carry their NBT, bounded by {@link FriendlyByteBuf#readItem()}. */
+    public void write(FriendlyByteBuf buf) {
+        buf.writeItem(goods);
+        buf.writeVarInt(priceMode.ordinal());
+        buf.writeVarLong(price);
+        buf.writeItem(priceItem);
+        buf.writeBoolean(buyback);
+        buf.writeVarInt(animation.ordinal());
+    }
+
+    public static VendingSettings read(FriendlyByteBuf buf) {
+        return new VendingSettings(
+            buf.readItem(),
             enumAt(PriceMode.values(), buf.readVarInt()),
             buf.readVarLong(),
-            ItemStack.OPTIONAL_STREAM_CODEC.decode(buf),
+            buf.readItem(),
             buf.readBoolean(),
-            enumAt(DisplayAnimation.values(), buf.readVarInt())));
+            enumAt(DisplayAnimation.values(), buf.readVarInt()));
+    }
 
     public static <E extends Enum<E>> E enumAt(E[] values, int ordinal) {
         if (ordinal < 0 || ordinal >= values.length) {

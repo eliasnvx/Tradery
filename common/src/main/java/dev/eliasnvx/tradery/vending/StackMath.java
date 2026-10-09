@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * Counting, fitting, taking and inserting items of one kind in a list of slots. Items match only when item and
- * all components are the same ({@link ItemStack#isSameItemSameComponents}): a damaged sword never pays for a new one.
+ * NBT are the same ({@link ItemStack#isSameItemSameTags}): a damaged sword never pays for a new one.
  * Every method works on the live stacks of the list, so menus watching the slots see the changes.
  */
 public final class StackMath {
@@ -14,7 +14,7 @@ public final class StackMath {
     }
 
     public static boolean matches(ItemStack stack, ItemStack sample) {
-        return !stack.isEmpty() && !sample.isEmpty() && ItemStack.isSameItemSameComponents(stack, sample);
+        return !stack.isEmpty() && !sample.isEmpty() && ItemStack.isSameItemSameTags(stack, sample);
     }
 
     /** Items matching {@code sample} in the slots. */

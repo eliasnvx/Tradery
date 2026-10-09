@@ -53,7 +53,7 @@ public final class QuickTradeInput {
         LocalPlayer player = minecraft.player;
         if (player == null || minecraft.level == null || !player.isShiftKeyDown()
             || !(minecraft.level.getBlockEntity(pos) instanceof VendingBlockEntity vendor) || !applies(player, vendor)
-            || !Platform.get().canSendToServer(TraderyPayloads.VendingQuickTradePayload.TYPE)) {
+            || !Platform.get().canSendToServer(TraderyPayloads.VendingQuickTradePayload.ID)) {
             return false;
         }
         long now = minecraft.level.getGameTime();

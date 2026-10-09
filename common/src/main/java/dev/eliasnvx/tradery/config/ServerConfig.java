@@ -22,10 +22,10 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         static final CurrencySection DEFAULT = new CurrencySection(TraderyApi.id("coin"), "Coins", "₮", 2, " ");
         static final Codec<CurrencySection> CODEC = RecordCodecBuilder.create(i -> i.group(
             field(ResourceLocation.CODEC, "id", DEFAULT.id).forGetter(CurrencySection::id),
-            field(Codec.string(1, 32), "name", DEFAULT.name).forGetter(CurrencySection::name),
-            field(Codec.string(0, 8), "symbol", DEFAULT.symbol).forGetter(CurrencySection::symbol),
+            field(ConfigCodecs.string(1, 32), "name", DEFAULT.name).forGetter(CurrencySection::name),
+            field(ConfigCodecs.string(0, 8), "symbol", DEFAULT.symbol).forGetter(CurrencySection::symbol),
             field(Codec.intRange(0, 6), "decimals", DEFAULT.decimals).forGetter(CurrencySection::decimals),
-            field(Codec.string(0, 3), "thousandsSeparator", DEFAULT.thousandsSeparator).forGetter(CurrencySection::thousandsSeparator)
+            field(ConfigCodecs.string(0, 3), "thousandsSeparator", DEFAULT.thousandsSeparator).forGetter(CurrencySection::thousandsSeparator)
         ).apply(i, CurrencySection::new));
     }
 
@@ -49,7 +49,7 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
     public record VendingSection(BigDecimal feePercent, int maxPerPlayer, List<ResourceLocation> itemBlacklist,
                                  List<ResourceLocation> facadeBlacklist, DisplayAnimation defaultAnimation) {
         static final VendingSection DEFAULT = new VendingSection(BigDecimal.valueOf(2), 0,
-            List.of(ResourceLocation.withDefaultNamespace("bedrock")), List.of(), DisplayAnimation.SPIN_BOB);
+            List.of(new ResourceLocation("bedrock")), List.of(), DisplayAnimation.SPIN_BOB);
         static final Codec<VendingSection> CODEC = RecordCodecBuilder.create(i -> i.group(
             field(ConfigCodecs.PERCENT, "feePercent", DEFAULT.feePercent).forGetter(VendingSection::feePercent),
             field(Codec.intRange(0, 100_000), "maxPerPlayer", DEFAULT.maxPerPlayer).forGetter(VendingSection::maxPerPlayer),

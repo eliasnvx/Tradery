@@ -3,7 +3,6 @@ package dev.eliasnvx.tradery.economy;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.eliasnvx.tradery.util.CodecSavedData;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -24,7 +23,7 @@ public final class AccountsData extends SavedData {
     ).apply(instance, AccountsData::new));
 
     public static final String NAME = "tradery_accounts";
-    public static final SavedData.Factory<AccountsData> FACTORY = CodecSavedData.factory(NAME, CODEC, AccountsData::new);
+    public static final CodecSavedData.Factory<AccountsData> FACTORY = CodecSavedData.factory(NAME, CODEC, AccountsData::new);
 
     private final Ledger ledger = new Ledger();
     private int decimals;
@@ -41,8 +40,8 @@ public final class AccountsData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        return CodecSavedData.save(CODEC, this, tag, registries);
+    public CompoundTag save(CompoundTag tag) {
+        return CodecSavedData.save(CODEC, this, tag);
     }
 
     public Ledger ledger() {

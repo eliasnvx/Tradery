@@ -24,10 +24,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,7 +36,7 @@ import java.util.UUID;
  * diminishing returns → daily cap → {@link RewardGrantedEvent} → deposit with reason {@code tradery:reward/<type>}.
  */
 public final class Rewards {
-    /** Scoreboard tag of mobs from (trial) spawners; set when they spawn, read when they die. */
+    /** Scoreboard tag of mobs from spawners; set when they spawn, read when they die. */
     public static final String SPAWNER_TAG = "tradery.spawner";
 
     private static ConfigFile<RewardsConfig> file;
@@ -139,7 +139,7 @@ public final class Rewards {
     }
 
     /** A fishing rod brought up items. */
-    public static void onFished(Player player, List<ItemStack> catches) {
+    public static void onFished(Player player, Collection<ItemStack> catches) {
         if (!(player instanceof ServerPlayer serverPlayer) || tables == null || tables.fish().isEmpty()) {
             return;
         }

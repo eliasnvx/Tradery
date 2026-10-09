@@ -230,10 +230,10 @@ public final class EconomyService implements TraderyEconomy {
         if (account instanceof LedgerAccount ledgerAccount && accounts.ledger().get(ledgerAccount.id()).orElse(null) == ledgerAccount) {
             return ledgerAccount;
         }
-        return switch (account.id()) {
-            case AccountId.Player player -> account(player.uuid());
-            case AccountId.System system -> systemAccount(system.id());
-        };
+        if (account.id() instanceof AccountId.Player player) {
+            return account(player.uuid());
+        }
+        return systemAccount(((AccountId.System) account.id()).id());
     }
 
     /** Creates or refreshes a player's account on join and sends the client what the HUD needs. */

@@ -3,7 +3,6 @@ package dev.eliasnvx.tradery.economy;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.eliasnvx.tradery.util.CodecSavedData;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -42,7 +41,7 @@ public final class HistoryData extends SavedData {
         .xmap(HistoryData::new, HistoryData::snapshot);
 
     public static final String NAME = "tradery_history";
-    public static final SavedData.Factory<HistoryData> FACTORY = CodecSavedData.factory(NAME, CODEC, HistoryData::new);
+    public static final CodecSavedData.Factory<HistoryData> FACTORY = CodecSavedData.factory(NAME, CODEC, HistoryData::new);
 
     private final Map<UUID, Deque<Entry>> entries = new HashMap<>();
 
@@ -54,8 +53,8 @@ public final class HistoryData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        return CodecSavedData.save(CODEC, this, tag, registries);
+    public CompoundTag save(CompoundTag tag) {
+        return CodecSavedData.save(CODEC, this, tag);
     }
 
     private Map<UUID, List<Entry>> snapshot() {

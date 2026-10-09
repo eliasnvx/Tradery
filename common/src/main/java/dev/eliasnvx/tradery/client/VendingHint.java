@@ -16,7 +16,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.state.BlockState;
@@ -229,7 +228,7 @@ public final class VendingHint {
     private static void details(Minecraft minecraft, ItemStack stack, int count) {
         bottom.add(new Row(DETAIL, Component.empty().append(stack.getHoverName())
             .append(Component.literal(" ×" + count).withStyle(ChatFormatting.GRAY)), TEXT, 0));
-        List<Component> lines = stack.getTooltipLines(Item.TooltipContext.of(minecraft.level), minecraft.player, TooltipFlag.NORMAL);
+        List<Component> lines = stack.getTooltipLines(minecraft.player, TooltipFlag.NORMAL);
         int added = 0;
         for (int i = 1; i < lines.size(); i++) {
             Component line = lines.get(i);

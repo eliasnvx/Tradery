@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LedgerTest {
-    private static final ResourceLocation COIN = ResourceLocation.fromNamespaceAndPath("tradery", "coin");
+    private static final ResourceLocation COIN = new ResourceLocation("tradery", "coin");
     private Ledger ledger;
     private LedgerAccount alice;
     private LedgerAccount bob;
@@ -24,7 +24,7 @@ class LedgerTest {
         ledger = new Ledger();
         alice = ledger.create(AccountId.player(UUID.randomUUID()), "Alice", false);
         bob = ledger.create(AccountId.player(UUID.randomUUID()), "Bob", false);
-        server = ledger.create(AccountId.system(ResourceLocation.fromNamespaceAndPath("tradery", "server")), "", true);
+        server = ledger.create(AccountId.system(new ResourceLocation("tradery", "server")), "", true);
         assertMoved(ledger.move(null, alice, COIN, 1_000, 0, 0));
     }
 

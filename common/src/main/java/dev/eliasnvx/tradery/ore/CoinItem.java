@@ -15,6 +15,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -81,7 +82,7 @@ public class CoinItem extends Item {
 
     /** "Worth 1.00 ₮" with the connected server's values (clients never read the server config). */
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         dev.eliasnvx.tradery.client.ClientEconomy.CurrencyView currency = dev.eliasnvx.tradery.client.ClientEconomy.currency();
         if (currency == null) {
             return;

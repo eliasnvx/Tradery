@@ -6,7 +6,6 @@ import dev.eliasnvx.tradery.api.AccountId;
 import dev.eliasnvx.tradery.util.CodecSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -34,7 +33,7 @@ public final class VendorsData extends SavedData {
 
     /** File name in the overworld's data storage ({@code data/tradery_vendors.dat}). */
     public static final String NAME = "tradery_vendors";
-    public static final SavedData.Factory<VendorsData> FACTORY = CodecSavedData.factory(NAME, CODEC, VendorsData::new);
+    public static final CodecSavedData.Factory<VendorsData> FACTORY = CodecSavedData.factory(NAME, CODEC, VendorsData::new);
 
     private final Map<GlobalPos, Entry> vendors = new LinkedHashMap<>();
 
@@ -50,8 +49,8 @@ public final class VendorsData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        return CodecSavedData.save(CODEC, this, tag, registries);
+    public CompoundTag save(CompoundTag tag) {
+        return CodecSavedData.save(CODEC, this, tag);
     }
 
     /** @param overwrite replace a different owner (placement); a load never does */

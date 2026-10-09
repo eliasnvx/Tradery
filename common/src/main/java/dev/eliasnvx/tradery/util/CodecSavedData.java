@@ -2,15 +2,13 @@ package dev.eliasnvx.tradery.util;
 
 import com.mojang.serialization.Codec;
 import dev.eliasnvx.tradery.Tradery;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -22,20 +20,28 @@ public final class CodecSavedData {
     }
 
     /**
+     * How to create and load one kind of saved data: what {@code DimensionDataStorage#computeIfAbsent} takes
+     * (1.20.1 has no {@code SavedData.Factory}).
+     *
+     * @param constructor  a fresh, empty instance
+     * @param deserializer reads the {@code data} compound of the file
+     */
+    public record Factory<T extends SavedData>(Supplier<T> constructor, Function<CompoundTag, T> deserializer) {
+    }
+
+    /**
      * A factory that decodes the data with {@code codec}. Data that can't be read is logged and the readable part
      * kept; nothing readable at all starts empty (as vanilla does with a broken file).
      */
-    public static <T extends SavedData> SavedData.Factory<T> factory(String name, Codec<T> codec, Supplier<T> empty) {
-        return new SavedData.Factory<>(empty, (tag, registries) -> codec.parse(RegistryOps.create(NbtOps.INSTANCE, registries), tag)
+    public static <T extends SavedData> Factory<T> factory(String name, Codec<T> codec, Supplier<T> empty) {
+        return new Factory<>(empty, tag -> codec.parse(NbtOps.INSTANCE, tag)
             .resultOrPartial(error -> Tradery.LOGGER.error("Failed to parse saved data '{}': {}", name, error))
-            .orElseGet(empty),
-            // Plain mod data: the command-storage fixer leaves it alone
-            DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
+            .orElseGet(empty));
     }
 
-    /** Encodes {@code value} into {@code into} (the body of {@link SavedData#save(CompoundTag, HolderLookup.Provider)}). */
-    public static <T> CompoundTag save(Codec<T> codec, T value, CompoundTag into, HolderLookup.Provider registries) {
-        Tag encoded = codec.encodeStart(RegistryOps.create(NbtOps.INSTANCE, registries), value).getOrThrow();
+    /** Encodes {@code value} into {@code into} (the body of {@link SavedData#save(CompoundTag)}). */
+    public static <T> CompoundTag save(Codec<T> codec, T value, CompoundTag into) {
+        Tag encoded = codec.encodeStart(NbtOps.INSTANCE, value).getOrThrow(false, error -> { });
         if (!(encoded instanceof CompoundTag compound)) {
             throw new IllegalStateException("Saved data must encode to a compound tag, got " + encoded.getType().getName());
         }
@@ -43,7 +49,7 @@ public final class CodecSavedData {
     }
 
     /** The server's instance, loaded or created on first use. */
-    public static <T extends SavedData> T get(MinecraftServer server, SavedData.Factory<T> factory, String name) {
-        return server.overworld().getDataStorage().computeIfAbsent(factory, name);
+    public static <T extends SavedData> T get(MinecraftServer server, Factory<T> factory, String name) {
+        return server.overworld().getDataStorage().computeIfAbsent(factory.deserializer(), factory.constructor(), name);
     }
 }
