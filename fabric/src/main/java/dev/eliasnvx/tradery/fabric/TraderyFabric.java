@@ -6,7 +6,7 @@ import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.server.TraderyServer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
@@ -49,16 +49,16 @@ public final class TraderyFabric implements ModInitializer {
                 net.minecraft.world.level.levelgen.GenerationStep.Decoration.UNDERGROUND_ORES, feature);
         }
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> TraderyServer.onPlayerRespawnOrTravel(newPlayer));
-        ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register((player, origin, destination) ->
+        ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) ->
             TraderyServer.onPlayerRespawnOrTravel(player));
     }
 
     private static <T extends CustomPacketPayload> void registerClientbound(TraderyPayloads.Entry<T> entry) {
-        PayloadTypeRegistry.clientboundPlay().register(entry.type(), entry.codec());
+        PayloadTypeRegistry.playS2C().register(entry.type(), entry.codec());
     }
 
     private static <T extends CustomPacketPayload> void registerServerbound(TraderyPayloads.Entry<T> entry) {
-        PayloadTypeRegistry.serverboundPlay().register(entry.type(), entry.codec());
+        PayloadTypeRegistry.playC2S().register(entry.type(), entry.codec());
     }
 
     /** Fabric runs play payload handlers on the server thread. */

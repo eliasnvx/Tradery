@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ChunkMapMixin {
     @Shadow
     @Final
-    private ServerLevel level;
+    ServerLevel level;
 
     @Inject(method = "save(Lnet/minecraft/world/level/chunk/ChunkAccess;)Z", at = @At("RETURN"))
     private void tradery$saveTradesWithChunk(ChunkAccess chunk, CallbackInfoReturnable<Boolean> cir) {

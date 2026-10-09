@@ -20,9 +20,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -82,7 +82,7 @@ public final class SourcesGameTests {
 
     private static int itemsAround(GameTestHelper helper, Item item) {
         int total = 0;
-        for (ItemEntity entity : helper.getEntities(EntityTypes.ITEM, ORE, 4)) {
+        for (ItemEntity entity : helper.getEntities(EntityType.ITEM, ORE, 4)) {
             if (entity.getItem().is(item)) {
                 total += entity.getItem().getCount();
             }
@@ -145,8 +145,8 @@ public final class SourcesGameTests {
     public static void coinPickupWithFullInventory(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper, ORE);
         setBalance(player, 0);
-        for (int i = 0; i < player.getInventory().getNonEquipmentItems().size(); i++) {
-            player.getInventory().getNonEquipmentItems().set(i, new ItemStack(Items.DIRT, 64));
+        for (int i = 0; i < player.getInventory().items.size(); i++) {
+            player.getInventory().items.set(i, new ItemStack(Items.DIRT, 64));
         }
         ItemEntity coins = new ItemEntity(helper.getLevel(), player.getX(), player.getY(), player.getZ(),
             new ItemStack(TraderyItems.coin(CoinTier.SILVER), 3));
@@ -175,7 +175,7 @@ public final class SourcesGameTests {
 
         // Sneak + use puts every coin back
         player.setShiftKeyDown(true);
-        ItemStack held = player.getInventory().getNonEquipmentItems().stream().filter(s -> s.is(TraderyItems.coin(CoinTier.GOLD))).findFirst()
+        ItemStack held = player.getInventory().items.stream().filter(s -> s.is(TraderyItems.coin(CoinTier.GOLD))).findFirst()
             .orElseThrow();
         player.setItemInHand(InteractionHand.MAIN_HAND, held.copy());
         held.setCount(0);
@@ -183,8 +183,8 @@ public final class SourcesGameTests {
         helper.assertValueEqual(balance(player), 2 * gold, "all coins deposited");
         helper.assertValueEqual(player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 0, "coins gone after deposit");
 
-        for (int i = 0; i < player.getInventory().getNonEquipmentItems().size(); i++) {
-            player.getInventory().getNonEquipmentItems().set(i, new ItemStack(Items.DIRT, 64));
+        for (int i = 0; i < player.getInventory().items.size(); i++) {
+            player.getInventory().items.set(i, new ItemStack(Items.DIRT, 64));
         }
         helper.assertValueEqual(CoinWithdraw.withdraw(player, gold), 0, "no room: refused");
         helper.assertValueEqual(balance(player), 2 * gold, "no money taken without room");
@@ -194,13 +194,13 @@ public final class SourcesGameTests {
     public static void rewardKillSkipsSpawnerMobs(GameTestHelper helper) {
         ServerPlayer hunter = survivalPlayer(helper, ORE);
         setBalance(hunter, 0);
-        Zombie farmed = helper.spawnWithNoFreeWill(EntityTypes.ZOMBIE, ORE.east());
+        Zombie farmed = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, ORE.east());
         farmed.addTag(Rewards.SPAWNER_TAG);
-        farmed.hurtServer(helper.getLevel(), hunter.damageSources().playerAttack(hunter), 1000);
+        farmed.hurt(hunter.damageSources().playerAttack(hunter), 1000);
         helper.assertValueEqual(balance(hunter), 0L, "a spawner zombie pays nothing");
 
-        Zombie wild = helper.spawnWithNoFreeWill(EntityTypes.ZOMBIE, ORE.west());
-        wild.hurtServer(helper.getLevel(), hunter.damageSources().playerAttack(hunter), 1000);
+        Zombie wild = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, ORE.west());
+        wild.hurt(hunter.damageSources().playerAttack(hunter), 1000);
         long paid = balance(hunter);
         long unit = EconomyService.INSTANCE.toMinorOrMax(BigDecimal.ONE, "test");
         helper.assertTrue(paid >= unit && paid <= 3 * unit, "a wild zombie pays 1-3, got " + paid);
@@ -242,7 +242,8 @@ public final class SourcesGameTests {
             "net.minecraft.world.inventory.ResultSlot",
             "net.minecraft.world.entity.projectile.FishingHook",
             "net.minecraft.server.PlayerAdvancements",
-            "net.minecraft.world.entity.EntityType",
+            "net.minecraft.world.level.BaseSpawner",
+            "net.minecraft.world.level.block.entity.trialspawner.TrialSpawner",
             "net.minecraft.world.item.BlockItem"
         };
         for (String target : targets) {
@@ -264,7 +265,7 @@ public final class SourcesGameTests {
         for (var biomeKey : List.of(net.minecraft.world.level.biome.Biomes.PLAINS, net.minecraft.world.level.biome.Biomes.DEEP_DARK)) {
             var settings = biomes.getOrThrow(biomeKey).value().getGenerationSettings();
             for (var featureKey : dev.eliasnvx.tradery.ore.CoinOreGeneration.ALL) {
-                helper.assertTrue(settings.hasFeature(features.getOrThrow(featureKey).value()), featureKey.identifier() + " in " + biomeKey.identifier());
+                helper.assertTrue(settings.hasFeature(features.getOrThrow(featureKey).value()), featureKey.location() + " in " + biomeKey.location());
             }
         }
         var nether = biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.NETHER_WASTES).value().getGenerationSettings();
@@ -284,7 +285,7 @@ public final class SourcesGameTests {
                 var block = TraderyItems.ore(tier, deepslate);
                 var stack = new ItemStack(block.asItem());
                 for (String tag : processingTags) {
-                    var id = net.minecraft.resources.Identifier.fromNamespaceAndPath("c", tag);
+                    var id = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", tag);
                     helper.assertFalse(block.defaultBlockState().is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, id)),
                         block + " is not in #c:" + tag);
                     helper.assertFalse(stack.is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, id)),

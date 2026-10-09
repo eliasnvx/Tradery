@@ -2,7 +2,7 @@ package dev.eliasnvx.tradery.economy;
 
 import dev.eliasnvx.tradery.api.AccountId;
 import dev.eliasnvx.tradery.api.FailReason;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -23,7 +23,7 @@ public final class Ledger {
     /** Lower-cased last known name → player UUID, for commands that take offline players. */
     private final Map<String, UUID> playersByName = new HashMap<>();
     /** Sum of every finite balance, per currency: the money supply held on accounts. */
-    private final Map<Identifier, Long> totals = new HashMap<>();
+    private final Map<ResourceLocation, Long> totals = new HashMap<>();
 
     /** Result of {@link #move}. */
     public sealed interface Outcome permits Moved, Refused {
@@ -105,7 +105,7 @@ public final class Ledger {
     }
 
     /** Money held on finite accounts in this currency. */
-    public long total(Identifier currency) {
+    public long total(ResourceLocation currency) {
         return totals.getOrDefault(currency, 0L);
     }
 
@@ -115,7 +115,7 @@ public final class Ledger {
      *
      * @param maxBalance ceiling for the payee's balance, {@code <= 0} for none
      */
-    public Outcome move(@Nullable LedgerAccount from, @Nullable LedgerAccount to, Identifier currency, long amount, long fee, long maxBalance) {
+    public Outcome move(@Nullable LedgerAccount from, @Nullable LedgerAccount to, ResourceLocation currency, long amount, long fee, long maxBalance) {
         if (amount <= 0 || fee < 0 || fee > amount || (from == null && to == null) || (from != null && from == to)) {
             return new Refused(FailReason.INVALID_AMOUNT);
         }

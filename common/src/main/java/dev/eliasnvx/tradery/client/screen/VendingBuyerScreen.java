@@ -6,7 +6,7 @@ import dev.eliasnvx.tradery.menu.VendingBuyerMenu;
 import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -32,7 +32,9 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
     private long resultAt;
 
     public VendingBuyerScreen(VendingBuyerMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 176, 134);
+        super(menu, inventory, title);
+        imageWidth = 176;
+        imageHeight = 134;
     }
 
     @Override
@@ -65,8 +67,13 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        super.extractBackground(graphics, mouseX, mouseY, a);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        super.render(graphics, mouseX, mouseY, partialTick);
+        renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         Panels.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
         Panels.inset(graphics, leftPos + 7, topPos + OFFER_Y, 162, 28);
         Panels.slot(graphics, leftPos + GOODS_X, topPos + OFFER_Y + 6);
@@ -77,25 +84,25 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
     }
 
     @Override
-    protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, title, titleLabelX, titleLabelY, Panels.LABEL, false);
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, titleLabelX, titleLabelY, Panels.LABEL, false);
         VendingSettings settings = menu.data().settings();
         ItemStack goods = settings.goods();
         int rowY = OFFER_Y + 6;
 
-        graphics.item(goods, GOODS_X, rowY);
-        graphics.itemDecorations(font, goods, GOODS_X, rowY);
+        graphics.renderItem(goods, GOODS_X, rowY);
+        graphics.renderItemDecorations(font, goods, GOODS_X, rowY);
         Component arrow = Component.translatable(settings.isBuyback() ? "tradery.screen.you_get" : "tradery.screen.for");
-        graphics.text(font, arrow, GOODS_X + 22, rowY + 4, Panels.LABEL, false);
+        graphics.drawString(font, arrow, GOODS_X + 22, rowY + 4, Panels.LABEL, false);
         if (settings.priceMode() == PriceMode.ITEM && !settings.isBuyback()) {
             ItemStack price = settings.priceItem();
-            graphics.item(price, PRICE_X, rowY);
-            graphics.itemDecorations(font, price, PRICE_X, rowY);
+            graphics.renderItem(price, PRICE_X, rowY);
+            graphics.renderItemDecorations(font, price, PRICE_X, rowY);
         } else {
             ClientEconomy.CurrencyView currency = ClientEconomy.currency();
             Component text = settings.price() == 0 ? Component.translatable("tradery.vending.free")
                 : currency != null ? currency.money(settings.price()) : Component.literal(String.valueOf(settings.price()));
-            graphics.text(font, text, PRICE_X - 20 + 16, rowY + 4, GOLD, true);
+            graphics.drawString(font, text, PRICE_X - 20 + 16, rowY + 4, GOLD, true);
         }
 
         int available = menu.available();
@@ -103,21 +110,21 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
             ? Component.translatable("tradery.screen.room", count(available))
             : Component.translatable("tradery.screen.in_stock", count(available));
         // One fact per line: side by side they collide in languages with long words
-        graphics.text(font, stock, 8, 50, Panels.LABEL, false);
+        graphics.drawString(font, stock, 8, 50, Panels.LABEL, false);
         Component can = Component.translatable(settings.isBuyback() ? "tradery.screen.you_have" : "tradery.screen.you_afford",
             count(menu.affordable()));
-        graphics.text(font, can, 8, 60, Panels.LABEL, false);
-        graphics.text(font, Component.translatable("tradery.screen.per_trade", settings.perTrade()), 8, 70, 0xFF707070, false);
+        graphics.drawString(font, can, 8, 60, Panels.LABEL, false);
+        graphics.drawString(font, Component.translatable("tradery.screen.per_trade", settings.perTrade()), 8, 70, 0xFF707070, false);
 
         if (settings.priceMode() == PriceMode.CURRENCY && ClientEconomy.currency() != null) {
             Component balance = Component.translatable("tradery.screen.balance", ClientEconomy.currency().money(ClientEconomy.balance()));
-            graphics.text(font, balance, 8, 106, Panels.LABEL, false);
+            graphics.drawString(font, balance, 8, 106, Panels.LABEL, false);
         }
         if (!resultMessage.getString().isEmpty() && System.currentTimeMillis() - resultAt < 6000) {
             List<FormattedCharSequence> lines = font.split(resultMessage, imageWidth - 16);
             int y = 117;
             for (FormattedCharSequence line : lines.subList(0, Math.min(1, lines.size()))) {
-                graphics.text(font, line, 8, y, resultSuccess ? OK : ERROR, false);
+                graphics.drawString(font, line, 8, y, resultSuccess ? OK : ERROR, false);
                 y += 10;
             }
         }
@@ -128,14 +135,14 @@ public class VendingBuyerScreen extends AbstractContainerScreen<VendingBuyerMenu
     }
 
     @Override
-    protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        super.extractTooltip(graphics, mouseX, mouseY);
+    protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        super.renderTooltip(graphics, mouseX, mouseY);
         VendingSettings settings = menu.data().settings();
         int rowY = topPos + OFFER_Y + 6;
         if (isHovering(GOODS_X, OFFER_Y + 6, 16, 16, mouseX, mouseY)) {
-            graphics.setTooltipForNextFrame(font, settings.goods(), mouseX, mouseY);
+            graphics.renderTooltip(font, settings.goods(), mouseX, mouseY);
         } else if (settings.priceMode() == PriceMode.ITEM && isHovering(PRICE_X, OFFER_Y + 6, 16, 16, mouseX, mouseY)) {
-            graphics.setTooltipForNextFrame(font, settings.priceItem(), mouseX, mouseY);
+            graphics.renderTooltip(font, settings.priceItem(), mouseX, mouseY);
         }
     }
 }

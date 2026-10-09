@@ -12,7 +12,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -80,10 +80,10 @@ public final class VendingHint {
     private VendingHint() {
     }
 
-    public static void render(GuiGraphicsExtractor graphics) {
+    public static void render(GuiGraphics graphics) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (!enabled() || minecraft.player == null || minecraft.level == null || minecraft.gui.screen() != null
-            || minecraft.gui.hud.isHidden()
+        if (!enabled() || minecraft.player == null || minecraft.level == null || minecraft.screen != null
+            || minecraft.options.hideGui
             || !(minecraft.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
             || !(minecraft.level.getBlockEntity(hit.getBlockPos()) instanceof VendingBlockEntity vendor)) {
             return;
@@ -93,7 +93,7 @@ public final class VendingHint {
         Font font = minecraft.font;
         int x = (graphics.guiWidth() - width) / 2;
         int y = TraderyConfig.client().vending().hintY() + TooltipRenderUtil.PADDING_TOP;
-        TooltipRenderUtil.extractTooltipBackground(graphics, x, y, width, height, null);
+        TooltipRenderUtil.renderTooltipBackground(graphics, x, y, width, height, 0);
         int rowY = drawRows(graphics, font, top, x, y);
         if (hasOffer) {
             drawOffer(graphics, font, x + (width - offerWidth) / 2, rowY);
@@ -134,31 +134,31 @@ public final class VendingHint {
         return !jadeLoaded;
     }
 
-    private static int drawRows(GuiGraphicsExtractor graphics, Font font, List<Row> rows, int x, int y) {
+    private static int drawRows(GuiGraphics graphics, Font font, List<Row> rows, int x, int y) {
         for (int i = 0; i < rows.size(); i++) {
             Row row = rows.get(i);
             int rowX = row.kind() == CENTERED ? x + (width - font.width(row.text())) / 2 : x + row.indent();
-            graphics.text(font, row.text(), rowX, y, row.color(), true);
+            graphics.drawString(font, row.text(), rowX, y, row.color(), true);
             y += TEXT_ROW;
         }
         return y;
     }
 
     /** "Sells [icon×4] for (coin)2.50", centered; the counts are drawn on the icons as in an inventory. */
-    private static void drawOffer(GuiGraphicsExtractor graphics, Font font, int x, int y) {
+    private static void drawOffer(GuiGraphics graphics, Font font, int x, int y) {
         int textY = y + 5;
-        graphics.text(font, offerLabel, x, textY, LABEL, true);
+        graphics.drawString(font, offerLabel, x, textY, LABEL, true);
         x += font.width(offerLabel) + GAP;
-        graphics.item(offerGoods, x, y + 1);
-        graphics.itemDecorations(font, offerGoods, x, y + 1);
+        graphics.renderItem(offerGoods, x, y + 1);
+        graphics.renderItemDecorations(font, offerGoods, x, y + 1);
         x += ICON + GAP;
-        graphics.text(font, offerFor, x, textY, LABEL, true);
+        graphics.drawString(font, offerFor, x, textY, LABEL, true);
         x += font.width(offerFor) + GAP;
         if (offerMoney != null) {
-            graphics.text(font, offerMoney, x, textY, GOLD, true);
+            graphics.drawString(font, offerMoney, x, textY, GOLD, true);
         } else {
-            graphics.item(offerPriceItem, x, y + 1);
-            graphics.itemDecorations(font, offerPriceItem, x, y + 1);
+            graphics.renderItem(offerPriceItem, x, y + 1);
+            graphics.renderItemDecorations(font, offerPriceItem, x, y + 1);
         }
     }
 

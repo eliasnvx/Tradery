@@ -1,6 +1,5 @@
 package dev.eliasnvx.tradery.registry;
 
-import dev.eliasnvx.tradery.Tradery;
 import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.vending.DisplayBlock;
 import dev.eliasnvx.tradery.vending.DisplayBlockEntity;
@@ -9,7 +8,6 @@ import dev.eliasnvx.tradery.vending.VendingBlockEntity;
 import dev.eliasnvx.tradery.vending.VendorKeyItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -22,7 +20,6 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -33,20 +30,21 @@ public final class TraderyBlocks {
 
     public static final Supplier<VendingBlock> VENDING_BLOCK = block("vending_block", VendingBlock::new,
         BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.5f, BLAST_PROOF).sound(SoundType.METAL)
-            .noOcclusion().pushReaction(PushReaction.IMMOVEABLE));
+            .noOcclusion().pushReaction(PushReaction.BLOCK));
     public static final Supplier<DisplayBlock> DISPLAY_BLOCK = block("display_block", DisplayBlock::new,
         BlockBehaviour.Properties.of().mapColor(MapColor.QUARTZ).strength(1.5f, BLAST_PROOF).sound(SoundType.GLASS)
-            .noOcclusion().pushReaction(PushReaction.IMMOVEABLE));
+            .noOcclusion().pushReaction(PushReaction.BLOCK));
 
     public static final Supplier<BlockItem> VENDING_BLOCK_ITEM = blockItem("vending_block", VENDING_BLOCK);
     public static final Supplier<BlockItem> DISPLAY_BLOCK_ITEM = blockItem("display_block", DISPLAY_BLOCK);
     public static final Supplier<VendorKeyItem> VENDOR_KEY = item("vendor_key",
         properties -> new VendorKeyItem(properties.stacksTo(1).rarity(Rarity.EPIC)));
 
+    // No data fixer type: mod block entities have no vanilla fixes
     public static final Supplier<BlockEntityType<VendingBlockEntity>> VENDING_BLOCK_ENTITY = Platform.get().register(
-        Registries.BLOCK_ENTITY_TYPE, "vending_block", () -> new BlockEntityType<>(VendingBlockEntity::new, Set.of(VENDING_BLOCK.get())));
+        Registries.BLOCK_ENTITY_TYPE, "vending_block", () -> BlockEntityType.Builder.of(VendingBlockEntity::new, VENDING_BLOCK.get()).build(null));
     public static final Supplier<BlockEntityType<DisplayBlockEntity>> DISPLAY_BLOCK_ENTITY = Platform.get().register(
-        Registries.BLOCK_ENTITY_TYPE, "display_block", () -> new BlockEntityType<>(DisplayBlockEntity::new, Set.of(DISPLAY_BLOCK.get())));
+        Registries.BLOCK_ENTITY_TYPE, "display_block", () -> BlockEntityType.Builder.of(DisplayBlockEntity::new, DISPLAY_BLOCK.get()).build(null));
 
     public static final Supplier<CreativeModeTab> TAB = Platform.get().register(Registries.CREATIVE_MODE_TAB, "main",
         () -> Platform.get().creativeTabBuilder()
@@ -70,18 +68,15 @@ public final class TraderyBlocks {
     }
 
     static <B extends Block> Supplier<B> block(String name, Function<BlockBehaviour.Properties, B> factory, BlockBehaviour.Properties properties) {
-        ResourceKey<Block> key = ResourceKey.create(Registries.BLOCK, Tradery.id(name));
-        return Platform.get().register(Registries.BLOCK, name, () -> factory.apply(properties.setId(key)));
+        return Platform.get().register(Registries.BLOCK, name, () -> factory.apply(properties));
     }
 
+    /** A block item; its name is the block's ({@code block.tradery.<name>}). */
     static Supplier<BlockItem> blockItem(String name, Supplier<? extends Block> block) {
-        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Tradery.id(name));
-        return Platform.get().register(Registries.ITEM, name,
-            () -> new BlockItem(block.get(), new Item.Properties().setId(key).useBlockDescriptionPrefix()));
+        return Platform.get().register(Registries.ITEM, name, () -> new BlockItem(block.get(), new Item.Properties()));
     }
 
     static <I extends Item> Supplier<I> item(String name, Function<Item.Properties, I> factory) {
-        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Tradery.id(name));
-        return Platform.get().register(Registries.ITEM, name, () -> factory.apply(new Item.Properties().setId(key)));
+        return Platform.get().register(Registries.ITEM, name, () -> factory.apply(new Item.Properties()));
     }
 }

@@ -7,16 +7,8 @@
   "entrypoints": {
     "fabric-gametest": [
       "dev.eliasnvx.tradery.fabric.gametest.TraderyGameTestsFabric",
-      "dev.eliasnvx.tradery.fabric.gametest.CommonEconomyGameTests"
-    ],
-    "fabric-client-gametest": [
-      "dev.eliasnvx.tradery.fabric.gametest.HudClientTest",
-      "dev.eliasnvx.tradery.fabric.gametest.VendingClientTest",
-      "dev.eliasnvx.tradery.fabric.gametest.OreClientTest",
-      "dev.eliasnvx.tradery.fabric.gametest.NetworkClientTest",
-      "dev.eliasnvx.tradery.fabric.gametest.PerformanceClientTest",
-      "dev.eliasnvx.tradery.fabric.gametest.DocsShotsClientTest",
-      "dev.eliasnvx.tradery.fabric.gametest.LanguageShotsClientTest"
+      "dev.eliasnvx.tradery.fabric.gametest.CommonEconomyGameTests",
+      "dev.eliasnvx.tradery.fabric.gametest.FakePlayerGameTests"
     ]
   },
   "depends": {

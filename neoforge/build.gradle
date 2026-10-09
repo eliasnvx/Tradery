@@ -69,7 +69,7 @@ dependencies {
 
     // Dev only: run with the optional mods installed: ./gradlew :neoforge:runClient -Pcompat=true
     if (project.hasProperty('compat')) {
-        runtimeOnly("mezz.jei:jei-26.3-neoforge:${jei_version}")
+        runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
         runtimeOnly("maven.modrinth:jade:${jade_neoforge_version}")
         runtimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}")
         runtimeOnly("dev.architectury:architectury-neoforge:${architectury_version}")

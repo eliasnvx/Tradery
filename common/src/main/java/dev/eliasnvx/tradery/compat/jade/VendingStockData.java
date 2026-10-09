@@ -8,7 +8,7 @@ import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.StreamServerDataProvider;
 
@@ -19,10 +19,10 @@ import snownee.jade.api.StreamServerDataProvider;
 enum VendingStockData implements StreamServerDataProvider<BlockAccessor, Integer> {
     INSTANCE;
 
-    private static final Identifier UID = Tradery.id("vending_stock");
+    private static final ResourceLocation UID = Tradery.id("vending_stock");
 
     @Override
-    public Identifier getUid() {
+    public ResourceLocation getUid() {
         return UID;
     }
 

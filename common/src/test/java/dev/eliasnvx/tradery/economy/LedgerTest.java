@@ -2,7 +2,7 @@ package dev.eliasnvx.tradery.economy;
 
 import dev.eliasnvx.tradery.api.AccountId;
 import dev.eliasnvx.tradery.api.FailReason;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LedgerTest {
-    private static final Identifier COIN = Identifier.fromNamespaceAndPath("tradery", "coin");
+    private static final ResourceLocation COIN = ResourceLocation.fromNamespaceAndPath("tradery", "coin");
     private Ledger ledger;
     private LedgerAccount alice;
     private LedgerAccount bob;
@@ -24,7 +24,7 @@ class LedgerTest {
         ledger = new Ledger();
         alice = ledger.create(AccountId.player(UUID.randomUUID()), "Alice", false);
         bob = ledger.create(AccountId.player(UUID.randomUUID()), "Bob", false);
-        server = ledger.create(AccountId.system(Identifier.fromNamespaceAndPath("tradery", "server")), "", true);
+        server = ledger.create(AccountId.system(ResourceLocation.fromNamespaceAndPath("tradery", "server")), "", true);
         assertMoved(ledger.move(null, alice, COIN, 1_000, 0, 0));
     }
 

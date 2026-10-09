@@ -9,7 +9,7 @@ import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.ITooltip;
@@ -22,10 +22,10 @@ import snownee.jade.api.config.IPluginConfig;
 enum VendingJadeProvider implements IBlockComponentProvider {
     INSTANCE;
 
-    private static final Identifier UID = Tradery.id("vending_block");
+    private static final ResourceLocation UID = Tradery.id("vending_block");
 
     @Override
-    public Identifier getUid() {
+    public ResourceLocation getUid() {
         return UID;
     }
 

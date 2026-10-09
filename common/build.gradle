@@ -18,8 +18,8 @@ dependencies {
     implementation project(':api')
 
     // Both loaders ship Fabric Mixin and MixinExtras, so common mixins can use them
-    // https://github.com/neoforged/NeoForge/blob/26.3.x/gradle.properties
-    compileOnly 'net.fabricmc:sponge-mixin:0.17.3+mixin.0.8.7'
+    // NeoForge 21.1.256 ships Mixin 0.16.4, Fabric Loader 0.19.5 Mixin 0.17.4; both MixinExtras 0.5.5. Compile against the lowest
+    compileOnly 'net.fabricmc:sponge-mixin:0.16.4+mixin.0.8.7'
     compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.3'))
 }
 

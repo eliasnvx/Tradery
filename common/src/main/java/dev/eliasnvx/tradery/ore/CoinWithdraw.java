@@ -31,7 +31,7 @@ public final class CoinWithdraw {
         }
         // Everything must fit before the money moves: dropped coins would be picked up and deposited again
         List<ItemStack> simulated = new ArrayList<>();
-        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
+        for (ItemStack stack : player.getInventory().items) {
             simulated.add(stack.copy());
         }
         for (ItemStack coins : split.stacks()) {
@@ -46,7 +46,7 @@ public final class CoinWithdraw {
             return 0;
         }
         for (ItemStack coins : split.stacks()) {
-            StackMath.insert(player.getInventory().getNonEquipmentItems(), coins, coins.getCount());
+            StackMath.insert(player.getInventory().items, coins, coins.getCount());
         }
         player.getInventory().setChanged();
         player.sendSystemMessage(Messages.tr("tradery.withdraw.done", "Withdrew %s in coins", Messages.money(amount)));

@@ -5,18 +5,17 @@ import dev.eliasnvx.tradery.config.ClientConfig;
 import dev.eliasnvx.tradery.config.TraderyConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 
 /**
  * The balance on screen: a small panel in a corner with a coin icon, a number that rolls to its new value, and
  * +/- popups that float away from the corner and fade out.
  */
 public final class BalanceHud {
-    static final Identifier COIN_SPRITE = Tradery.id("hud/coin");
+    static final ResourceLocation COIN_SPRITE = Tradery.id("hud/coin");
     private static final int ICON = 9;
     private static final int PAD = 3;
     private static final int GAP = 2;
@@ -89,12 +88,12 @@ public final class BalanceHud {
         return shownFrom + Math.round((shownTo - shownFrom) * eased);
     }
 
-    public static void render(GuiGraphicsExtractor graphics) {
+    public static void render(GuiGraphics graphics) {
         ClientConfig.Hud config = TraderyConfig.client().hud();
         Minecraft minecraft = Minecraft.getInstance();
         ClientEconomy.CurrencyView currency = ClientEconomy.currency();
         if (!config.enabled() || currency == null || !ClientEconomy.isActive() || minecraft.player == null
-            || minecraft.gui.screen() != null || minecraft.gui.hud.isHidden()) {
+            || minecraft.screen != null || minecraft.options.hideGui) {
             return;
         }
         long now = Util.getMillis();
@@ -123,12 +122,12 @@ public final class BalanceHud {
         }
 
         var pose = graphics.pose();
-        pose.pushMatrix();
-        pose.translate(x, y);
-        pose.scale(scale, scale);
+        pose.pushPose();
+        pose.translate(x, y, 0);
+        pose.scale(scale, scale, 1);
         graphics.fill(0, 0, width, height, PANEL);
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, COIN_SPRITE, PAD, PAD - 1, ICON, ICON);
-        graphics.text(font, text, PAD + ICON + GAP, PAD, TEXT, true);
+        graphics.blitSprite(COIN_SPRITE, PAD, PAD - 1, ICON, ICON);
+        graphics.drawString(font, text, PAD + ICON + GAP, PAD, TEXT, true);
 
         // Popups float away from the corner: up from a bottom corner, down from a top one
         int direction = corner.bottom() ? -1 : 1;
@@ -150,9 +149,9 @@ public final class BalanceHud {
             int color = (alpha << 24) | (popup.delta() > 0 ? GAIN : LOSS);
             int lineX = corner.right() ? width - font.width(line) : 0;
             int lineY = baseY + direction * (i * (font.lineHeight + 1) + Math.round(progress * POPUP_RISE));
-            graphics.text(font, line, lineX, lineY, color, true);
+            graphics.drawString(font, line, lineX, lineY, color, true);
         }
-        pose.popMatrix();
+        pose.popPose();
     }
 
     private static boolean overlapsHotbar(int x, int width, int screenWidth) {

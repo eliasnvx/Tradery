@@ -8,7 +8,7 @@ import dev.eliasnvx.tradery.util.MoneyText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Locale;
 
@@ -70,7 +70,7 @@ public final class Messages {
      * Name of a reason type: {@code tradery:vending/sale} → key {@code tradery.reason.tradery.vending.sale}, falling
      * back to the raw id for other mods' reasons without a translation.
      */
-    public static MutableComponent reason(Identifier type) {
+    public static MutableComponent reason(ResourceLocation type) {
         String key = "tradery.reason." + type.getNamespace() + "." + type.getPath().replace('/', '.');
         return tr(key, type.toString().toLowerCase(Locale.ROOT));
     }

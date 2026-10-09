@@ -114,7 +114,7 @@ class LangFilesTest {
         JsonObject en = lang("en_us");
         for (Field field : Reasons.class.getFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
-                net.minecraft.resources.Identifier id = (net.minecraft.resources.Identifier) field.get(null);
+                net.minecraft.resources.ResourceLocation id = (net.minecraft.resources.ResourceLocation) field.get(null);
                 String key = "tradery.reason." + id.getNamespace() + "." + id.getPath().replace('/', '.');
                 assertTrue(en.has(key), "no name for reason " + id);
             }

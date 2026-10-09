@@ -45,7 +45,7 @@ final class CommandArgs {
     /** Resolves a player argument to an existing account: online name first, then the last names the economy saw. */
     static LedgerAccount account(CommandContext<CommandSourceStack> context, String argument) throws CommandSyntaxException {
         String name = StringArgumentType.getString(context, argument);
-        ServerPlayer online = context.getSource().getServer().getPlayerList().getPlayer(name);
+        ServerPlayer online = context.getSource().getServer().getPlayerList().getPlayerByName(name);
         EconomyService economy = EconomyService.INSTANCE;
         if (online != null) {
             return economy.account(online.getUUID());

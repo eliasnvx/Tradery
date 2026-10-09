@@ -3,13 +3,13 @@ package dev.eliasnvx.tradery.economy;
 import dev.eliasnvx.tradery.api.Currency;
 import dev.eliasnvx.tradery.util.Money;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.math.BigDecimal;
 import java.util.OptionalLong;
 
 /** The configured currency. Immutable; replaced as a whole on reload. */
-public record SimpleCurrency(Identifier id, String displayName, String symbol, int decimals, String thousandsSeparator)
+public record SimpleCurrency(ResourceLocation id, String displayName, String symbol, int decimals, String thousandsSeparator)
     implements Currency {
 
     public SimpleCurrency {

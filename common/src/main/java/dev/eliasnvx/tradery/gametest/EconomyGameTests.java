@@ -10,7 +10,7 @@ import dev.eliasnvx.tradery.economy.EconomyService;
 import dev.eliasnvx.tradery.economy.LedgerAccount;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** The economy on a real server: transactions, events, the thread contract and /pay. */
 public final class EconomyGameTests {
-    static final Identifier TAXED = Identifier.fromNamespaceAndPath("tradery_test", "taxed");
-    static final Identifier BLOCKED = Identifier.fromNamespaceAndPath("tradery_test", "blocked");
+    static final ResourceLocation TAXED = ResourceLocation.fromNamespaceAndPath("tradery_test", "taxed");
+    static final ResourceLocation BLOCKED = ResourceLocation.fromNamespaceAndPath("tradery_test", "blocked");
     private static final AtomicBoolean LISTENING = new AtomicBoolean();
     private static final AtomicInteger BALANCE_EVENTS = new AtomicInteger();
 
@@ -55,6 +55,7 @@ public final class EconomyGameTests {
         });
     }
 
+    @SuppressWarnings("removal")
     private static LedgerAccount freshAccount(GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
         return EconomyService.INSTANCE.account(player.getUUID());
@@ -128,6 +129,7 @@ public final class EconomyGameTests {
         helper.succeed();
     }
 
+    @SuppressWarnings("removal")
     public static void payCommand(GameTestHelper helper) {
         EconomyService eco = EconomyService.INSTANCE;
         ServerPlayer sender = helper.makeMockServerPlayerInLevel();

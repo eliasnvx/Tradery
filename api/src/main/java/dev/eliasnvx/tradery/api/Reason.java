@@ -1,6 +1,6 @@
 package dev.eliasnvx.tradery.api;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * @param type a stable id, {@code <modid>:<category>/<action>}; Tradery's own are in {@link Reasons}
  * @param note optional free text (a player name, an item), may be {@code null}
  */
-public record Reason(Identifier type, @Nullable String note) {
+public record Reason(ResourceLocation type, @Nullable String note) {
     /** Longest note kept; longer notes are cut. */
     public static final int MAX_NOTE = 256;
 
@@ -23,7 +23,7 @@ public record Reason(Identifier type, @Nullable String note) {
      * @param type the reason type
      * @return a reason without a note
      */
-    public static Reason of(Identifier type) {
+    public static Reason of(ResourceLocation type) {
         return new Reason(type, null);
     }
 
@@ -32,7 +32,7 @@ public record Reason(Identifier type, @Nullable String note) {
      * @param note the note
      * @return a reason with a note
      */
-    public static Reason of(Identifier type, @Nullable String note) {
+    public static Reason of(ResourceLocation type, @Nullable String note) {
         return new Reason(type, note);
     }
 

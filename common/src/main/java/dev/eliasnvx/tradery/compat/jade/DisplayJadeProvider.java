@@ -4,7 +4,7 @@ import dev.eliasnvx.tradery.Tradery;
 import dev.eliasnvx.tradery.vending.DisplayBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.ITooltip;
@@ -14,10 +14,10 @@ import snownee.jade.api.config.IPluginConfig;
 enum DisplayJadeProvider implements IBlockComponentProvider {
     INSTANCE;
 
-    private static final Identifier UID = Tradery.id("display_block");
+    private static final ResourceLocation UID = Tradery.id("display_block");
 
     @Override
-    public Identifier getUid() {
+    public ResourceLocation getUid() {
         return UID;
     }
 

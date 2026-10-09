@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "G": "minecraft:glass",
-    "S": "#minecraft:slabs"
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "S": {
+      "tag": "minecraft:slabs"
+    }
   },
   "pattern": [
     "GGG",
@@ -11,6 +15,7 @@
     "SSS"
   ],
   "result": {
+    "count": 1,
     "id": "tradery:display_block"
   }
 }

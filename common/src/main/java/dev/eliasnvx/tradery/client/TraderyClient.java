@@ -1,10 +1,13 @@
 package dev.eliasnvx.tradery.client;
 
+import dev.eliasnvx.tradery.client.screen.VendingResultView;
 import dev.eliasnvx.tradery.config.ClientConfig;
 import dev.eliasnvx.tradery.config.TraderyConfig;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
@@ -41,7 +44,7 @@ public final class TraderyClient {
         ClientEconomy.reset();
     }
 
-    public static void renderHud(net.minecraft.client.gui.GuiGraphicsExtractor graphics) {
+    public static void renderHud(GuiGraphics graphics) {
         VendingHint.render(graphics);
         BalanceHud.render(graphics);
     }
@@ -52,16 +55,16 @@ public final class TraderyClient {
         TraderyConfig.saveClient(config.withHud(config.hud().withEnabled(enabled)));
         var player = Minecraft.getInstance().player;
         if (player != null) {
-            player.sendOverlayMessage(enabled
+            player.displayClientMessage(enabled
                 ? Component.translatableWithFallback("tradery.hud.shown", "Balance shown")
-                : Component.translatableWithFallback("tradery.hud.hidden", "Balance hidden"));
+                : Component.translatableWithFallback("tradery.hud.hidden", "Balance hidden"), true);
         }
     }
 
     private static void showVendingResult(TraderyPayloads.VendingResultPayload payload) {
-        if (Minecraft.getInstance().gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen
+        if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen
             && screen.getMenu().containerId == payload.containerId()
-            && screen instanceof dev.eliasnvx.tradery.client.screen.VendingResultView view) {
+            && screen instanceof VendingResultView view) {
             view.showResult(payload.success(), payload.message());
         }
     }

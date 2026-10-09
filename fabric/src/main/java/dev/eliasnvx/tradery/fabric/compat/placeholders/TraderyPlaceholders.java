@@ -17,38 +17,38 @@ public final class TraderyPlaceholders {
     }
 
     public static void register() {
-        Placeholders.registerServer(Tradery.id("balance"), (ctx, arg) -> {
+        Placeholders.register(Tradery.id("balance"), (ctx, arg) -> {
             if (!ctx.hasPlayer() || !EconomyService.INSTANCE.isReady()) {
                 return PlaceholderResult.invalid("No player");
             }
             EconomyService eco = EconomyService.INSTANCE;
-            return PlaceholderResult.value(eco.defaultCurrency().formatPlain(eco.account(ctx.serverPlayer().getUUID()).balance(eco.defaultCurrency())));
+            return PlaceholderResult.value(eco.defaultCurrency().formatPlain(eco.account(ctx.player().getUUID()).balance(eco.defaultCurrency())));
         });
-        Placeholders.registerServer(Tradery.id("balance_short"), (ctx, arg) -> {
+        Placeholders.register(Tradery.id("balance_short"), (ctx, arg) -> {
             if (!ctx.hasPlayer() || !EconomyService.INSTANCE.isReady()) {
                 return PlaceholderResult.invalid("No player");
             }
             EconomyService eco = EconomyService.INSTANCE;
-            return PlaceholderResult.value(eco.defaultCurrency().formatShort(eco.account(ctx.serverPlayer().getUUID()).balance(eco.defaultCurrency())));
+            return PlaceholderResult.value(eco.defaultCurrency().formatShort(eco.account(ctx.player().getUUID()).balance(eco.defaultCurrency())));
         });
-        Placeholders.registerServer(Tradery.id("balance_raw"), (ctx, arg) -> {
+        Placeholders.register(Tradery.id("balance_raw"), (ctx, arg) -> {
             if (!ctx.hasPlayer() || !EconomyService.INSTANCE.isReady()) {
                 return PlaceholderResult.invalid("No player");
             }
             EconomyService eco = EconomyService.INSTANCE;
-            long balance = eco.account(ctx.serverPlayer().getUUID()).balance(eco.defaultCurrency());
+            long balance = eco.account(ctx.player().getUUID()).balance(eco.defaultCurrency());
             return PlaceholderResult.value(eco.defaultCurrency().toMajor(balance).toPlainString());
         });
-        Placeholders.registerServer(Tradery.id("top_name"), (ctx, arg) -> {
+        Placeholders.register(Tradery.id("top_name"), (ctx, arg) -> {
             LedgerAccount entry = top(arg);
             return entry == null ? PlaceholderResult.value("") : PlaceholderResult.value(entry.displayName());
         });
-        Placeholders.registerServer(Tradery.id("top_balance"), (ctx, arg) -> {
+        Placeholders.register(Tradery.id("top_balance"), (ctx, arg) -> {
             LedgerAccount entry = top(arg);
             EconomyService eco = EconomyService.INSTANCE;
             return entry == null ? PlaceholderResult.value("") : PlaceholderResult.value(eco.defaultCurrency().formatPlain(entry.balance(eco.defaultCurrency())));
         });
-        Placeholders.registerServer(Tradery.id("currency"), (ctx, arg) ->
+        Placeholders.register(Tradery.id("currency"), (ctx, arg) ->
             PlaceholderResult.value(EconomyService.INSTANCE.defaultCurrency().symbol()));
     }
 

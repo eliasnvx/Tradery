@@ -13,8 +13,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.levelgen.placement.PlacementModifier;
-import com.mojang.serialization.MapCodec;
+import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -29,8 +28,8 @@ public final class TraderyItems {
     private static final Map<CoinTier, Supplier<CoinOreBlock>> DEEPSLATE_ORES = new EnumMap<>(CoinTier.class);
     private static final List<Supplier<? extends ItemLike>> TAB = new ArrayList<>();
 
-    public static final Supplier<MapCodec<? extends PlacementModifier>> ORE_ENABLED_FILTER = Platform.get().register(
-        Registries.PLACEMENT_MODIFIER_TYPE, "enabled_in_config", () -> OreEnabledFilter.CODEC);
+    public static final Supplier<PlacementModifierType<OreEnabledFilter>> ORE_ENABLED_FILTER = Platform.get().register(
+        Registries.PLACEMENT_MODIFIER_TYPE, "enabled_in_config", () -> () -> OreEnabledFilter.CODEC);
 
     static {
         for (CoinTier tier : CoinTier.values()) {

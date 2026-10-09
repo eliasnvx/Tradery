@@ -1,13 +1,11 @@
 {
   "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
   "textures": {
     "particle": "tradery:block/display_base",
     "base": "tradery:block/display_base",
     "top": "tradery:block/display_top",
-    "glass": {
-      "force_translucent": true,
-      "sprite": "tradery:block/case_glass"
-    },
+    "glass": "tradery:block/case_glass",
     "metal": "tradery:block/display_metal"
   },
   "elements": [

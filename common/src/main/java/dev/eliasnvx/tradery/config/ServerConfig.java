@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.eliasnvx.tradery.api.TraderyApi;
 import dev.eliasnvx.tradery.vending.DisplayAnimation;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,10 +18,10 @@ import static dev.eliasnvx.tradery.config.ConfigCodecs.field;
 public record ServerConfig(CurrencySection currency, EconomySection economy, PaySection pay, VendingSection vending,
                            OreSection ore, HistorySection history, LogSection log) {
 
-    public record CurrencySection(Identifier id, String name, String symbol, int decimals, String thousandsSeparator) {
+    public record CurrencySection(ResourceLocation id, String name, String symbol, int decimals, String thousandsSeparator) {
         static final CurrencySection DEFAULT = new CurrencySection(TraderyApi.id("coin"), "Coins", "₮", 2, " ");
         static final Codec<CurrencySection> CODEC = RecordCodecBuilder.create(i -> i.group(
-            field(Identifier.CODEC, "id", DEFAULT.id).forGetter(CurrencySection::id),
+            field(ResourceLocation.CODEC, "id", DEFAULT.id).forGetter(CurrencySection::id),
             field(Codec.string(1, 32), "name", DEFAULT.name).forGetter(CurrencySection::name),
             field(Codec.string(0, 8), "symbol", DEFAULT.symbol).forGetter(CurrencySection::symbol),
             field(Codec.intRange(0, 6), "decimals", DEFAULT.decimals).forGetter(CurrencySection::decimals),
@@ -46,15 +46,15 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         ).apply(i, PaySection::new));
     }
 
-    public record VendingSection(BigDecimal feePercent, int maxPerPlayer, List<Identifier> itemBlacklist,
-                                 List<Identifier> facadeBlacklist, DisplayAnimation defaultAnimation) {
+    public record VendingSection(BigDecimal feePercent, int maxPerPlayer, List<ResourceLocation> itemBlacklist,
+                                 List<ResourceLocation> facadeBlacklist, DisplayAnimation defaultAnimation) {
         static final VendingSection DEFAULT = new VendingSection(BigDecimal.valueOf(2), 0,
-            List.of(Identifier.withDefaultNamespace("bedrock")), List.of(), DisplayAnimation.SPIN_BOB);
+            List.of(ResourceLocation.withDefaultNamespace("bedrock")), List.of(), DisplayAnimation.SPIN_BOB);
         static final Codec<VendingSection> CODEC = RecordCodecBuilder.create(i -> i.group(
             field(ConfigCodecs.PERCENT, "feePercent", DEFAULT.feePercent).forGetter(VendingSection::feePercent),
             field(Codec.intRange(0, 100_000), "maxPerPlayer", DEFAULT.maxPerPlayer).forGetter(VendingSection::maxPerPlayer),
-            field(Identifier.CODEC.listOf(), "itemBlacklist", DEFAULT.itemBlacklist).forGetter(VendingSection::itemBlacklist),
-            field(Identifier.CODEC.listOf(), "facadeBlacklist", DEFAULT.facadeBlacklist).forGetter(VendingSection::facadeBlacklist),
+            field(ResourceLocation.CODEC.listOf(), "itemBlacklist", DEFAULT.itemBlacklist).forGetter(VendingSection::itemBlacklist),
+            field(ResourceLocation.CODEC.listOf(), "facadeBlacklist", DEFAULT.facadeBlacklist).forGetter(VendingSection::facadeBlacklist),
             field(ConfigCodecs.enumCodec(DisplayAnimation.class), "defaultAnimation", DEFAULT.defaultAnimation).forGetter(VendingSection::defaultAnimation)
         ).apply(i, VendingSection::new));
     }

@@ -60,7 +60,7 @@ public final class CoinMining {
             long left = Math.max(0, cap - stats.earnedToday(player.getUUID(), StatsData.Earning.ORE));
             pay = Math.min(amount, left);
             if (pay < amount) {
-                player.sendOverlayMessage(Messages.tr("tradery.ore.daily_cap", "Daily limit for coin ore reached"));
+                player.displayClientMessage(Messages.tr("tradery.ore.daily_cap", "Daily limit for coin ore reached"), true);
             }
         }
         if (pay <= 0) {
@@ -70,7 +70,7 @@ public final class CoinMining {
         if (result.isSuccess()) {
             stats.addEarned(player.getUUID(), StatsData.Earning.ORE, pay);
         } else if (result instanceof TransactionResult.Failure failure) {
-            player.sendOverlayMessage(Messages.failure(failure));
+            player.displayClientMessage(Messages.failure(failure), true);
         }
     }
 

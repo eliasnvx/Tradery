@@ -2,7 +2,7 @@ package dev.eliasnvx.tradery.api;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -35,7 +35,7 @@ public sealed interface AccountId permits AccountId.Player, AccountId.System {
      *
      * @param id the account id, in the owning mod's namespace
      */
-    record System(Identifier id) implements AccountId {
+    record System(ResourceLocation id) implements AccountId {
         @Override
         public String serialize() {
             return "system:" + id;
@@ -54,7 +54,7 @@ public sealed interface AccountId permits AccountId.Player, AccountId.System {
      * @param id a system account id
      * @return the system account id
      */
-    static AccountId system(Identifier id) {
+    static AccountId system(ResourceLocation id) {
         return new System(id);
     }
 
@@ -73,7 +73,7 @@ public sealed interface AccountId permits AccountId.Player, AccountId.System {
             }
         }
         if (text.startsWith("system:")) {
-            return Identifier.read(text.substring("system:".length())).map(System::new);
+            return ResourceLocation.read(text.substring("system:".length())).map(System::new);
         }
         return DataResult.error(() -> "Unknown account id: " + text);
     }

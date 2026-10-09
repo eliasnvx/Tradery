@@ -1,7 +1,7 @@
 package dev.eliasnvx.tradery.api;
 
 import dev.eliasnvx.tradery.api.internal.TraderyEconomyHolder;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -18,7 +18,7 @@ import java.util.UUID;
  * <pre>{@code
  * TraderyEconomy eco = TraderyEconomy.get();
  * Account player = eco.account(serverPlayer.getUUID());
- * TransactionResult result = eco.withdraw(player, 500, Reason.of(Identifier.fromNamespaceAndPath("mymod", "teleport_fee")));
+ * TransactionResult result = eco.withdraw(player, 500, Reason.of(ResourceLocation.fromNamespaceAndPath("mymod", "teleport_fee")));
  * if (result instanceof TransactionResult.Failure failure) { ... }
  * }</pre>
  */
@@ -63,7 +63,7 @@ public interface TraderyEconomy {
      * @param id the currency id, e.g. {@code tradery:coin}
      * @return the currency, or empty if unknown
      */
-    Optional<Currency> currency(Identifier id);
+    Optional<Currency> currency(ResourceLocation id);
 
     /**
      * The account of a player, created on first access (with the configured starting balance).
@@ -87,7 +87,7 @@ public interface TraderyEconomy {
      * @param id the account id, in the owning mod's namespace
      * @return the account, never {@code null}
      */
-    Account systemAccount(Identifier id);
+    Account systemAccount(ResourceLocation id);
 
     /**
      * The server account {@code tradery:server}. It is infinite: paying from it creates money, paying into it

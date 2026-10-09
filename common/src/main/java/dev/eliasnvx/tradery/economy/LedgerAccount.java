@@ -5,7 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.eliasnvx.tradery.api.Account;
 import dev.eliasnvx.tradery.api.AccountId;
 import dev.eliasnvx.tradery.api.Currency;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,18 +17,18 @@ public final class LedgerAccount implements Account {
     static final Codec<LedgerAccount> CODEC = RecordCodecBuilder.create(instance -> instance.group(
         AccountId.CODEC.fieldOf("id").forGetter(a -> a.id),
         Codec.STRING.optionalFieldOf("name", "").forGetter(a -> a.name),
-        Codec.unboundedMap(Identifier.CODEC, Codec.LONG).optionalFieldOf("balances", Map.of()).forGetter(a -> a.balances),
+        Codec.unboundedMap(ResourceLocation.CODEC, Codec.LONG).optionalFieldOf("balances", Map.of()).forGetter(a -> a.balances),
         Codec.BOOL.optionalFieldOf("infinite", false).forGetter(a -> a.infinite),
         Codec.BOOL.optionalFieldOf("locked", false).forGetter(a -> a.locked)
     ).apply(instance, LedgerAccount::new));
 
     private final AccountId id;
-    private final Map<Identifier, Long> balances;
+    private final Map<ResourceLocation, Long> balances;
     private final boolean infinite;
     private String name;
     private boolean locked;
 
-    LedgerAccount(AccountId id, String name, Map<Identifier, Long> balances, boolean infinite, boolean locked) {
+    LedgerAccount(AccountId id, String name, Map<ResourceLocation, Long> balances, boolean infinite, boolean locked) {
         this.id = id;
         this.name = name;
         this.balances = new HashMap<>(balances);
@@ -47,11 +47,11 @@ public final class LedgerAccount implements Account {
         return balance(currency.id());
     }
 
-    public long balance(Identifier currency) {
+    public long balance(ResourceLocation currency) {
         return infinite ? Long.MAX_VALUE : balances.getOrDefault(currency, 0L);
     }
 
-    void setBalance(Identifier currency, long balance) {
+    void setBalance(ResourceLocation currency, long balance) {
         if (balance == 0) {
             balances.remove(currency);
         } else {
@@ -59,7 +59,7 @@ public final class LedgerAccount implements Account {
         }
     }
 
-    Map<Identifier, Long> balances() {
+    Map<ResourceLocation, Long> balances() {
         return balances;
     }
 

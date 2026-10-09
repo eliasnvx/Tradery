@@ -3,14 +3,14 @@ package dev.eliasnvx.tradery.vending;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.eliasnvx.tradery.api.AccountId;
-import dev.eliasnvx.tradery.api.TraderyApi;
+import dev.eliasnvx.tradery.util.CodecSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -29,10 +29,12 @@ public final class VendorsData extends SavedData {
         ).apply(i, Entry::new));
     }
 
-    static final Codec<VendorsData> CODEC = Entry.CODEC.listOf().xmap(VendorsData::new, d -> new ArrayList<>(d.vendors.values()));
+    static final Codec<VendorsData> CODEC = Entry.CODEC.listOf().optionalFieldOf("vendors", List.of())
+        .xmap(VendorsData::new, d -> new ArrayList<>(d.vendors.values())).codec();
 
-    public static final SavedDataType<VendorsData> TYPE = new SavedDataType<>(
-        TraderyApi.id("vendors"), VendorsData::new, CODEC, DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
+    /** File name in the overworld's data storage ({@code data/tradery_vendors.dat}). */
+    public static final String NAME = "tradery_vendors";
+    public static final SavedData.Factory<VendorsData> FACTORY = CodecSavedData.factory(NAME, CODEC, VendorsData::new);
 
     private final Map<GlobalPos, Entry> vendors = new LinkedHashMap<>();
 
@@ -44,7 +46,12 @@ public final class VendorsData extends SavedData {
     }
 
     public static VendorsData get(MinecraftServer server) {
-        return server.getDataStorage().computeIfAbsent(TYPE);
+        return CodecSavedData.get(server, FACTORY, NAME);
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        return CodecSavedData.save(CODEC, this, tag, registries);
     }
 
     /** @param overwrite replace a different owner (placement); a load never does */

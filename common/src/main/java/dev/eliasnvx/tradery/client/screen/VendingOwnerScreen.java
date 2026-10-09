@@ -1,5 +1,6 @@
 package dev.eliasnvx.tradery.client.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.eliasnvx.tradery.api.vending.PriceMode;
 import dev.eliasnvx.tradery.client.ClientEconomy;
 import dev.eliasnvx.tradery.menu.VendingOwnerMenu;
@@ -10,13 +11,11 @@ import dev.eliasnvx.tradery.util.MoneyText;
 import dev.eliasnvx.tradery.vending.AdminFlags;
 import dev.eliasnvx.tradery.vending.DisplayAnimation;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
@@ -53,7 +52,9 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
     private long resultAt;
 
     public VendingOwnerScreen(VendingOwnerMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, CHEST_WIDTH + PANEL_WIDTH, menu.adminMode() ? 232 : 206);
+        super(menu, inventory, title);
+        imageWidth = CHEST_WIDTH + PANEL_WIDTH;
+        imageHeight = menu.adminMode() ? 232 : 206;
         inventoryLabelY = CHEST_HEIGHT - 94;
     }
 
@@ -105,7 +106,7 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
 
     /** A 14x14 button: normal click = one step, shift-click = eight. */
     private Button small(String label, int id, int shiftId, int x, int y) {
-        return Button.builder(Component.literal(label), b -> click(minecraft.hasShiftDown() ? shiftId : id)).bounds(x, y, 14, 14).build();
+        return Button.builder(Component.literal(label), b -> click(hasShiftDown() ? shiftId : id)).bounds(x, y, 14, 14).build();
     }
 
     private void click(int buttonId) {
@@ -172,8 +173,13 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        super.extractBackground(graphics, mouseX, mouseY, a);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        super.render(graphics, mouseX, mouseY, partialTick);
+        renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         int x = leftPos;
         int y = topPos;
         Panels.panel(graphics, x, y, CHEST_WIDTH, CHEST_HEIGHT);
@@ -195,71 +201,71 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
     }
 
     @Override
-    protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, title, titleLabelX, titleLabelY, Panels.LABEL, false);
-        graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, Panels.LABEL, false);
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, titleLabelX, titleLabelY, Panels.LABEL, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, Panels.LABEL, false);
         Component revenue = Component.translatable("tradery.screen.revenue");
-        graphics.text(font, revenue, CHEST_WIDTH - 8 - font.width(revenue), VendingOwnerMenu.GRID_TOP + 4 * 18 + 2, GRAY, false);
+        graphics.drawString(font, revenue, CHEST_WIDTH - 8 - font.width(revenue), VendingOwnerMenu.GRID_TOP + 4 * 18 + 2, GRAY, false);
 
-        graphics.text(font, Component.translatable("tradery.screen.goods"), PANEL_INNER, 6, Panels.LABEL, false);
-        graphics.text(font, Panels.fit(font, Component.translatable("tradery.screen.per_trade_short"), PER_TRADE_WIDTH), VendingOwnerMenu.GOODS_X + 56,
+        graphics.drawString(font, Component.translatable("tradery.screen.goods"), PANEL_INNER, 6, Panels.LABEL, false);
+        graphics.drawString(font, Panels.fit(font, Component.translatable("tradery.screen.per_trade_short"), PER_TRADE_WIDTH), VendingOwnerMenu.GOODS_X + 56,
             VendingOwnerMenu.GOODS_Y + 4, GRAY, false);
         boolean currency = menu.priceMode() == PriceMode.CURRENCY;
         if (currency) {
             ClientEconomy.CurrencyView view = ClientEconomy.currency();
             if (view != null) {
-                graphics.text(font, MoneyText.coin(view.symbol()), VendingOwnerMenu.PRICE_X + 82, VendingOwnerMenu.PRICE_Y + 4, Panels.LABEL, false);
+                graphics.drawString(font, MoneyText.coin(view.symbol()), VendingOwnerMenu.PRICE_X + 82, VendingOwnerMenu.PRICE_Y + 4, Panels.LABEL, false);
             }
-            graphics.text(font, Component.translatable("tradery.screen.fee", menu.data().feePercent()), PANEL_INNER + 2,
+            graphics.drawString(font, Component.translatable("tradery.screen.fee", menu.data().feePercent()), PANEL_INNER + 2,
                 VendingOwnerMenu.PRICE_Y + 19, GRAY, false);
         } else {
-            graphics.text(font, Panels.fit(font, Component.translatable("tradery.screen.per_trade_short"), PER_TRADE_WIDTH), VendingOwnerMenu.PRICE_X + 56,
+            graphics.drawString(font, Panels.fit(font, Component.translatable("tradery.screen.per_trade_short"), PER_TRADE_WIDTH), VendingOwnerMenu.PRICE_X + 56,
                 VendingOwnerMenu.PRICE_Y + 4, GRAY, false);
         }
-        graphics.text(font, Component.translatable("tradery.screen.facade"), PANEL_INNER, VendingOwnerMenu.FACADE_Y - 11, Panels.LABEL, false);
+        graphics.drawString(font, Component.translatable("tradery.screen.facade"), PANEL_INNER, VendingOwnerMenu.FACADE_Y - 11, Panels.LABEL, false);
         List<FormattedCharSequence> hint = font.split(Component.translatable("tradery.screen.facade_hint"), 90);
         for (int i = 0; i < Math.min(2, hint.size()); i++) {
-            graphics.text(font, hint.get(i), VendingOwnerMenu.FACADE_X + 20, VendingOwnerMenu.FACADE_Y + i * 9, GRAY, false);
+            graphics.drawString(font, hint.get(i), VendingOwnerMenu.FACADE_X + 20, VendingOwnerMenu.FACADE_Y + i * 9, GRAY, false);
         }
 
         if (!resultMessage.getString().isEmpty() && System.currentTimeMillis() - resultAt < 8000) {
             int y = menu.adminMode() ? 208 : 188;
             List<FormattedCharSequence> lines = font.split(resultMessage, PANEL_WIDTH - 12);
             for (int i = 0; i < Math.min(2, lines.size()); i++) {
-                graphics.text(font, lines.get(i), PANEL_INNER - 2, y + i * 10, resultSuccess ? OK : ERROR, false);
+                graphics.drawString(font, lines.get(i), PANEL_INNER - 2, y + i * 10, resultSuccess ? OK : ERROR, false);
             }
         }
     }
 
     @Override
-    protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        super.extractTooltip(graphics, mouseX, mouseY);
+    protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        super.renderTooltip(graphics, mouseX, mouseY);
         if (hoveredSlot != null && !hoveredSlot.hasItem() && hoveredSlot.isFake()) {
             String key = hoveredSlot.index == VendingOwnerMenu.GOODS_SLOT ? "tradery.screen.goods_tip"
                 : hoveredSlot.index == VendingOwnerMenu.PRICE_SLOT ? "tradery.screen.price_tip" : "tradery.screen.facade_tip";
-            graphics.setTooltipForNextFrame(font, Component.translatable(key), mouseX, mouseY);
+            graphics.renderTooltip(font, Component.translatable(key), mouseX, mouseY);
         }
     }
 
     @Override
-    public boolean keyPressed(KeyEvent event) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // While typing the price, keys go to the text box (so "E" doesn't close and digits don't swap slots)
-        if (priceBox.isVisible() && priceBox.isFocused() && !event.isEscape()) {
-            return priceBox.keyPressed(event) || true;
+        if (priceBox.isVisible() && priceBox.isFocused() && keyCode != InputConstants.KEY_ESCAPE) {
+            return priceBox.keyPressed(keyCode, scanCode, modifiers) || true;
         }
-        return super.keyPressed(event);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
-    public boolean charTyped(CharacterEvent event) {
+    public boolean charTyped(char codePoint, int modifiers) {
         if (priceBox.isVisible() && priceBox.isFocused()) {
-            return priceBox.charTyped(event);
+            return priceBox.charTyped(codePoint, modifiers);
         }
-        return super.charTyped(event);
+        return super.charTyped(codePoint, modifiers);
     }
 
     @Override
-    protected boolean hasClickedOutside(double mx, double my, int xo, int yo) {
+    protected boolean hasClickedOutside(double mx, double my, int xo, int yo, int button) {
         return mx < xo || my < yo || mx >= xo + imageWidth || my >= yo + imageHeight
             // the corner under the chest part and left of the panel is outside too
             || (mx < xo + CHEST_WIDTH && my >= yo + CHEST_HEIGHT);

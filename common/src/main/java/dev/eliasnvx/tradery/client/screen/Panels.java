@@ -1,6 +1,6 @@
 package dev.eliasnvx.tradery.client.screen;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 /** Vanilla-looking panels and slot frames drawn with fills: no GUI texture to keep in sync with the layout. */
@@ -27,7 +27,7 @@ public final class Panels {
     }
 
     /** A raised panel with rounded corners, like container backgrounds. */
-    public static void panel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+    public static void panel(GuiGraphics g, int x, int y, int w, int h) {
         g.fill(x + 1, y, x + w - 1, y + h, OUTLINE);
         g.fill(x, y + 1, x + w, y + h - 1, OUTLINE);
         g.fill(x + 1, y + 1, x + w - 1, y + h - 1, LIGHT);
@@ -38,7 +38,7 @@ public final class Panels {
     }
 
     /** A sunken area (for text fields and info boxes). */
-    public static void inset(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+    public static void inset(GuiGraphics g, int x, int y, int w, int h) {
         g.fill(x, y, x + w, y + h, INSET_DARK);
         g.fill(x, y, x + w - 1, y + 1, SLOT_DARK);
         g.fill(x, y, x + 1, y + h - 1, SLOT_DARK);
@@ -47,7 +47,7 @@ public final class Panels {
     }
 
     /** A slot frame; {@code x, y} is the slot's item position (as in {@code Slot}). */
-    public static void slot(GuiGraphicsExtractor g, int x, int y) {
+    public static void slot(GuiGraphics g, int x, int y) {
         int fx = x - 1;
         int fy = y - 1;
         g.fill(fx, fy, fx + 17, fy + 1, SLOT_DARK);
@@ -58,7 +58,7 @@ public final class Panels {
     }
 
     /** A sample slot: like a slot, with a dashed gold border so it reads as "copy, not storage". */
-    public static void ghostSlot(GuiGraphicsExtractor g, int x, int y) {
+    public static void ghostSlot(GuiGraphics g, int x, int y) {
         slot(g, x, y);
         int gold = 0xFFB88A1B;
         for (int i = 0; i < 18; i += 3) {
@@ -70,7 +70,7 @@ public final class Panels {
     }
 
     /** Frames for the 27 + 9 player inventory slots at {@code (x, y)} (the first main slot). */
-    public static void inventory(GuiGraphicsExtractor g, int x, int y) {
+    public static void inventory(GuiGraphics g, int x, int y) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 slot(g, x + col * 18, y + row * 18);

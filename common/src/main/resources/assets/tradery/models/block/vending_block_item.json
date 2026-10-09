@@ -1,14 +1,12 @@
 {
   "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
   "textures": {
     "particle": "tradery:block/vending_metal",
     "side": "tradery:block/vending_side",
     "front": "tradery:block/vending_front",
     "top": "tradery:block/vending_top",
-    "glass": {
-      "force_translucent": true,
-      "sprite": "tradery:block/case_glass"
-    },
+    "glass": "tradery:block/case_glass",
     "metal": "tradery:block/vending_metal",
     "light": "tradery:block/vending_light_on"
   },
@@ -710,7 +708,9 @@
           "texture": "#light"
         }
       },
-      "light_emission": 12
+      "neoforge_data": {
+        "block_light": 12
+      }
     }
   ],
   "display": {

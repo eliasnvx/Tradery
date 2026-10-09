@@ -98,7 +98,7 @@ public final class VendingTrades {
 
     private static Outcome sale(ServerPlayer player, VendingBlockEntity vendor, VendingSettings settings, int requested) {
         EconomyService economy = EconomyService.INSTANCE;
-        List<ItemStack> inventory = player.getInventory().getNonEquipmentItems();
+        List<ItemStack> inventory = player.getInventory().items;
         ItemStack goods = settings.goods();
         int perTrade = settings.perTrade();
         AdminFlags admin = vendor.admin();
@@ -194,7 +194,7 @@ public final class VendingTrades {
 
     private static Outcome buyback(ServerPlayer player, VendingBlockEntity vendor, VendingSettings settings, int requested) {
         EconomyService economy = EconomyService.INSTANCE;
-        List<ItemStack> inventory = player.getInventory().getNonEquipmentItems();
+        List<ItemStack> inventory = player.getInventory().items;
         ItemStack goods = settings.goods();
         int perTrade = settings.perTrade();
         AdminFlags admin = vendor.admin();
@@ -287,7 +287,7 @@ public final class VendingTrades {
         if (!settings.isConfigured()) {
             return 0;
         }
-        List<ItemStack> inventory = player.getInventory().getNonEquipmentItems();
+        List<ItemStack> inventory = player.getInventory().items;
         if (settings.isBuyback()) {
             return (int) Math.min(UNLIMITED, StackMath.count(inventory, settings.goods()) / settings.perTrade());
         }

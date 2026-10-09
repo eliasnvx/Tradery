@@ -14,7 +14,8 @@ def changelogText = providers.provider {
 }
 
 publishMods {
-    file = tasks.named('jar').flatMap { it.archiveFile }
+    // Fabric 1.21.1 is remapped: upload the intermediary jar (remapJar), not the Mojang-named dev jar
+    file = tasks.named(loader == 'fabric' ? 'remapJar' : 'jar').flatMap { it.archiveFile }
     changelog = changelogText
     version = "${rootProject.version}+${rootProject.minecraft_version}-${loader}"
     displayName = "Tradery ${rootProject.version} (${loader == 'fabric' ? 'Fabric' : 'NeoForge'} ${rootProject.minecraft_version})"
@@ -41,7 +42,7 @@ publishMods {
         accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
         projectId = rootProject.curseforge_project_id
         minecraftVersions.add(rootProject.minecraft_version)
-        javaVersions.add(JavaVersion.VERSION_25)
+        javaVersions.add(JavaVersion.VERSION_21)
         clientRequired = true
         serverRequired = true
         if (loader == 'fabric') {
