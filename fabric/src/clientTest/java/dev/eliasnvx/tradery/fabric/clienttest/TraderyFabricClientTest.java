@@ -1,4 +1,4 @@
-package dev.eliasnvx.tradery.neoforge.clienttest;
+package dev.eliasnvx.tradery.fabric.clienttest;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.logging.LogUtils;
@@ -14,6 +14,8 @@ import dev.eliasnvx.tradery.vending.DisplayAnimation;
 import dev.eliasnvx.tradery.vending.VendingBlock;
 import dev.eliasnvx.tradery.vending.VendingBlockEntity;
 import dev.eliasnvx.tradery.vending.VendingSettings;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -34,10 +36,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 
 import java.nio.file.Files;
@@ -52,32 +50,32 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * Dev-only NeoForge client check (NeoForge has no client test framework): creates a flat world, sets up vending
- * blocks, holds the real key mappings through the normal client tick (sneak + use, sneak + attack) and checks items,
- * money and that nothing was placed or broken. Screenshots go to {@code build/run/clientTest/screenshots}; the result
- * to {@code build/run/clientTest/tradery-client-test.txt}. A failure halts the game with exit code 1.
+ * Dev-only Fabric client check, the twin of the NeoForge {@code TraderyClientTest} (Fabric API 1.21.1 has no client
+ * GameTest API; it came with 1.21.4): creates a flat world, sets up vending blocks, holds the real key mappings through
+ * the normal client tick (sneak + use, sneak + attack) and checks items, money and that nothing was placed or broken.
+ * This covers the Fabric client glue: the HUD mixin, the key mappings, client networking, the menu screens and the
+ * block render layers. Screenshots go to {@code build/run/clientTest/screenshots}; the result to
+ * {@code build/run/clientTest/tradery-client-test.txt}. A failure halts the game with exit code 1.
  *
- * <p>Run: {@code ./gradlew :neoforge:runClientTest}
+ * <p>Run: {@code ./gradlew :fabric:runClientTest}
  */
-@Mod(value = TraderyClientTest.MOD_ID, dist = Dist.CLIENT)
-public final class TraderyClientTest {
-    static final String MOD_ID = "tradery_client_test";
+public final class TraderyFabricClientTest implements ClientModInitializer {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final UUID SHOPKEEPER = UUID.fromString("00000000-0000-0000-0000-00000000beef");
     private static final int TIMEOUT_TICKS = 20 * 60;
     private static final AtomicInteger TICKS = new AtomicInteger();
     private static volatile boolean started;
 
-    /** Set when the test starts: the mod is constructed before the game instance exists. */
+    /** Set when the test starts: the entrypoint runs while the game instance is still being built. */
     private Minecraft minecraft;
     private final List<String> notes = new ArrayList<>();
 
-    public TraderyClientTest() {
-        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> {
+    @Override
+    public void onInitializeClient() {
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
             TICKS.incrementAndGet();
             // Start once loading is over, whatever screen is up (title, onboarding, loading warnings)
-            Minecraft minecraft = Minecraft.getInstance();
-            if (!started && minecraft.isGameLoadFinished() && minecraft.screen != null) {
+            if (!started && client.isGameLoadFinished() && client.screen != null) {
                 started = true;
                 Thread thread = new Thread(this::runAndExit, "tradery-client-test");
                 thread.setDaemon(true);
@@ -167,31 +165,20 @@ public final class TraderyClientTest {
         check(server(server -> server.overworld().getBlockEntity(bread) instanceof VendingBlockEntity), "the selling block is still there");
         screenshot("wrong_button");
 
-        // Sneak + hold attack on the buyback vendor: sells a lot every 4 ticks
+        // Sneak + hold attack on the buyback vendor: sells a lot every 4 ticks. Unlike vanilla's continueAttack (and the
+        // NeoForge test), Fabric's ClientPreAttackCallback fires every tick the key is down, grabbed mouse or not
         aimAt(cobble);
         command("give @p minecraft:cobblestone 32");
         waitTicks(5);
         int cobbleBefore = server(server -> count(server, Items.COBBLESTONE));
-        boolean grabbed = grabMouse();
-        if (grabbed) {
-            hold(List.of(minecraft.options.keyShift, minecraft.options.keyAttack), 14);
-        } else {
-            // Without a grabbed mouse vanilla doesn't continue an attack; press it instead
-            notes.add("window not focused: sneak + attack pressed 4 times instead of held");
-            client(() -> minecraft.options.keyShift.setDown(true));
-            // The player sneaks one tick after the key goes down (keybinds run before the player tick)
-            waitTicks(2);
-            for (int i = 0; i < 4; i++) {
-                client(() -> KeyMapping.click(InputConstants.getKey(minecraft.options.keyAttack.saveString())));
-                waitTicks(5);
-            }
-            client(() -> minecraft.options.keyShift.setDown(false));
-            waitTicks(4);
+        if (!grabMouse()) {
+            notes.add("window not focused: sneak + attack held without a grabbed mouse (Fabric's pre-attack callback still fires)");
         }
+        hold(List.of(minecraft.options.keyShift, minecraft.options.keyAttack), 14);
         int sold = cobbleBefore - server(server -> count(server, Items.COBBLESTONE));
         check(sold >= 16 && sold % 8 == 0, "quick sell: sold " + sold + " cobblestone");
         check(server(server -> server.overworld().getBlockEntity(cobble) instanceof VendingBlockEntity), "the buyback block is still there");
-        notes.add("quick sell (" + (grabbed ? "held" : "pressed") + " sneak + attack): " + sold + " cobblestone");
+        notes.add("quick sell (held sneak + attack): " + sold + " cobblestone");
         screenshot("quick_sell");
 
         // The owner's own block: sneak + attack stays vanilla, so the owner breaks it in creative

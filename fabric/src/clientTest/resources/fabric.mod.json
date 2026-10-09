@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "tradery_client_test",
+  "version": "0.0.0",
+  "name": "Tradery client test (dev only)",
+  "description": "Dev-only check: runClientTest drives a client through quick trade, the hint and the vending screens, then quits.",
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.eliasnvx.tradery.fabric.clienttest.TraderyFabricClientTest"]
+  },
+  "depends": {
+    "tradery": "*"
+  }
+}

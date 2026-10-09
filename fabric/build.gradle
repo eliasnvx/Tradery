@@ -19,7 +19,8 @@ dependencies {
 
     // Dev only: run with the optional mods installed: ./gradlew :fabric:runClient -Pcompat=true
     if (project.hasProperty('compat')) {
-        modRuntimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}")
+        modRuntimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}") { transitive = false } // the full mod jar; its POM lists dev-only modules
+        modRuntimeOnly("net.mezzdev.config:mezz_config-${minecraft_version}-fabric:${mezz_config_version}") { transitive = false }
         modRuntimeOnly("maven.modrinth:jade:${jade_fabric_version}")
         modRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}")
         modRuntimeOnly("dev.architectury:architectury-fabric:${architectury_version}")
@@ -28,10 +29,28 @@ dependencies {
     }
 }
 
+// The Fabric counterpart of the NeoForge clientTest (Fabric API 1.21.1 has no client GameTest API): a dev-only
+// test mod, set up the way Loom sets up the gametest source set. Never in runClient, runGameTest or the release jar.
+sourceSets {
+    clientTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations {
+    clientTestCompileClasspath.extendsFrom compileClasspath
+    clientTestRuntimeClasspath.extendsFrom runtimeClasspath
+}
+
 loom {
     def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {
         accessWidenerPath.set(aw)
+    }
+    mods {
+        tradery_client_test {
+            sourceSet sourceSets.clientTest
+        }
     }
     runs {
         client {
@@ -46,8 +65,19 @@ loom {
             ideConfigGenerated(true)
             runDir('runs/server')
         }
+        // Dev only, needs a display: drives a client through quick trade, the hint and the vending screens, then quits.
+        // ./gradlew :fabric:runClientTest (screenshots in build/run/clientTest/screenshots)
+        clientTest {
+            client()
+            setConfigName('Fabric Client Test')
+            source(sourceSets.clientTest)
+            runDir('build/run/clientTest')
+        }
     }
 }
+
+// runClientTest needs a display, so `build` only compiles the test mod (it can't rot unnoticed)
+tasks.named('check') { dependsOn 'clientTestClasses' }
 
 // GameTests: shared bodies in common (dev.eliasnvx.tradery.gametest), @GameTest wrappers in src/gametest.
 // runGameTest is part of `build`. 1.21.1 has no client GameTest API (Fabric added it for 1.21.4).

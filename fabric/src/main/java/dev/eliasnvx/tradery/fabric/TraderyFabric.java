@@ -8,12 +8,14 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 public final class TraderyFabric implements ModInitializer {
     @Override
@@ -36,8 +38,12 @@ public final class TraderyFabric implements ModInitializer {
         }
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registries, environment) -> TraderyServer.registerCommands(dispatcher));
-        ServerLifecycleEvents.SERVER_STARTED.register(TraderyServer::onServerStarted);
-        ServerLifecycleEvents.SERVER_STOPPED.register(TraderyServer::onServerStopped);
+        // The economy is up before other mods' SERVER_STARTED listeners and still up in their SERVER_STOPPED ones
+        ResourceLocation economyPhase = Tradery.id("economy");
+        ServerLifecycleEvents.SERVER_STARTED.addPhaseOrdering(economyPhase, Event.DEFAULT_PHASE);
+        ServerLifecycleEvents.SERVER_STARTED.register(economyPhase, TraderyServer::onServerStarted);
+        ServerLifecycleEvents.SERVER_STOPPED.addPhaseOrdering(Event.DEFAULT_PHASE, economyPhase);
+        ServerLifecycleEvents.SERVER_STOPPED.register(economyPhase, TraderyServer::onServerStopped);
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> TraderyServer.onPlayerJoin(handler.getPlayer()));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> TraderyServer.onPlayerLeave(handler.getPlayer()));
         PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> TraderyServer.mayBreak(player, level, pos));
