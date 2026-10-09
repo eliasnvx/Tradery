@@ -107,6 +107,9 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - Mod page like Femboy Mod / Bee Mastery: `docs/pages/curseforge.md` (EN), `description-ru.md`, `gallery.txt`; banner, section headers and screenshots in `docs/images`. The author asked for OpenAI art: the banner background (`tools/docs/gen_banner_art.py`, gpt-image-2.5-flare, picked from 3 drafts) and the 9 section icons (texgen manifest `tools/texgen/prompts.yaml`, pixelized to 32x32). Text and chips are drawn by `tools/docs/make_page_images.py` with Femboy Mod's 5x7 pixel font; the gallery is real in-game (`DocsShotsClientTest`, only with `TRADERY_DOCS_SHOTS=1`). The page discloses the AI art in "Credits & Notes"; the mod's own textures stay hand-made.
 - Mod icon (platforms and the in-game mod lists): an AI app-icon draft like Femboy Mod's (`mod_icon` in the texgen manifest, own `style`): the vending block with a gold coin in the glass on a sunset gradient. `art/icon/icon_{1024,512}.png`, 128 px in the jar. `tools/textures.py` no longer draws the icon.
 
+## 2026-10-09: Economy lifecycle order
+- Found while porting to 1.20.1 (the Forge crash-test mod used the API in its own `ServerStartedEvent` listener and sometimes ran first): the economy starts on the server-started event, so an addon calling `TraderyEconomy` in the same event could see "economy is not available", depending on the mod order. Now the economy starts before other listeners (NeoForge `EventPriority.HIGHEST`; Fabric: event phase `tradery:economy` ordered before `Event.DEFAULT_PHASE`) and stops after them on server stopped (`LOWEST` / a phase after the default one). Same on every version branch.
+
 ## API notes (26.3)
 - `ResourceLocation` → `Identifier`; `Identifier.read(String)` returns `DataResult`.
 - `SavedDataType(Identifier, Supplier, Codec, DataFixTypes)`; `MinecraftServer#getDataStorage()`.
