@@ -165,8 +165,8 @@
 | Minecraft | Fabric | NeoForge / Forge | Java |
 |---|---|---|---|
 | **26.3** | [Fabric Loader](https://fabricmc.net/) 0.19.5+ и [Fabric API](https://modrinth.com/mod/fabric-api) | [NeoForge](https://neoforged.net/) 26.3 | 25 |
-| **1.21.1** | Fabric Loader 0.19.5+ и Fabric API | NeoForge 21.1 | 21 |
-| **1.20.1** | Fabric Loader 0.19.5+ и Fabric API | [Forge](https://files.minecraftforge.net/) 47 | 17 |
+| **1.21.1** | Fabric Loader 0.15.11+ и Fabric API | NeoForge 21.1 | 21 |
+| **1.20.1** | Fabric Loader 0.16.10+ и Fabric API | [Forge](https://files.minecraftforge.net/) 47 | 17 |
 
 Jade, JEI и REI необязательны на всех загрузчиках, Text Placeholder API — на Fabric. Возможности на всех версиях одинаковые.
 
