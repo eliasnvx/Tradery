@@ -101,7 +101,7 @@ Gradle запускается на JDK 25 через `gradle/gradle-daemon-jvm.p
 - Ресурсы: `worldgen/configured_feature/`, loot `functions`/`conditions`, ингредиенты рецептов — объекты, модели предметов в `models/item/` (без `assets/tradery/items/`), прозрачность — `render_type` в модели (NeoForge) и `BlockRenderLayerMap` (Fabric); подсветка автомата — `neoforge_data.block_light` (только NeoForge: у Fabric нет поэлементной эмиссии).
 - Метка мобов из спавнера — миксины `BaseSpawner`/`TrialSpawner` (в 1.21.1 нет причины спавна у `loadEntityRecursive`).
 - Common Economy API 1.2.0 (1.2.1 вызывает методы 1.21.2+), версии интеграций — в `gradle.properties`.
-- Клиентских GameTest у Fabric 1.21.1 нет: клиентские проверки и скриншоты — тест-мод NeoForge (`:neoforge:runClientTest`).
+- Клиентских GameTest у Fabric 1.21.1 нет: клиентские проверки и скриншоты — dev-only тест-моды на обоих загрузчиках (`:fabric:runClientTest`, `:neoforge:runClientTest`), сценарий один.
 
 ## Архитектура
 
