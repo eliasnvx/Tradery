@@ -1,11 +1,11 @@
 # Tradery Economy API
 
-`dev.eliasnvx:tradery-api:<api>+<minecraft>` (`+26.3`, `+1.21.1`) — the same API on Fabric and NeoForge. It depends on vanilla Minecraft only.
+`dev.eliasnvx:tradery-api:<api>+<minecraft>` (`+26.3`, `+1.21.1`, `+1.20.1`) — the same API on Fabric and NeoForge/Forge. It depends on vanilla Minecraft only.
 
 ```groovy
 repositories { maven { url "<Tradery maven>" } }
 dependencies {
-    compileOnly "dev.eliasnvx:tradery-api:1.0.0+1.21.1"   // the classes ship inside the Tradery mod jar
+    compileOnly "dev.eliasnvx:tradery-api:1.0.0+1.20.1"   // the classes ship inside the Tradery mod jar
 }
 ```
 
@@ -24,7 +24,7 @@ TraderyEconomy eco = TraderyEconomy.get();
 Currency coins = eco.defaultCurrency();
 
 Account player = eco.account(uuid);                                         // created on first use
-Account bank = eco.systemAccount(ResourceLocation.fromNamespaceAndPath("mymod", "bank")); // your own account
+Account bank = eco.systemAccount(new ResourceLocation("mymod", "bank")); // your own account
 Account server = eco.serverAccount();                                       // infinite: creates/destroys money
 
 TransactionResult r = eco.transfer(player, bank, coins.parse("10").orElseThrow(), Reason.of(MY_REASON));

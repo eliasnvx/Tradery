@@ -91,7 +91,7 @@ Gradle запускается на JDK 25 через `gradle/gradle-daemon-jvm.p
 | --- | --- | --- | --- |
 | `26.3-dev` (основная) | 26.3 | Fabric + NeoForge 26.3 | 25 |
 | `1.21.1-dev` | 1.21.1 | Fabric (Loader 0.19.5, API 0.116.17+1.21.1) + NeoForge 21.1.256 | 21 |
-| `1.20.1-dev` | 1.20.1 | Fabric + Forge 47 | 17 |
+| `1.20.1-dev` | 1.20.1 | Fabric (Loader 0.19.5, API 0.92.12+1.20.1) + Forge 47.4.26 | 17 |
 
 **1.21.1** (ветка `1.21.1-dev`): игра обфусцирована — Fabric собирается Loom'ом с ремапом на Mojang-маппингах (`fabric-loom` 1.18.2), `:common` — через NeoForm `1.21.1-20240808.144430`. Отличия от 26.3:
 
@@ -102,6 +102,16 @@ Gradle запускается на JDK 25 через `gradle/gradle-daemon-jvm.p
 - Метка мобов из спавнера — миксины `BaseSpawner`/`TrialSpawner` (в 1.21.1 нет причины спавна у `loadEntityRecursive`).
 - Common Economy API 1.2.0 (1.2.1 вызывает методы 1.21.2+), версии интеграций — в `gradle.properties`.
 - Клиентских GameTest у Fabric 1.21.1 нет: клиентские проверки и скриншоты — тест-мод NeoForge (`:neoforge:runClientTest`).
+
+**1.20.1** (ветка `1.20.1-dev`, порт из 1.21.1): Fabric — Loom с ремапом на Mojang-маппингах; Forge 47 — ModDevGradle legacyforge (в рантайме SRG: reobf jar и refmap миксинов); `:api`/`:common` — MCP 1.20.1. Отличия от 1.21.1:
+
+- Пакеты: своего `CustomPacketPayload`/`StreamCodec` нет — `network/TraderyPacket` (id канала + `write(FriendlyByteBuf)`, у каждой записи `read` с ограничениями размеров); Fabric — каналы Fabric API, Forge — один `SimpleChannel` `tradery:main`. Данные открытия меню — `FriendlyByteBuf`.
+- Нет data components: предметы в NBT, сравнение — `isSameItemSameTags`; блоки — `Block#use`; сохранения — `SavedData#save(CompoundTag)` и `computeIfAbsent(load, create, name)`.
+- GUI: атласа GUI-спрайтов нет — те же PNG рисуются как обычные текстуры.
+- Права на Forge — `PermissionAPI`; метки поставленных блоков — capability чанка (Fabric — attachment).
+- Common Economy API 1.1.1 (1.2.x требует 1.20.5+ и Java 21); MixinExtras нет на Forge 47 — миксины на чистом Mixin.
+- Ресурсы: `pack_format` 15, папки во множественном числе (`tags/blocks`, `loot_tables`, `recipes`, `structures`), результат рецепта `{"item"}`, модификатор биомов `forge:add_features`, свечение — `forge_data`.
+- Нет trial spawner'а (1.21): метку «из спавнера» ставит только обычный спавнер; из наград по умолчанию убраны отсутствующие в 1.20.1 мобы (`bogged`, `breeze`).
 
 ## Архитектура
 

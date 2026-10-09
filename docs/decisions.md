@@ -144,6 +144,31 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - Blocks: `BaseEntityBlock#codec()`; `useItemOn` returns `ItemInteractionResult`; `Block#onRemove(state, level, pos, newState, moved)` for "removed for good"; `PushReaction.BLOCK`; `BlockEntityType.Builder.of(...).build(null)` (the supplier interface is opened by the AT for `:common`).
 - Worldgen: `data/<ns>/worldgen/configured_feature/`; `PlacementFilter` is an abstract class with a `PlacementModifierType`; loot tables use `"functions"` / `"conditions"`.
 
+## 2026-10-09: Port to Minecraft 1.20.1 (branch `1.20.1-dev`)
+- Ported from the tested 1.21.1 branch (worktree `Tradery-1.20.1`), Fabric + Forge 47 like Femboy Mod and Bee Mastery on 1.20.1. Build as in MultiLoader-Template's 1.20.1 branch: Fabric through the remapping `fabric-loom` 1.18.2 (Mojang mappings; the legacy mixin AP writes `tradery.refmap.json`, because the shared `tradery.mixins.json` names it); Forge through ModDevGradle **legacyforge** 2.0.148 (Forge 1.20.1-47.4.26, SRG at runtime: the published jar is `reobfJar`, mixins resolve through the generated refmap, `MixinConfigs` in the manifest); `:api`/`:common` compile against vanilla through MCP (`legacyForge { mcpVersion }`). The optional mods' jars are remapped to Mojang names per module (Loom `modCompileOnly` for the Fabric jars, legacyforge `modCompileOnly` for the SRG Forge jars). Java 17.
+- Shared contracts were fixed by the coordinator before the parallel port (core, vending, network + compat, client, loaders, resources): `network/TraderyPacket` (channel id + `write(FriendlyByteBuf)`, a bounded static `read` per record) instead of `CustomPacketPayload`/`StreamCodec`; `Platform` takes packets, `canSendToServer(ResourceLocation)`, menu opening data as `Function<FriendlyByteBuf, D>` / `BiConsumer<FriendlyByteBuf, D>`.
+- Item data in NBT (no data components); `ItemStack.isSameItemSameTags`; the vending block entity writes stock and revenue with `ContainerHelper`; settings samples go through `ItemStack#save`/`ItemStack.of` (keeps Forge capabilities, so a saved sample still matches stock on Forge).
+- Forge: one `SimpleChannel` `tradery:main` (optional on both sides); a connection is modded only if it has a netty channel with the FML version attribute (checked before `NetworkHooks.isVanillaConnection`, which throws without it — the author's Femboy Mod fix); fake players get no packets and no menus. Placed-block marks are a chunk capability (saved with the chunk; Fabric 0.92 has the attachment API). Permissions through `PermissionAPI`. HUD below the subtitles overlay (1.20.1 draws subtitles before the chat).
+- GameTest players: 1.20.1's `makeMockServerPlayerInLevel` has a connection without a netty channel, and Forge's join hooks crash on it; `gametest/MockPlayers` joins a player over an `EmbeddedChannel` (as in Femboy Mod 1.20.1).
+- Common Economy API **1.1.1**: 1.2.x declares Minecraft >= 1.20.5 and Java 21; 1.1.1 has the same API (javap diff) and all its Minecraft references exist in the 1.20.1 intermediary.
+- No MixinExtras on Forge 47: `BaseSpawnerMixin` and `FishingHookMixin` use `@ModifyArg`. No trial spawner on 1.20.1. On Forge a fishing reward is paid only if `ItemFishedEvent` wasn't cancelled (the hook runs after it).
+- Resources: `pack.mcmeta` (pack_format 15; Forge 47 ignores a mod's resources without it), plural data folders, recipe results `{"item", "count"}`, Silk Touch predicate in the 1.20.1 format, biome modifier `forge:add_features`, `forge_data` light for the vending lamp (Fabric: no glow, as on 1.21.1), structure DataVersion 3465. GUI sprites are drawn as plain textures (no GUI sprite atlas).
+- Quick-trade reach: eyes to block centre <= 6 blocks, as vanilla 1.20.1 checks block use (1.21.1: `canInteractWithBlock`).
+- **Found by the Forge crash test: the economy start raced other mods.** Tradery starts the economy on `ServerStartedEvent`; a mod using the API in its own `ServerStartedEvent` listener (the crash-test mod here) got "economy is not available" depending on the mod order. The economy now starts before other listeners (Forge `EventPriority.HIGHEST`, Fabric an event phase `tradery:economy` ordered before the default phase) and stops after them on `ServerStoppedEvent`.
+- Fabric client test: Fabric API 0.92 has no client GameTest API (added for 1.21.4), so the Forge test mod's scenario is ported as a dev-only Fabric mod (`fabric/src/clientTest`, mod id `tradery_client_test`, a `client` entrypoint ticking on `ClientTickEvents.END_CLIENT_TICK`). Its source set extends main's classpath configurations (as Loom wires `gametest`) and only the Loom run `clientTest` puts it on the classpath; `runClient`, `runGameTest` and the remapped jar never see it. It covers the Fabric-only client glue: `GuiMixin` (HUD), key mappings, `ClientPlayNetworking`, `MenuScreens`, render layers. Same report lines and screenshot names as Forge.
+- Checks: `./gradlew build` (JUnit 32, GameTests Forge 32/32, Fabric 33/33), the Forge client test (quick buy/sell by held keys, wrong button, owner breaking, buyer and owner screens; screenshots match 1.21.1) and `tools/crash-test.sh` (kill -9: one consistent state).
+
+| Dep (1.20.1) | Version | Note |
+|---|---|---|
+| fabric-loom (remap) | 1.18.2 | Mojang mappings, legacy mixin AP |
+| ModDevGradle legacyforge | 2.0.148 | Forge + MCP for :api/:common |
+| Fabric Loader / API | 0.19.5 / 0.92.12+1.20.1 | |
+| Forge | 1.20.1-47.4.26 | |
+| Common Economy API | 1.1.1 | jar-in-jar |
+| fabric-permissions-api (lucko) | 0.3.1 | jar-in-jar |
+| Text Placeholder API | 2.1.4+1.20.1 | optional |
+| JEI / REI / Jade | 15.62.0.219 / 12.1.785 / 11.13.3 | optional |
+
 ## API notes (26.3)
 - `ResourceLocation` → `Identifier`; `Identifier.read(String)` returns `DataResult`.
 - `SavedDataType(Identifier, Supplier, Codec, DataFixTypes)`; `MinecraftServer#getDataStorage()`.
