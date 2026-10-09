@@ -169,6 +169,10 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 | Text Placeholder API | 2.1.4+1.20.1 | optional |
 | JEI / REI / Jade | 15.62.0.219 / 12.1.785 / 11.13.3 | optional |
 
+## 2026-10-09: Compat in a real client (1.20.1)
+- `-Pcompat=true` client tests on both loaders: JEI 15, REI 12, Jade 11 (and Placeholder API on Fabric) load their Tradery plugins without errors and the scenario passes. Dev runs take the JEI mod jar without its POM dependencies plus `mezz_config` 0.6.3 (nested in the JEI jar); the Forge client test extends the main runtime dependencies for this.
+- The Forge client test's unfocused-window fallback lost its first sneak + attack click; it now waits two ticks after the sneak key goes down.
+
 ## API notes (26.3)
 - `ResourceLocation` → `Identifier`; `Identifier.read(String)` returns `DataResult`.
 - `SavedDataType(Identifier, Supplier, Codec, DataFixTypes)`; `MinecraftServer#getDataStorage()`.
