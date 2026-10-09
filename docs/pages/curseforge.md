@@ -2,9 +2,10 @@
 
 ![Tradery — Vending Blocks & Economy](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/banner.png)
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.3-62B47A?style=for-the-badge&logo=minecraft&logoColor=white)](https://www.minecraft.net/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.3_|_1.21.1_|_1.20.1-62B47A?style=for-the-badge&logo=minecraft&logoColor=white)](https://www.minecraft.net/)
 [![Fabric](https://img.shields.io/badge/Fabric-0.19.5+-DBD0B4?style=for-the-badge)](https://fabricmc.net/)
-[![NeoForge](https://img.shields.io/badge/NeoForge-26.3-E68A00?style=for-the-badge)](https://neoforged.net/)
+[![NeoForge](https://img.shields.io/badge/NeoForge-26.3_|_21.1-E68A00?style=for-the-badge)](https://neoforged.net/)
+[![Forge](https://img.shields.io/badge/Forge-47_(1.20.1)-D9534F?style=for-the-badge)](https://files.minecraftforge.net/)
 [![Economy API](https://img.shields.io/badge/Economy%20API-1.0.0-C9962C?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md)
 [![License](https://img.shields.io/badge/License-MIT-A3302B?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/26.3-dev/LICENSE)
 [![Version](https://img.shields.io/badge/Version-1.0.0-F0C95A?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/26.3-dev/CHANGELOG.md)
@@ -12,7 +13,7 @@
 [![Modrinth](https://img.shields.io/badge/Modrinth-Download-1BD96A?style=for-the-badge&logo=modrinth&logoColor=white)](https://modrinth.com/mod/tradery)
 [![CurseForge](https://img.shields.io/badge/CurseForge-Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/minecraft/mc-mods/tradery)
 
-**Player shops in a block, a currency you can see on screen, and coin ore as the source of money.<br>The spiritual successor to Vending Block — for Fabric and NeoForge, with a public Economy API.**
+**Player shops in a block, a currency you can see on screen, and coin ore as the source of money.<br>The spiritual successor to Vending Block — for Fabric, NeoForge and Forge, with a public Economy API.**
 
 [Vending Blocks](#vending-blocks) • [Quick Trade](#quick-trade--look-at-hint) • [Balance HUD](#balance-hud) • [Money](#where-money-comes-from) • [Commands](#commands) • [Servers](#for-servers) • [Developers](#for-developers) • [Compatibility](#compatibility) • [Installation](#installation)
 
@@ -150,7 +151,7 @@ Amounts are typed in normal units (`/pay Steve 12.50`). Permissions work with Lu
 
 ## For Developers
 
-`dev.eliasnvx:tradery-api:1.0.0+26.3` — accounts, atomic transactions and events, one API for Fabric and NeoForge.
+`dev.eliasnvx:tradery-api:1.0.0+<minecraft>` (`+26.3`, `+1.21.1`, `+1.20.1`) — accounts, atomic transactions and events, one API for every loader.
 
 ```java
 TraderyEconomy eco = TraderyEconomy.get();               // server thread only
@@ -164,7 +165,7 @@ VendingPurchaseEvent.Pre.EVENT.register(e -> {
 });
 ```
 
-Guide: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md). On Fabric, Tradery is also a **Common Economy API** provider, so mods that use it work with Tradery balances out of the box.
+On 1.21.1 and 1.20.1 ids are `ResourceLocation`s. Guide: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md). On Fabric, Tradery is also a **Common Economy API** provider, so mods that use it work with Tradery balances out of the box.
 
 ---
 
@@ -180,7 +181,7 @@ Guide: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/26.3-dev/
 | **Text Placeholder API** (Fabric) | `%tradery:balance%`, `%tradery:balance_short%`, `%tradery:top_name 1%`, `%tradery:top_balance 1%`, `%tradery:currency%` |
 | **LuckPerms** | All `tradery.*` permission nodes |
 
-All optional. EMI and WTHIT support will follow when they update to 26.3.
+All optional, on every version and loader. EMI and WTHIT support is planned.
 
 ---
 
@@ -188,14 +189,15 @@ All optional. EMI and WTHIT support will follow when they update to 26.3.
 
 ## Installation
 
-| | Fabric | NeoForge |
-|---|---|---|
-| Minecraft | 26.3 | 26.3 |
-| Loader | [Fabric Loader](https://fabricmc.net/) 0.19.5+ and [Fabric API](https://modrinth.com/mod/fabric-api) | [NeoForge](https://neoforged.net/) 26.3+ |
-| Java | 25 | 25 |
-| Jade, JEI, REI, Text Placeholder API | optional | optional (Jade, JEI, REI) |
+| Minecraft | Fabric | NeoForge / Forge | Java |
+|---|---|---|---|
+| **26.3** | [Fabric Loader](https://fabricmc.net/) 0.19.5+ and [Fabric API](https://modrinth.com/mod/fabric-api) | [NeoForge](https://neoforged.net/) 26.3 | 25 |
+| **1.21.1** | Fabric Loader 0.19.5+ and Fabric API | NeoForge 21.1 | 21 |
+| **1.20.1** | Fabric Loader 0.19.5+ and Fabric API | [Forge](https://files.minecraftforge.net/) 47 | 17 |
 
-1. Install the loader for Minecraft 26.3 (and Fabric API on Fabric).
+Jade, JEI and REI are optional on every loader, Text Placeholder API on Fabric. All versions have the same features.
+
+1. Install the loader for your Minecraft version (and Fabric API on Fabric).
 2. Download Tradery for your loader.
 3. Drop the `.jar` into `mods` — on **both** the client and the server.
 
@@ -209,7 +211,7 @@ All optional. EMI and WTHIT support will follow when they update to 26.3.
 
 **Can I use another currency name or symbol?** Yes — name, symbol, decimals and the thousands separator are in `server.json5`. The HUD and screens show a coin icon instead of the symbol.
 
-**Will it come to 1.21.1 / 1.20.1?** A 1.21.1 backport is planned for 1.1.
+**Which versions?** 26.3 (Fabric, NeoForge), 1.21.1 (Fabric, NeoForge) and 1.20.1 (Fabric, Forge), the same features everywhere. The only difference: on 1.21.1 and 1.20.1 the vending block's lamp glows on NeoForge/Forge only.
 
 ---
 

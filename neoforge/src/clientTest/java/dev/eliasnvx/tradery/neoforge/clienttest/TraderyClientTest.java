@@ -173,6 +173,8 @@ public final class TraderyClientTest {
             // Without a grabbed mouse vanilla doesn't continue an attack; press it instead
             notes.add("window not focused: sneak + attack pressed 4 times instead of held");
             client(() -> minecraft.options.keyShift.setDown(true));
+            // The player sneaks one tick after the key goes down (keybinds run before the player tick)
+            waitTicks(2);
             for (int i = 0; i < 4; i++) {
                 client(() -> KeyMapping.click(InputConstants.getKey(minecraft.options.keyAttack.saveString())));
                 waitTicks(5);

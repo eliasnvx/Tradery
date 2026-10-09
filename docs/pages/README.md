@@ -9,7 +9,9 @@
 - Modrinth tags: Economy, Game Mechanics, Utility, Storage, Worldgen; environment: client + server (required on both).
 - CurseForge (no "Economy" category there): main **Server Utility**; additional **Miscellaneous** (where the original
   Vending Block and Lightman's Currency are), **Utility & QoL**, **Ores and Resources** (World Gen), **Storage**.
-  Loaders Fabric + NeoForge, MC 26.3. Checked against the category list on 2026-10-06.
+  Loaders Fabric + NeoForge + Forge; game versions 26.3 (Fabric, NeoForge), 1.21.1 (Fabric, NeoForge), 1.20.1
+  (Fabric, Forge): each file is uploaded from its branch (`26.3-dev`, `1.21.1-dev`, `1.20.1-dev`) with its own
+  Minecraft version and loader. Checked against the category list on 2026-10-06.
 
 ## Images
 
