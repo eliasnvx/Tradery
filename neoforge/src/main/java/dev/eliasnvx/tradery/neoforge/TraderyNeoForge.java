@@ -6,6 +6,7 @@ import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.server.TraderyServer;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -34,8 +35,9 @@ public final class TraderyNeoForge {
         TraderyGameTestsNeoForge.register(modBus);
         NeoForge.EVENT_BUS.addListener((PermissionGatherEvent.Nodes event) -> event.addNodes(NeoForgePlatform.nodes()));
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> TraderyServer.registerCommands(event.getDispatcher()));
-        NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> TraderyServer.onServerStarted(event.getServer()));
-        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> TraderyServer.onServerStopped(event.getServer()));
+        // The economy is up before other mods' ServerStartedEvent listeners and still up in their ServerStoppedEvent ones
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (ServerStartedEvent event) -> TraderyServer.onServerStarted(event.getServer()));
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ServerStoppedEvent event) -> TraderyServer.onServerStopped(event.getServer()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
             if (event.getEntity() instanceof ServerPlayer player) {
                 TraderyServer.onPlayerJoin(player);
