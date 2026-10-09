@@ -123,6 +123,16 @@ On Fabric, Tradery is also a **Common Economy API** provider, so mods like Unive
 
 All of them are optional. EMI and WTHIT support will follow when they update to 26.3.
 
+## Versions
+
+One branch per Minecraft version, the same features everywhere:
+
+| Minecraft | Loaders | Branch |
+|---|---|---|
+| 26.3 | Fabric, NeoForge | [`26.3-dev`](https://github.com/eliasnvx/Tradery/tree/26.3-dev) (this one) |
+| 1.21.1 | Fabric, NeoForge | [`1.21.1-dev`](https://github.com/eliasnvx/Tradery/tree/1.21.1-dev) |
+| 1.20.1 | Fabric, Forge | [`1.20.1-dev`](https://github.com/eliasnvx/Tradery/tree/1.20.1-dev) |
+
 ## Building
 
 ```bash

@@ -64,3 +64,7 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] Release checks automated (2026-10-06): NeoForge client harness (`runClientTest`), dedicated-server network test, 50-vendor performance test, real `kill -9` crash test (`tools/crash-test.sh`), coin ore processing GameTest. Found and fixed: trades saved apart from their chunk (crash dupe/loss), NeoForge `logoFile` warning screen
 - [ ] Optional: two real players on a dedicated server; Create/Mekanism in game once they exist for 26.3
 - [ ] Create the Modrinth/CurseForge projects, set their ids, add tokens, tag `v1.0.0`
+
+## Ports (2026-10-09)
+- [x] 1.21.1 (Fabric + NeoForge) on branch `1.21.1-dev`, 1.20.1 (Fabric + Forge) on branch `1.20.1-dev`: same features, all GameTests, client tests on every loader (also with JEI/REI/Jade) and the kill -9 crash test pass; details in each branch's `docs/PROGRESS.md` and `docs/decisions.md`
+

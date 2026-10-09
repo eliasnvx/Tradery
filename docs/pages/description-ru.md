@@ -2,7 +2,7 @@
 
 ![Tradery — торговые автоматы и экономика](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/banner.png)
 
-**Магазин игрока в одном блоке, валюта, которую видно на экране, и монетная руда как источник денег.<br>Духовный наследник Vending Block — для Fabric и NeoForge, с публичным Economy API.**
+**Магазин игрока в одном блоке, валюта, которую видно на экране, и монетная руда как источник денег.<br>Духовный наследник Vending Block — для Fabric, NeoForge и Forge, с публичным Economy API.**
 
 </div>
 
@@ -138,7 +138,7 @@
 
 ## Для разработчиков
 
-`dev.eliasnvx:tradery-api:1.0.0+26.3` — счета, атомарные транзакции и события, один API для Fabric и NeoForge. Руководство: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md). На Fabric Tradery ещё и провайдер **Common Economy API**: моды, которые его используют, сразу видят балансы Tradery.
+`dev.eliasnvx:tradery-api:1.0.0+<версия Minecraft>` (`+26.3`, `+1.21.1`, `+1.20.1`) — счета, атомарные транзакции и события, один API для всех загрузчиков. На 1.21.1 и 1.20.1 идентификаторы — `ResourceLocation`. Руководство: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md). На Fabric Tradery ещё и провайдер **Common Economy API**: моды, которые его используют, сразу видят балансы Tradery.
 
 ---
 
@@ -154,7 +154,7 @@
 | **Text Placeholder API** (Fabric) | `%tradery:balance%`, `%tradery:balance_short%`, `%tradery:top_name 1%`, `%tradery:top_balance 1%`, `%tradery:currency%` |
 | **LuckPerms** | Все права `tradery.*` |
 
-Всё необязательно. Поддержка EMI и WTHIT появится, когда они выйдут под 26.3.
+Всё необязательно, на всех версиях и загрузчиках. Поддержка EMI и WTHIT запланирована.
 
 ---
 
@@ -162,13 +162,15 @@
 
 ## Установка
 
-| | Fabric | NeoForge |
-|---|---|---|
-| Minecraft | 26.3 | 26.3 |
-| Загрузчик | [Fabric Loader](https://fabricmc.net/) 0.19.5+ и [Fabric API](https://modrinth.com/mod/fabric-api) | [NeoForge](https://neoforged.net/) 26.3+ |
-| Java | 25 | 25 |
+| Minecraft | Fabric | NeoForge / Forge | Java |
+|---|---|---|---|
+| **26.3** | [Fabric Loader](https://fabricmc.net/) 0.19.5+ и [Fabric API](https://modrinth.com/mod/fabric-api) | [NeoForge](https://neoforged.net/) 26.3 | 25 |
+| **1.21.1** | Fabric Loader 0.19.5+ и Fabric API | NeoForge 21.1 | 21 |
+| **1.20.1** | Fabric Loader 0.19.5+ и Fabric API | [Forge](https://files.minecraftforge.net/) 47 | 17 |
 
-1. Установите загрузчик для Minecraft 26.3 (и Fabric API на Fabric).
+Jade, JEI и REI необязательны на всех загрузчиках, Text Placeholder API — на Fabric. Возможности на всех версиях одинаковые.
+
+1. Установите загрузчик для своей версии Minecraft (и Fabric API на Fabric).
 2. Скачайте Tradery для своего загрузчика.
 3. Положите `.jar` в папку `mods` — и на **клиенте**, и на **сервере**.
 
@@ -182,7 +184,7 @@
 
 **Можно поменять название и символ валюты?** Да — название, символ, знаки после запятой и разделитель тысяч задаются в `server.json5`. На экране и в окнах вместо символа — иконка монеты.
 
-**Будет ли версия под 1.21.1 / 1.20.1?** Бэкпорт на 1.21.1 запланирован в версии 1.1.
+**Какие версии?** 26.3 (Fabric, NeoForge), 1.21.1 (Fabric, NeoForge) и 1.20.1 (Fabric, Forge), возможности везде одинаковые. Единственное отличие: на 1.21.1 и 1.20.1 лампа автомата светится только на NeoForge/Forge.
 
 ---
 
