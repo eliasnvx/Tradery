@@ -139,7 +139,8 @@ One branch per Minecraft version, the same features everywhere:
 ./gradlew :fabric:runClient
 ./gradlew :neoforge:runClient
 ./gradlew :fabric:runClient -Pcompat=true   # with JEI, REI, Jade, Placeholder API
-./gradlew :neoforge:runClientTest    # client checks with screenshots (Fabric 1.21.1 has no client GameTests)
+./gradlew :fabric:runClientTest      # client checks with screenshots (dev-only test mods: 1.21.1 has no Fabric client GameTests)
+./gradlew :neoforge:runClientTest    # the same on NeoForge
 tools/crash-test.sh                  # kill -9 a dedicated server mid-play, check the rollback
 ```
 

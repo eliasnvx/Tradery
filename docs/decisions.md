@@ -120,6 +120,7 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
   - Spawner mobs: `@ModifyExpressionValue` on `EntityType.loadEntityRecursive` in `BaseSpawner#serverTick` and `TrialSpawner#spawnMob` (no spawn reason in that call on 1.21.1).
   - `TradePersistence` saves dirty saved data with `DimensionDataStorage#save()` (synchronous; 1.21.1 has no `scheduleSave`). `ChunkMap#save(ChunkAccess)` and the ~10 s eager chunk save exist on 1.21.1 as well.
   - Fabric has no client GameTest API on 1.21.1: the client checks run in the NeoForge test mod, which now also opens the buyer and owner screens for screenshots.
+  - The Fabric client glue (HUD mixin, key mappings, client networking, menu screens, block render layers) gets the same check: a dev-only Fabric test mod (`fabric/src/clientTest`, mod id `tradery_client_test`, `client` entrypoint, `ClientTickEvents.END_CLIENT_TICK` as the tick hook) runs the NeoForge scenario with the same screenshots and report lines (`./gradlew :fabric:runClientTest`, `build/run/clientTest`). Its source set is wired like Loom's own `gametest` one (main output + the main classpath configurations, a `loom.mods` entry for the classpath group), so `runClient`, `runGameTest` and the release jar never see it; `check` compiles it. One difference: Fabric's `ClientPreAttackCallback` fires on every tick the attack key is down, grabbed mouse or not, so the Fabric test always holds sneak + attack (the NeoForge one falls back to presses in an unfocused window).
   - No creaking reward (the creaking is 1.21.4+).
   - Fabric HUD: a client mixin draws the balance at the start of `Gui#renderChat` (under chat, as on NeoForge's `RegisterGuiLayersEvent#registerBelow(CHAT)`).
 
@@ -133,6 +134,11 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 | fabric-permissions-api (lucko) | 0.3.1 | jar-in-jar, see above |
 | Text Placeholder API | 2.4.2+1.21 | optional |
 | JEI / REI / Jade | 19.57.0.451 / 16.0.799 / 15.10.6 | optional |
+
+## 2026-10-09: Economy lifecycle order, compat in a real client
+- The economy starts before other mods' server-started listeners (NeoForge `EventPriority.HIGHEST`, Fabric phase `tradery:economy` before `Event.DEFAULT_PHASE`) and stops after their server-stopped ones, so addons can use the API in those events whatever the mod order (found by the 1.20.1 Forge crash test; same fix on every branch).
+- `-Pcompat=true` client tests on both loaders: JEI, REI, Jade (and Placeholder API on Fabric) load their Tradery plugins without errors and the scenario passes. Dev runs take the JEI mod jar without its POM dependencies (they name dev-only modules that aren't published) plus `mezz_config` (nested in the JEI jar, but not unpacked from a dev classpath); the NeoForge client test extends the main runtime dependencies for this.
+- The NeoForge client test's unfocused-window fallback lost its first sneak + attack click (the player sneaks a tick after the key goes down); it now waits two ticks first.
 
 ## API notes (1.21.1)
 - `ResourceLocation.fromNamespaceAndPath`; `ResourceKey#location()`.

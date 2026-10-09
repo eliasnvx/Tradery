@@ -70,5 +70,6 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] `./gradlew build` green: JUnit 32, GameTests NeoForge 32/32, Fabric 33/33 (incl. Common Economy API and fake players)
 - [x] Library check: every bundled/optional Fabric jar against the 1.21.1 intermediary names (fixed: lucko perms 0.3.1, Common Economy API 1.2.0)
 - [x] NeoForge client test: quick buy/sell by held keys, wrong button, owner breaking, buyer and owner screens; screenshots reviewed
+- [x] Fabric client test (`:fabric:runClientTest`, dev-only test mod): the same scenario and checks; PASS, screenshots match NeoForge's
 - [x] `tools/crash-test.sh` (kill -9) on 1.21.1: PASS, one consistent state; found and fixed the NeoForge fake-player crash
 
