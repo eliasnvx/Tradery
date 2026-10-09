@@ -64,3 +64,11 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] Release checks automated (2026-10-06): NeoForge client harness (`runClientTest`), dedicated-server network test, 50-vendor performance test, real `kill -9` crash test (`tools/crash-test.sh`), coin ore processing GameTest. Found and fixed: trades saved apart from their chunk (crash dupe/loss), NeoForge `logoFile` warning screen
 - [ ] Optional: two real players on a dedicated server; Create/Mekanism in game once they exist for 26.3
 - [ ] Create the Modrinth/CurseForge projects, set their ids, add tokens, tag `v1.0.0`
+
+## Port to 1.21.1 (branch `1.21.1-dev`) ✅ (2026-10-09)
+- [x] Fabric (remapping Loom, Mojang mappings) + NeoForge 21.1, Java 21; every source and resource ported, behavior kept (differences: `docs/decisions.md`, 2026-10-09)
+- [x] `./gradlew build` green: JUnit 32, GameTests NeoForge 32/32, Fabric 33/33 (incl. Common Economy API and fake players)
+- [x] Library check: every bundled/optional Fabric jar against the 1.21.1 intermediary names (fixed: lucko perms 0.3.1, Common Economy API 1.2.0)
+- [x] NeoForge client test: quick buy/sell by held keys, wrong button, owner breaking, buyer and owner screens; screenshots reviewed
+- [x] `tools/crash-test.sh` (kill -9) on 1.21.1: PASS, one consistent state; found and fixed the NeoForge fake-player crash
+

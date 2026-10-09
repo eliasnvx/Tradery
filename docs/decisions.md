@@ -107,6 +107,43 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - Mod page like Femboy Mod / Bee Mastery: `docs/pages/curseforge.md` (EN), `description-ru.md`, `gallery.txt`; banner, section headers and screenshots in `docs/images`. The author asked for OpenAI art: the banner background (`tools/docs/gen_banner_art.py`, gpt-image-2.5-flare, picked from 3 drafts) and the 9 section icons (texgen manifest `tools/texgen/prompts.yaml`, pixelized to 32x32). Text and chips are drawn by `tools/docs/make_page_images.py` with Femboy Mod's 5x7 pixel font; the gallery is real in-game (`DocsShotsClientTest`, only with `TRADERY_DOCS_SHOTS=1`). The page discloses the AI art in "Credits & Notes"; the mod's own textures stay hand-made.
 - Mod icon (platforms and the in-game mod lists): an AI app-icon draft like Femboy Mod's (`mod_icon` in the texgen manifest, own `style`): the vending block with a gold coin in the glass on a sunset gradient. `art/icon/icon_{1024,512}.png`, 128 px in the jar. `tools/textures.py` no longer draws the icon.
 
+## 2026-10-09: Port to Minecraft 1.21.1 (branch `1.21.1-dev`)
+- The author asked for "trending" versions for reach; picked 1.21.1 (Fabric + NeoForge) and 1.20.1 (Fabric + Forge), the versions of Femboy Mod and Bee Mastery and the most played modded versions. Same branch system as those mods: `<mc>-dev` per version, a git worktree per branch (`Tradery-1.21.1`), the same mod version on every branch (`1.0.0+1.21.1-fabric`). SPEC listed 1.21.1 for v1.1; since 1.0.0 is not released yet, the ports ship with 1.0.0.
+- Toolchain: Java 21; Fabric through the remapping `fabric-loom` 1.18.2 with `loom.officialMojangMappings()` (1.21.1 is obfuscated); `:api`/`:common` through NeoForm `1.21.1-20240808.144430`; ModDevGradle with NeoForge 21.1.256. `:common` compiles against the Mojang-named NeoForge jars of JEI/REI/Jade.
+- Fabric metadata depends on exactly `1.21.1` (as Femboy Mod's 1.21.1 fix), NeoForge on `[1.21.1, 1.21.2)`.
+- **Found by the GameTests: two libraries built for 1.21.2+.** `me.lucko:fabric-permissions-api` 0.3.3 calls `Entity#createCommandSourceStackForNameResolution(ServerLevel)` (1.21.2+), and its POM imports the Fabric API 1.21.3 BOM, which silently upgraded `fabric-entity-events-v1` and crashed the test server (mixin target missing). 0.3.1 only uses 1.21.1 methods. Common Economy API 1.2.1 calls `ServerPlayer#createCommandSourceStack()` (1.21.2+) in `getDefaultAccount` although its metadata says `>=1.20.5`; 1.2.0 has the same public API (javap diff) and only 1.21.1 methods. Both are now non-transitive. Every bundled or optional Fabric jar was checked against the 1.21.1 intermediary names.
+- **Found by `tools/crash-test.sh`: NeoForge 21.1 fake players crashed Tradery.** A `FakePlayer`'s connection has no Netty channel there, so `ICommonPacketListener#hasChannel` throws; joining the economy (currency sync) or a plain click on a vending block (menu with opening data) by a machine of another mod (Create's deployer and the like) would have crashed the server. `NeoForgePlatform` sends fake players nothing and lets `FakePlayer#openMenu` (a no-op) handle the menu. GameTests `tradery.fake_player_trades` (NeoForge; fails without the fix) and `FakePlayerGameTests` (Fabric) trade and click as a fake player.
+- Port done in five parallel areas (core, client, gameplay, loaders + compat, resources) from a shared brief with 1.21.1 facts checked in the decompiled sources (`~/Desktop/minecraft/ref-1.21.1`).
+- What differs on 1.21.1 (behavior kept where the game allows):
+  - Coin in text: a bitmap font glyph (`assets/tradery/font/coin.json`, private-use char) instead of an object text component (1.21.9+). `getString()` of such text contains the private-use char (the server console shows it in place of the coin); placeholders and Common Economy API use `formatPlain`.
+  - Vending light: `neoforge_data.block_light` in the model (NeoForge); Fabric has no per-element emission without the Renderer API, so the light strip doesn't glow there.
+  - Spawner mobs: `@ModifyExpressionValue` on `EntityType.loadEntityRecursive` in `BaseSpawner#serverTick` and `TrialSpawner#spawnMob` (no spawn reason in that call on 1.21.1).
+  - `TradePersistence` saves dirty saved data with `DimensionDataStorage#save()` (synchronous; 1.21.1 has no `scheduleSave`). `ChunkMap#save(ChunkAccess)` and the ~10 s eager chunk save exist on 1.21.1 as well.
+  - Fabric has no client GameTest API on 1.21.1: the client checks run in the NeoForge test mod, which now also opens the buyer and owner screens for screenshots.
+  - No creaking reward (the creaking is 1.21.4+).
+  - Fabric HUD: a client mixin draws the balance at the start of `Gui#renderChat` (under chat, as on NeoForge's `RegisterGuiLayersEvent#registerBelow(CHAT)`).
+
+| Dep (1.21.1) | Version | Note |
+|---|---|---|
+| fabric-loom (remap) | 1.18.2 | Mojang mappings |
+| NeoForm | 1.21.1-20240808.144430 | |
+| Fabric Loader / API | 0.19.5 / 0.116.17+1.21.1 | |
+| NeoForge | 21.1.256 | |
+| Common Economy API | 1.2.0 | jar-in-jar, see above |
+| fabric-permissions-api (lucko) | 0.3.1 | jar-in-jar, see above |
+| Text Placeholder API | 2.4.2+1.21 | optional |
+| JEI / REI / Jade | 19.57.0.451 / 16.0.799 / 15.10.6 | optional |
+
+## API notes (1.21.1)
+- `ResourceLocation.fromNamespaceAndPath`; `ResourceKey#location()`.
+- `SavedData.Factory(Supplier, BiFunction<CompoundTag, HolderLookup.Provider, T>, DataFixTypes)`, `server.overworld().getDataStorage().computeIfAbsent(factory, name)`; `util/CodecSavedData` wraps a `Codec` into that.
+- Permissions: `CommandSourceStack#hasPermission(int)`, `Player#hasPermissions(int)`; `TraderyPermission#fallback()` is an op level.
+- GUI: `GuiGraphics` (`drawString`, `fill`, `blitSprite(ResourceLocation, x, y, w, h)`, `pose()` is a `PoseStack`); tooltip-style panels via `TooltipRenderUtil.renderTooltipBackground`; the open screen is `Minecraft#screen`; F1 is `options.hideGui`.
+- `InputConstants.Type.KEYSYM`; key categories are plain translation keys.
+- BER renders immediately: `render(be, partialTick, pose, buffers, light, overlay)`; items via `ItemRenderer#renderStatic`, blocks via `BlockRenderDispatcher#renderSingleBlock`.
+- Blocks: `BaseEntityBlock#codec()`; `useItemOn` returns `ItemInteractionResult`; `Block#onRemove(state, level, pos, newState, moved)` for "removed for good"; `PushReaction.BLOCK`; `BlockEntityType.Builder.of(...).build(null)` (the supplier interface is opened by the AT for `:common`).
+- Worldgen: `data/<ns>/worldgen/configured_feature/`; `PlacementFilter` is an abstract class with a `PlacementModifierType`; loot tables use `"functions"` / `"conditions"`.
+
 ## API notes (26.3)
 - `ResourceLocation` → `Identifier`; `Identifier.read(String)` returns `DataResult`.
 - `SavedDataType(Identifier, Supplier, Codec, DataFixTypes)`; `MinecraftServer#getDataStorage()`.
