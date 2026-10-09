@@ -173,6 +173,9 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - `-Pcompat=true` client tests on both loaders: JEI 15, REI 12, Jade 11 (and Placeholder API on Fabric) load their Tradery plugins without errors and the scenario passes. Dev runs take the JEI mod jar without its POM dependencies plus `mezz_config` 0.6.3 (nested in the JEI jar); the Forge client test extends the main runtime dependencies for this.
 - The Forge client test's unfocused-window fallback lost its first sneak + attack click; it now waits two ticks after the sneak key goes down.
 
+## 2026-10-09: Lowest Fabric Loader
+- `fabric.mod.json` asks for Fabric Loader >= 0.16.10 (`fabric_loader_min_version`), what the Fabric API we build against needs itself, instead of the 0.19.5 we develop with: modpacks on this Minecraft version often pin an older loader. Checked: GameTests and the Fabric client test pass on Loader 0.16.10 (`-Pfabric_loader_version=0.16.10`).
+
 ## API notes (26.3)
 - `ResourceLocation` → `Identifier`; `Identifier.read(String)` returns `DataResult`.
 - `SavedDataType(Identifier, Supplier, Codec, DataFixTypes)`; `MinecraftServer#getDataStorage()`.
