@@ -5,7 +5,7 @@
 # Tradery — Vending Blocks & Economy
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-62B47A?style=for-the-badge&logo=minecraft&logoColor=white)](https://www.minecraft.net/)
-[![Fabric](https://img.shields.io/badge/Fabric-0.19.5+-DBD0B4?style=for-the-badge)](https://fabricmc.net/)
+[![Fabric](https://img.shields.io/badge/Fabric-0.16.10+-DBD0B4?style=for-the-badge)](https://fabricmc.net/)
 [![Forge](https://img.shields.io/badge/Forge-47-E68A00?style=for-the-badge)](https://files.minecraftforge.net/)
 [![Java](https://img.shields.io/badge/Java-17-B07219?style=for-the-badge)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/License-MIT-D6303C?style=for-the-badge)](LICENSE)
