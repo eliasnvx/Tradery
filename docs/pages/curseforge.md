@@ -3,7 +3,7 @@
 ![Tradery — Vending Blocks & Economy](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/banner.png)
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-26.3_|_1.21.1_|_1.20.1-62B47A?style=for-the-badge&logo=minecraft&logoColor=white)](https://www.minecraft.net/)
-[![Fabric](https://img.shields.io/badge/Fabric-0.19.5+-DBD0B4?style=for-the-badge)](https://fabricmc.net/)
+[![Fabric](https://img.shields.io/badge/Fabric_Loader-0.15.11+-DBD0B4?style=for-the-badge)](https://fabricmc.net/)
 [![NeoForge](https://img.shields.io/badge/NeoForge-26.3_|_21.1-E68A00?style=for-the-badge)](https://neoforged.net/)
 [![Forge](https://img.shields.io/badge/Forge-47_(1.20.1)-D9534F?style=for-the-badge)](https://files.minecraftforge.net/)
 [![Economy API](https://img.shields.io/badge/Economy%20API-1.0.0-C9962C?style=for-the-badge)](https://github.com/eliasnvx/Tradery/blob/26.3-dev/docs/api/README.md)
@@ -192,8 +192,8 @@ All optional, on every version and loader. EMI and WTHIT support is planned.
 | Minecraft | Fabric | NeoForge / Forge | Java |
 |---|---|---|---|
 | **26.3** | [Fabric Loader](https://fabricmc.net/) 0.19.5+ and [Fabric API](https://modrinth.com/mod/fabric-api) | [NeoForge](https://neoforged.net/) 26.3 | 25 |
-| **1.21.1** | Fabric Loader 0.19.5+ and Fabric API | NeoForge 21.1 | 21 |
-| **1.20.1** | Fabric Loader 0.19.5+ and Fabric API | [Forge](https://files.minecraftforge.net/) 47 | 17 |
+| **1.21.1** | Fabric Loader 0.15.11+ and Fabric API | NeoForge 21.1 | 21 |
+| **1.20.1** | Fabric Loader 0.16.10+ and Fabric API | [Forge](https://files.minecraftforge.net/) 47 | 17 |
 
 Jade, JEI and REI are optional on every loader, Text Placeholder API on Fabric. All versions have the same features.
 
