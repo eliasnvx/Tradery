@@ -4,7 +4,7 @@ All notable changes. Mod versions follow SemVer; the Economy API has its own ver
 
 ## [1.0.0] - Unreleased
 
-First release for Minecraft 26.3 (Fabric and NeoForge). Economy API 1.0.0.
+First release for Minecraft 1.21.1 (Fabric and NeoForge), the same as the 26.3 release. Economy API 1.0.0.
 
 ### Economy
 - One configurable currency (name, symbol, decimals, thousands separator), starting balance, balance ceiling.

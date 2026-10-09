@@ -68,7 +68,7 @@ Tradery — духовный наследник Vending Block (3.7M скачив
 
 | Компонент | Выбор |
 | --- | --- |
-| Minecraft | 26.3 (`[26.3, 26.4)`); 1.21.1 — v1.1 |
+| Minecraft | 26.3 (`[26.3, 26.4)`), основная; порты 1.21.1 и 1.20.1 — отдельные ветки, см. [«Версии Minecraft»](#версии-minecraft) |
 | Лоадеры | Fabric Loader 0.19.5 + Fabric API 0.161.0+26.3; NeoForge 26.3.0.36-beta (вся линия 26.3 пока beta) |
 | Java | 25 |
 | Сборка | Gradle 9.7.1, `net.fabricmc.fabric-loom` 1.18.2 (без ремапа, игра не обфусцирована) + ModDevGradle 2.0.148; `:api` и `:common` компилируются против ванили через NeoForm (`26.3-1`); раскладка MultiLoader-Template (ветка 26.3) |
@@ -82,6 +82,26 @@ Tradery — духовный наследник Vending Block (3.7M скачив
 Gradle запускается на JDK 25 через `gradle/gradle-daemon-jvm.properties` (глобальный `~/.gradle/gradle.properties` автора указывает на JDK 21 для других проектов — не трогать).
 
 **Открытый вопрос:** поддержка 26.1.x/26.2 и 26.4 (уже идут снапшоты) — решить к релизу по статистике модпаков.
+
+### Версии Minecraft
+
+Как у Femboy Mod и Bee Mastery: одна ветка на версию игры, у каждой своя копия кода; общая версия мода, файлы `<mod>+<mc>-<loader>`. Поведение, баланс, ключи языков и API одинаковые; отличаются только сигнатуры игры и форматы ресурсов.
+
+| Ветка | Minecraft | Лоадеры | Java |
+| --- | --- | --- | --- |
+| `26.3-dev` (основная) | 26.3 | Fabric + NeoForge 26.3 | 25 |
+| `1.21.1-dev` | 1.21.1 | Fabric (Loader 0.19.5, API 0.116.17+1.21.1) + NeoForge 21.1.256 | 21 |
+| `1.20.1-dev` | 1.20.1 | Fabric + Forge 47 | 17 |
+
+**1.21.1** (ветка `1.21.1-dev`): игра обфусцирована — Fabric собирается Loom'ом с ремапом на Mojang-маппингах (`fabric-loom` 1.18.2), `:common` — через NeoForm `1.21.1-20240808.144430`. Отличия от 26.3:
+
+- `ResourceLocation` вместо `Identifier`; `GuiGraphics` вместо `GuiGraphicsExtractor`; BER рисует сразу (без render state); блок-энтити — NBT `saveAdditional/loadAdditional` с кодеками через `RegistryOps`; `SavedData.Factory` в хранилище overworld (файлы `data/tradery_{accounts,history,stats}.dat`).
+- Права: на Fabric — `me.lucko:fabric-permissions-api` 0.3.1 внутри jar (в Fabric API 1.21.1 модуля прав нет), на NeoForge — `PermissionAPI`; дефолты — уровни оператора.
+- Монетка в тексте — глиф битмап-шрифта `tradery:coin` (object-компонентов в 1.21.1 нет).
+- Ресурсы: `worldgen/configured_feature/`, loot `functions`/`conditions`, ингредиенты рецептов — объекты, модели предметов в `models/item/` (без `assets/tradery/items/`), прозрачность — `render_type` в модели (NeoForge) и `BlockRenderLayerMap` (Fabric); подсветка автомата — `neoforge_data.block_light` (только NeoForge: у Fabric нет поэлементной эмиссии).
+- Метка мобов из спавнера — миксины `BaseSpawner`/`TrialSpawner` (в 1.21.1 нет причины спавна у `loadEntityRecursive`).
+- Common Economy API 1.2.0 (1.2.1 вызывает методы 1.21.2+), версии интеграций — в `gradle.properties`.
+- Клиентских GameTest у Fabric 1.21.1 нет: клиентские проверки и скриншоты — тест-мод NeoForge (`:neoforge:runClientTest`).
 
 ## Архитектура
 
@@ -352,7 +372,7 @@ CoinOreMinedEvent.EVENT.register(e -> { if (isWeekend()) e.setAmount(e.amount() 
 
 **Монеты и начисление**
 
-- Loot table руды — источник правды по количеству монет (датапак может менять дроп и включать Fortune через `apply_bonus` в `"modifier"`)
+- Loot table руды — источник правды по количеству монет (датапак может менять дроп и включать Fortune через `apply_bonus` в `"modifier"`; в 1.21.1 — в `"functions"`)
 - `ore.directToBalance: true` (дефолт): когда руду добывает игрок в выживании подходящим инструментом, монеты из loot table не выпадают, их сумма сразу зачисляется (`tradery:ore/mined`). В креативе — ничего
 - Руду ломает не игрок (бур Create, взрыв) — выпадают монеты-предметы. В режиме `directToBalance` монета, подобранная игроком с земли, сразу зачисляется и исчезает (работает и с полным инвентарём). Монеты, собранные воронкой или лежащие в сундуке, остаются предметами
 - Режим предметов (`directToBalance: false`): `tradery:copper_coin`, `silver_coin`, `gold_coin`, стак 64; ПКМ — зачислить стак, Shift+ПКМ — все монеты из инвентаря
@@ -361,7 +381,7 @@ CoinOreMinedEvent.EVENT.register(e -> { if (isWeekend()) e.setAmount(e.amount() 
 
 **Генерация**
 
-- `data/tradery/worldgen/feature/*.json` (в 26.3 это бывший `configured_feature`) + `worldgen/placed_feature/*.json`, ванильный `minecraft:ore`
+- `data/tradery/worldgen/feature/*.json` (в 26.3 это бывший `configured_feature`; в 1.21.1 — `worldgen/configured_feature/`) + `worldgen/placed_feature/*.json`, ванильный `minecraft:ore`
 - В биомы: NeoForge — `data/tradery/neoforge/biome_modifier/*.json`, Fabric — `BiomeModifications` по тегу биомов `tradery:has_coin_ore`
 - Сервер меняет частоту и высоту датапаком (переопределяет `placed_feature`)
 - `ore.enabled: false` — руда не генерируется
@@ -407,7 +427,7 @@ CoinOreMinedEvent.EVENT.register(e -> { if (isWeekend()) e.setAmount(e.amount() 
 
 - Награда начисляется через API с `Reason` = `tradery:reward/<тип>` — видна в логе и HUD
 - Блоки, поставленные игроком, не дают награду `mine` (флаг в Data Attachment чанка). Ограничение: блок, сдвинутый поршнем, теряет флаг — поэтому `mine` выключена по умолчанию
-- `ignoreSpawnerMobs`: метка на сущности по причине спавна `EntitySpawnReason.SPAWNER` / `TRIAL_SPAWNER`, проверяется при смерти
+- `ignoreSpawnerMobs`: метка на сущности по причине спавна `EntitySpawnReason.SPAWNER` / `TRIAL_SPAWNER` (в 1.21.1 — миксины `BaseSpawner`/`TrialSpawner`), проверяется при смерти
 - `craft`: предупреждение в конфиге — обратимые рецепты (9 слитков ↔ блок) превращаются в бесконечные деньги; награда выдаётся только за перечисленные предметы
 
 ## Команды и права
@@ -523,7 +543,7 @@ Brigadier. Права: Fabric — `fabric-permission-api-v1` из Fabric API (у
 
 - **Лицензия:** MIT. Код Vending Block: Restocked (GPLv3) и оригинала (GPLv2) не копируется — только идеи механик
 - **Репозиторий:** `eliasnvx/Tradery`, README переписан под мод
-- **Артефакты:** `tradery-fabric-26.3-<ver>.jar`, `tradery-neoforge-26.3-<ver>.jar`, `dev.eliasnvx:tradery-api:<api>+26.3` в Maven
+- **Артефакты:** `tradery-fabric-<mc>-<ver>.jar`, `tradery-neoforge-<mc>-<ver>.jar` (на 1.20.1 — `tradery-forge-1.20.1-<ver>.jar`), `dev.eliasnvx:tradery-api:<api>+<mc>` в Maven
 - **Страница мода:** GIF покупки, скрин HUD, скрин руды; блоки «Для серверов» и «Для разработчиков (API)»
 - **SEO:** Vending Block, player shops, economy, currency, HUD balance
 - **Версионирование:** semver мода отдельно от semver API
@@ -533,7 +553,7 @@ Brigadier. Права: Fabric — `fabric-permission-api-v1` из Fabric API (у
 ## Изменения относительно ТЗ
 
 1. `ResourceLocation` → `Identifier` (в 26.3 класса `ResourceLocation` нет).
-2. `configured_feature` → `worldgen/feature` (переименовано в 26.3); loot tables используют `"modifier"` вместо `functions`.
+2. `configured_feature` → `worldgen/feature` (переименовано в 26.3); loot tables используют `"modifier"` вместо `functions`. В ветке 1.21.1 — старые имена (`configured_feature`, `functions`).
 3. Права на Fabric — встроенный в Fabric API `fabric-permission-api-v1` вместо `me.lucko:fabric-permissions-api` (LuckPerms 5.5.85 поддерживает оба).
 4. Воронки: противоречие ТЗ («insert-only» vs «не отдаёт capability») решено в пользу «никакой автоматизации в MVP» (решение автора 2026-09-30).
 5. EMI и WTHIT вынесены из MVP — сборок под 26.3 нет. Text Placeholder API явно добавлен в MVP (в ТЗ был только в таблице интеграций).
