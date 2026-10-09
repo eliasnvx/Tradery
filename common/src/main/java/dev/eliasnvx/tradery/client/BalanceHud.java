@@ -15,7 +15,10 @@ import net.minecraft.Util;
  * +/- popups that float away from the corner and fade out.
  */
 public final class BalanceHud {
-    static final ResourceLocation COIN_SPRITE = Tradery.id("hud/coin");
+    /** No GUI sprite atlas on 1.20.1: the coin is drawn as a plain texture. */
+    static final ResourceLocation COIN_TEXTURE = Tradery.id("textures/gui/sprites/hud/coin.png");
+    /** Size of {@link #COIN_TEXTURE} in pixels; drawn 1:1. */
+    private static final int COIN_TEXTURE_SIZE = 9;
     private static final int ICON = 9;
     private static final int PAD = 3;
     private static final int GAP = 2;
@@ -126,7 +129,7 @@ public final class BalanceHud {
         pose.translate(x, y, 0);
         pose.scale(scale, scale, 1);
         graphics.fill(0, 0, width, height, PANEL);
-        graphics.blitSprite(COIN_SPRITE, PAD, PAD - 1, ICON, ICON);
+        graphics.blit(COIN_TEXTURE, PAD, PAD - 1, ICON, ICON, 0, 0, COIN_TEXTURE_SIZE, COIN_TEXTURE_SIZE, COIN_TEXTURE_SIZE, COIN_TEXTURE_SIZE);
         graphics.drawString(font, text, PAD + ICON + GAP, PAD, TEXT, true);
 
         // Popups float away from the corner: up from a bottom corner, down from a top one

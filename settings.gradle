@@ -18,6 +18,10 @@ pluginManagement {
             name = 'NeoForged'
             url = uri('https://maven.neoforged.net/releases')
         }
+        maven {
+            name = 'Forge'
+            url = uri('https://maven.minecraftforge.net/')
+        }
     }
 }
 
@@ -29,5 +33,5 @@ rootProject.name = 'Tradery'
 includeBuild('build-logic')
 
 // api: the public contract (published on its own), common: all loader-agnostic logic,
-// fabric / neoforge: thin loader glue that compiles api + common sources into one jar.
-include('api', 'common', 'fabric', 'neoforge')
+// fabric / forge: thin loader glue that compiles api + common sources into one jar.
+include('api', 'common', 'fabric', 'forge')

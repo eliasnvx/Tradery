@@ -72,14 +72,14 @@ public final class ConfigFile<T> {
     /** Decodes JSON5 text; invalid values become defaults and are listed in {@link Result#problems()}. */
     public Result<T> decode(String text) throws Json5.ParseException {
         JsonElement json = Json5.parse(text);
-        T value = codec.parse(JsonOps.INSTANCE, json).resultOrPartial().orElse(defaults);
-        JsonElement normalized = codec.encodeStart(JsonOps.INSTANCE, value).getOrThrow();
+        T value = codec.parse(JsonOps.INSTANCE, json).resultOrPartial(error -> { }).orElse(defaults);
+        JsonElement normalized = codec.encodeStart(JsonOps.INSTANCE, value).getOrThrow(false, error -> { });
         return new Result<>(value, ConfigDiff.problems(json, normalized));
     }
 
     /** Encodes a value as commented JSON5. */
     public String encode(T value) {
-        JsonElement json = codec.encodeStart(JsonOps.INSTANCE, value).getOrThrow();
+        JsonElement json = codec.encodeStart(JsonOps.INSTANCE, value).getOrThrow(false, error -> { });
         return Json5.write(json, comments, header);
     }
 

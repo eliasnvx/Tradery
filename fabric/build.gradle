@@ -3,6 +3,20 @@ plugins {
     id 'fabric-loom'
 }
 
+// The Fabric counterpart of the Forge client check (1.20.1 has no Fabric client GameTest API): a dev-only test mod,
+// only on the classpath of runClientTest, never in runClient, runGameTest or the jar
+sourceSets {
+    clientTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+// Minecraft, Fabric API and the remapped mod dependencies, as Loom wires the gametest source set
+configurations {
+    clientTestCompileClasspath.extendsFrom(compileClasspath)
+    clientTestRuntimeClasspath.extendsFrom(runtimeClasspath)
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.officialMojangMappings()
@@ -11,11 +25,20 @@ dependencies {
 
     // Common Economy API: Tradery registers as a provider; shipped inside the jar (it's tiny, and other mods need it)
     modImplementation include("eu.pb4:common-economy-api:${common_economy_api_version}") { transitive = false }
-    // Permission nodes (LuckPerms & co.): Fabric API 1.21.1 has no permission module; tiny, shipped inside the jar.
-    // 0.3.1 is the last build for 1.21.1 (0.3.2+ call 1.21.2 methods); not transitive, its BOM would bump Fabric API modules
+    // Permission nodes (LuckPerms & co.): Fabric API 1.20.1 has no permission module; tiny, shipped inside the jar.
+    // 0.3.1 only calls methods that exist on 1.20.1 (0.3.2+ call 1.21.2 methods); not transitive, its BOM would bump Fabric API modules
     modImplementation include("me.lucko:fabric-permissions-api:${fabric_permissions_api_version}") { transitive = false }
     // Text Placeholder API: optional (%tradery:balance% etc.)
     modCompileOnly("eu.pb4:placeholder-api:${placeholder_api_version}") { transitive = false }
+
+    // Optional integrations, as in :common (Fabric jars are intermediary-named: modCompileOnly remaps them)
+    compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:${rei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel.cloth:cloth-config-fabric:${cloth_config_version}") { transitive = false }
+    compileOnly("me.shedaniel.cloth:basic-math:0.6.1") { transitive = false }
+    modCompileOnly("dev.architectury:architectury-fabric:${architectury_version}") { transitive = false }
+    modCompileOnly("maven.modrinth:jade:${jade_fabric_version}") { transitive = false }
 
     // Dev only: run with the optional mods installed: ./gradlew :fabric:runClient -Pcompat=true
     if (project.hasProperty('compat')) {
@@ -33,6 +56,17 @@ loom {
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
+    // The shared tradery.mixins.json names a refmap (Forge needs it): generate one here too, so production Fabric
+    // reads it instead of warning about a missing file
+    mixin {
+        useLegacyMixinAp = true
+        defaultRefmapName.set("${mod_id}.refmap.json")
+    }
+    mods {
+        tradery_client_test {
+            sourceSet sourceSets.clientTest
+        }
+    }
     runs {
         client {
             client()
@@ -46,11 +80,20 @@ loom {
             ideConfigGenerated(true)
             runDir('runs/server')
         }
+        // Dev only, needs a display: drives a client through quick trade and the hint, then quits.
+        // ./gradlew :fabric:runClientTest (screenshots in build/run/clientTest/screenshots)
+        clientTest {
+            client()
+            setConfigName('Fabric Client Test')
+            ideConfigGenerated(true)
+            source(sourceSets.clientTest)
+            runDir('build/run/clientTest')
+        }
     }
 }
 
 // GameTests: shared bodies in common (dev.eliasnvx.tradery.gametest), @GameTest wrappers in src/gametest.
-// runGameTest is part of `build`. 1.21.1 has no client GameTest API (Fabric added it for 1.21.4).
+// runGameTest is part of `build`. 1.20.1 has no client GameTest API (Fabric added it for 1.21.4).
 fabricApi {
     configureTests {
         createSourceSet = true

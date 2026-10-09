@@ -53,7 +53,7 @@ enum VendingJadeProvider implements IBlockComponentProvider {
                 .withStyle(ChatFormatting.GOLD);
         }
         tooltip.add(Component.translatable(settings.isBuyback() ? "tradery.jade.buys" : "tradery.jade.sells", goods, price));
-        VendingStockData.INSTANCE.decodeFromData(accessor).ifPresent(count -> tooltip.add(Component.translatable(
+        VendingStockData.read(accessor).ifPresent(count -> tooltip.add(Component.translatable(
             settings.isBuyback() ? "tradery.screen.room" : "tradery.screen.in_stock",
             count >= VendingTrades.UNLIMITED ? "∞" : String.valueOf(count)).withStyle(count > 0 ? ChatFormatting.GREEN : ChatFormatting.RED)));
         tooltip.add(VendingHint.keys(settings, vendor.isOwnedBy(accessor.getPlayer().getUUID())).copy().withStyle(ChatFormatting.GRAY));

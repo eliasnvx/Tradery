@@ -1,11 +1,11 @@
 package dev.eliasnvx.tradery.vending;
 
-import com.mojang.serialization.MapCodec;
 import dev.eliasnvx.tradery.api.AccountId;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -31,8 +31,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /** Display block: a showcase without trading. The owner picks the item and the animation. */
+@SuppressWarnings("deprecation") // 1.20.1 marks the BlockBehaviour hooks deprecated: override them, call them via BlockState
 public class DisplayBlock extends BaseEntityBlock {
-    public static final MapCodec<DisplayBlock> CODEC = simpleCodec(DisplayBlock::new);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     /** Height of the base under the glass case, in pixels; the model in tools/assets.py uses the same value. */
     public static final int BASE_HEIGHT = 2;
@@ -48,12 +48,7 @@ public class DisplayBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
-
-    @Override
-    protected RenderShape getRenderShape(BlockState state) {
+    public RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
@@ -63,7 +58,7 @@ public class DisplayBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
@@ -80,8 +75,12 @@ public class DisplayBlock extends BaseEntityBlock {
         }
     }
 
+    /** Main hand only, like any block's default interaction; strangers fall through to their item. */
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
+        }
         if (level instanceof ServerLevel && player instanceof ServerPlayer serverPlayer
             && level.getBlockEntity(pos) instanceof DisplayBlockEntity display) {
             if (display.isOwner(serverPlayer) || (VendingProtection.holdsKey(serverPlayer) && VendingProtection.isAdmin(serverPlayer))) {
@@ -94,7 +93,7 @@ public class DisplayBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos) {
+    public float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos) {
         if (level.getBlockEntity(pos) instanceof DisplayBlockEntity display && !VendingProtection.canBreak(player, display)) {
             return 0.0f;
         }
@@ -107,12 +106,12 @@ public class DisplayBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected BlockState rotate(BlockState state, Rotation rotation) {
+    public BlockState rotate(BlockState state, Rotation rotation) {
         return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState state, Mirror mirror) {
+    public BlockState mirror(BlockState state, Mirror mirror) {
         return rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 }

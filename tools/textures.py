@@ -274,6 +274,8 @@ ORE_OVERLAY = [
 
 
 def main():
+    # 1.20.1 has no GUI sprite atlas: these are plain textures drawn by their full path (and the coin font reads the
+    # icon as a bitmap glyph), so they get no .mcmeta "gui" scaling sections
     png("gui/sprites/hud/coin.png", HUD_COIN, GOLD)
     png("gui/sprites/icon/coin.png", TEXT_COIN, GOLD)
     png("block/vending_side.png", vending_side(), MACHINE)

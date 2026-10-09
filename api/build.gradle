@@ -1,12 +1,12 @@
 // Public Economy API: interfaces, records and events. Depends on vanilla Minecraft only, never on :common.
 plugins {
     id 'multiloader-shared'
-    id 'net.neoforged.moddev'
+    id 'net.neoforged.moddev.legacyforge'
 }
 
-neoForge {
-    neoFormVersion = neo_form_version
-    // JUnit tests use vanilla classes (Identifier, Codec, Gson) too
+legacyForge {
+    mcpVersion = minecraft_version
+    // JUnit tests use vanilla classes (ResourceLocation, Codec, Gson) too
     addModdingDependenciesTo(sourceSets.test)
 }
 

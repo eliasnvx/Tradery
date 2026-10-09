@@ -38,6 +38,7 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /** Vending trades and the anti-dupe table of the spec, on a real server. Items and money are counted before and after. */
@@ -82,13 +83,17 @@ public final class VendingGameTests {
     }
 
     /** A mock player standing next to the vendor, with an empty inventory. */
-    @SuppressWarnings("removal")
     private static ServerPlayer playerAtVendor(GameTestHelper helper) {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ServerPlayer player = MockPlayers.create(helper);
         Vec3 at = Vec3.atCenterOf(helper.absolutePos(VENDOR.north()));
         player.setPos(at.x, at.y, at.z);
         player.getInventory().clearContent();
         return player;
+    }
+
+    /** 1.20.1's {@link GameTestHelper} has no {@code assertValueEqual}; same message as the later one. */
+    private static <N> void assertEqual(GameTestHelper helper, N actual, N expected, String name) {
+        helper.assertTrue(Objects.equals(actual, expected), "Expected " + name + " to be " + expected + ", but was " + actual);
     }
 
     private static long balance(UUID player) {
@@ -126,13 +131,13 @@ public final class VendingGameTests {
         long supplyBefore = EconomyService.INSTANCE.ledger().total(EconomyService.INSTANCE.defaultCurrency().id());
 
         VendingTrades.Outcome outcome = VendingTrades.execute(buyer, vendor, 3);
-        helper.assertValueEqual(outcome.trades(), 3, "three trades: " + outcome.message().getString());
-        helper.assertValueEqual(count(buyer, Items.BREAD), 12, "buyer got 12 bread");
-        helper.assertValueEqual(count(vendor.stock(), Items.BREAD), 52, "stock lost 12 bread");
-        helper.assertValueEqual(balance(buyer.getUUID()), 250L, "buyer paid 7.50");
+        assertEqual(helper, outcome.trades(), 3, "three trades: " + outcome.message().getString());
+        assertEqual(helper, count(buyer, Items.BREAD), 12, "buyer got 12 bread");
+        assertEqual(helper, count(vendor.stock(), Items.BREAD), 52, "stock lost 12 bread");
+        assertEqual(helper, balance(buyer.getUUID()), 250L, "buyer paid 7.50");
         long fee = 750 * 2 / 100;
-        helper.assertValueEqual(balance(ownerId), 750 - fee, "owner got the price minus the 2% fee");
-        helper.assertValueEqual(EconomyService.INSTANCE.ledger().total(EconomyService.INSTANCE.defaultCurrency().id()), supplyBefore - fee,
+        assertEqual(helper, balance(ownerId), 750 - fee, "owner got the price minus the 2% fee");
+        assertEqual(helper, EconomyService.INSTANCE.ledger().total(EconomyService.INSTANCE.defaultCurrency().id()), supplyBefore - fee,
             "the fee left the economy");
         helper.assertTrue(helper.getBlockState(VENDOR).getValue(VendingBlock.STOCKED), "green light while stocked");
         helper.succeed();
@@ -149,9 +154,9 @@ public final class VendingGameTests {
 
         helper.assertTrue(VendingTrades.execute(first, vendor, 1).success(), "first buyer gets it");
         helper.assertFalse(VendingTrades.execute(second, vendor, 1).success(), "second buyer finds it gone");
-        helper.assertValueEqual(count(first, Items.DIAMOND) + count(second, Items.DIAMOND) + count(vendor.stock(), Items.DIAMOND), 1,
+        assertEqual(helper, count(first, Items.DIAMOND) + count(second, Items.DIAMOND) + count(vendor.stock(), Items.DIAMOND), 1,
             "exactly one diamond in total");
-        helper.assertValueEqual(balance(second.getUUID()), 1_000L, "second buyer paid nothing");
+        assertEqual(helper, balance(second.getUUID()), 1_000L, "second buyer paid nothing");
         helper.assertFalse(helper.getBlockState(VENDOR).getValue(VendingBlock.STOCKED), "light off when empty");
         helper.succeed();
     }
@@ -166,14 +171,14 @@ public final class VendingGameTests {
             buyer.getInventory().items.set(i, new ItemStack(Items.DIRT, 64));
         }
         helper.assertFalse(VendingTrades.execute(buyer, vendor, 1).success(), "no room: refused");
-        helper.assertValueEqual(balance(buyer.getUUID()), 1_000L, "no money taken");
-        helper.assertValueEqual(count(vendor.stock(), Items.BREAD), 16, "no goods taken");
+        assertEqual(helper, balance(buyer.getUUID()), 1_000L, "no money taken");
+        assertEqual(helper, count(vendor.stock(), Items.BREAD), 16, "no goods taken");
 
         setBalance(buyer.getUUID(), 150);
         buyer.getInventory().items.set(0, ItemStack.EMPTY);
         VendingTrades.Outcome outcome = VendingTrades.execute(buyer, vendor, 8);
-        helper.assertValueEqual(outcome.trades(), 1, "money for one trade only");
-        helper.assertValueEqual(balance(buyer.getUUID()), 50L, "paid for one trade");
+        assertEqual(helper, outcome.trades(), 1, "money for one trade only");
+        assertEqual(helper, balance(buyer.getUUID()), 50L, "paid for one trade");
         helper.succeed();
     }
 
@@ -190,14 +195,14 @@ public final class VendingGameTests {
         buyer.getInventory().add(new ItemStack(Items.DIAMOND, 6));
 
         VendingTrades.Outcome outcome = VendingTrades.execute(buyer, vendor, 3);
-        helper.assertValueEqual(outcome.trades(), 1, "revenue has room for one payment only");
-        helper.assertValueEqual(count(buyer, Items.DIAMOND), 4, "paid two diamonds");
-        helper.assertValueEqual(count(buyer, Items.GOLDEN_APPLE), 1, "got one apple");
-        helper.assertValueEqual(count(vendor.revenue(), Items.DIAMOND), 64, "diamonds in the revenue");
+        assertEqual(helper, outcome.trades(), 1, "revenue has room for one payment only");
+        assertEqual(helper, count(buyer, Items.DIAMOND), 4, "paid two diamonds");
+        assertEqual(helper, count(buyer, Items.GOLDEN_APPLE), 1, "got one apple");
+        assertEqual(helper, count(vendor.revenue(), Items.DIAMOND), 64, "diamonds in the revenue");
 
         helper.assertFalse(VendingTrades.execute(buyer, vendor, 1).success(), "revenue full: refused");
-        helper.assertValueEqual(count(buyer, Items.DIAMOND), 4, "nothing taken when refused");
-        helper.assertValueEqual(count(vendor.stock(), Items.GOLDEN_APPLE), 9, "stock untouched when refused");
+        assertEqual(helper, count(buyer, Items.DIAMOND), 4, "nothing taken when refused");
+        assertEqual(helper, count(vendor.stock(), Items.GOLDEN_APPLE), 9, "stock untouched when refused");
         helper.succeed();
     }
 
@@ -211,13 +216,13 @@ public final class VendingGameTests {
         seller.getInventory().add(new ItemStack(Items.COBBLESTONE, 32));
 
         VendingTrades.Outcome outcome = VendingTrades.execute(seller, vendor, VendingTrades.UNLIMITED);
-        helper.assertValueEqual(outcome.trades(), 2, "the owner can pay for two trades");
-        helper.assertValueEqual(count(seller, Items.COBBLESTONE), 16, "sold 16 cobblestone");
-        helper.assertValueEqual(count(vendor.stock(), Items.COBBLESTONE), 16, "stock got 16 cobblestone");
-        helper.assertValueEqual(balance(ownerId), 0L, "owner paid 2.00");
-        helper.assertValueEqual(balance(seller.getUUID()), 200L - 200 * 2 / 100, "seller got 2.00 minus the fee");
+        assertEqual(helper, outcome.trades(), 2, "the owner can pay for two trades");
+        assertEqual(helper, count(seller, Items.COBBLESTONE), 16, "sold 16 cobblestone");
+        assertEqual(helper, count(vendor.stock(), Items.COBBLESTONE), 16, "stock got 16 cobblestone");
+        assertEqual(helper, balance(ownerId), 0L, "owner paid 2.00");
+        assertEqual(helper, balance(seller.getUUID()), 200L - 200 * 2 / 100, "seller got 2.00 minus the fee");
         helper.assertFalse(VendingTrades.execute(seller, vendor, 1).success(), "owner broke: refused");
-        helper.assertValueEqual(count(seller, Items.COBBLESTONE), 16, "nothing taken when refused");
+        assertEqual(helper, count(seller, Items.COBBLESTONE), 16, "nothing taken when refused");
         helper.succeed();
     }
 
@@ -231,7 +236,7 @@ public final class VendingGameTests {
         // Sample slots copy, never take
         menu.setCarried(new ItemStack(Items.DIAMOND, 5));
         menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ClickType.PICKUP, owner);
-        helper.assertValueEqual(menu.getCarried().getCount(), 5, "cursor keeps all 5 diamonds");
+        assertEqual(helper, menu.getCarried().getCount(), 5, "cursor keeps all 5 diamonds");
         helper.assertTrue(menu.goodsSample().is(Items.DIAMOND) && menu.goodsSample().getCount() == 5, "sample is a copy of 5");
         menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ClickType.QUICK_MOVE, owner);
         menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ClickType.THROW, owner);
@@ -244,11 +249,11 @@ public final class VendingGameTests {
         owner.getInventory().items.set(0, new ItemStack(Items.DIRT, 10));
         int dirtSlot = VendingOwnerMenu.INVENTORY_START + 27; // first hotbar slot
         menu.quickMoveStack(owner, dirtSlot);
-        helper.assertValueEqual(count(vendor.stock(), Items.DIRT), 0, "dirt can't go into a diamond vendor");
-        helper.assertValueEqual(count(owner, Items.DIRT), 10, "dirt stays with the owner");
+        assertEqual(helper, count(vendor.stock(), Items.DIRT), 0, "dirt can't go into a diamond vendor");
+        assertEqual(helper, count(owner, Items.DIRT), 10, "dirt stays with the owner");
         owner.getInventory().items.set(1, new ItemStack(Items.DIAMOND, 3));
         menu.quickMoveStack(owner, dirtSlot + 1);
-        helper.assertValueEqual(count(vendor.stock(), Items.DIAMOND), 3, "diamonds go into the stock");
+        assertEqual(helper, count(vendor.stock(), Items.DIAMOND), 3, "diamonds go into the stock");
         helper.assertFalse(menu.getSlot(VendingOwnerMenu.REVENUE_START).mayPlace(new ItemStack(Items.DIAMOND)), "revenue is take-only");
         owner.closeContainer();
 
@@ -260,7 +265,7 @@ public final class VendingGameTests {
         helper.assertTrue(buyerMenu.slots.isEmpty(), "buyer menu has no slots");
         far.setPos(far.getX() + 20, far.getY(), far.getZ());
         helper.assertFalse(buyerMenu.clickMenuButton(far, VendingBuyerMenu.BUY_ONE), "too far: refused");
-        helper.assertValueEqual(count(far, Items.DIAMOND), 0, "nothing bought from afar");
+        assertEqual(helper, count(far, Items.DIAMOND), 0, "nothing bought from afar");
         helper.succeed();
     }
 
@@ -292,9 +297,9 @@ public final class VendingGameTests {
                 blocks += stack.getCount();
             }
         }
-        helper.assertValueEqual(bread, 69, "stock dropped exactly once");
-        helper.assertValueEqual(emeralds, 7, "revenue dropped exactly once");
-        helper.assertValueEqual(blocks, 1, "the block itself dropped");
+        assertEqual(helper, bread, 69, "stock dropped exactly once");
+        assertEqual(helper, emeralds, 7, "revenue dropped exactly once");
+        assertEqual(helper, blocks, 1, "the block itself dropped");
         helper.succeed();
     }
 
@@ -307,8 +312,8 @@ public final class VendingGameTests {
 
         helper.assertTrue(VendingProtection.mayBreak(owner, level, pos), "the owner may break it");
         helper.assertFalse(VendingProtection.mayBreak(stranger, level, pos), "a stranger may not");
-        helper.assertValueEqual(level.getBlockState(pos).getDestroyProgress(stranger, level, pos), 0.0f, "no progress for strangers");
-        helper.assertValueEqual(level.getBlockState(pos).getPistonPushReaction(), PushReaction.BLOCK, "pistons can't move it");
+        assertEqual(helper, level.getBlockState(pos).getDestroyProgress(stranger, level, pos), 0.0f, "no progress for strangers");
+        assertEqual(helper, level.getBlockState(pos).getPistonPushReaction(), PushReaction.BLOCK, "pistons can't move it");
         helper.assertFalse(level.getBlockEntity(pos) instanceof Container, "not a container");
         helper.assertTrue(HopperBlockEntity.getContainerAt(level, pos) == null, "hoppers see no container");
 
@@ -327,7 +332,7 @@ public final class VendingGameTests {
                 allowed++;
             }
         }
-        helper.assertValueEqual(allowed, 10, "10 requests per second");
+        assertEqual(helper, allowed, 10, "10 requests per second");
         VendingTrades.forget(player);
         helper.succeed();
     }
@@ -344,8 +349,8 @@ public final class VendingGameTests {
         NotificationsData notifications = NotificationsData.get(helper.getLevel().getServer());
         NotificationsData.Pending pending = notifications.take(offlineOwner).orElse(null);
         helper.assertTrue(pending != null, "the sale waits for the owner");
-        helper.assertValueEqual(pending.sales(), 1, "one sale");
-        helper.assertValueEqual(pending.earned(), 1_000L - 1_000 * 2 / 100, "earned the price minus the fee");
+        assertEqual(helper, pending.sales(), 1, "one sale");
+        assertEqual(helper, pending.earned(), 1_000L - 1_000 * 2 / 100, "earned the price minus the fee");
         helper.succeed();
     }
 
@@ -356,7 +361,7 @@ public final class VendingGameTests {
         VendingMenus.openBuyer(buyer, vendor);
         VendingMenus.openOwner(owner, vendor, false);
         VendingConfigurator.save(owner, (VendingOwnerMenu) owner.containerMenu, 900);
-        helper.assertValueEqual(vendor.settings().price(), 900L, "new price saved");
+        assertEqual(helper, vendor.settings().price(), 900L, "new price saved");
         helper.assertTrue(buyer.containerMenu == buyer.inventoryMenu, "the buyer's screen closed: no buying at a price they didn't see");
         helper.assertTrue(owner.containerMenu instanceof VendingOwnerMenu, "the owner keeps editing");
         helper.succeed();
@@ -374,12 +379,12 @@ public final class VendingGameTests {
         BlockPos pos = helper.absolutePos(VENDOR);
 
         VendingQuickTrade.handle(buyer, pos, false);
-        helper.assertValueEqual(count(buyer, Items.BREAD), 4, "one lot per request");
-        helper.assertValueEqual(balance(buyer.getUUID()), 750L, "paid for one lot");
+        assertEqual(helper, count(buyer, Items.BREAD), 4, "one lot per request");
+        assertEqual(helper, balance(buyer.getUUID()), 750L, "paid for one lot");
         VendingQuickTrade.handle(buyer, pos, false);
-        helper.assertValueEqual(count(buyer, Items.BREAD), 8, "a held button trades again");
-        helper.assertValueEqual(VendingQuickTrade.streakGoods(buyer), 8, "the action bar adds the streak up");
-        helper.assertValueEqual(count(vendor.stock(), Items.BREAD), 56, "stock lost 8 bread");
+        assertEqual(helper, count(buyer, Items.BREAD), 8, "a held button trades again");
+        assertEqual(helper, VendingQuickTrade.streakGoods(buyer), 8, "the action bar adds the streak up");
+        assertEqual(helper, count(vendor.stock(), Items.BREAD), 56, "stock lost 8 bread");
         VendingQuickTrade.forget(buyer);
         VendingTrades.forget(buyer);
         helper.succeed();
@@ -394,9 +399,9 @@ public final class VendingGameTests {
         buyer.getInventory().add(new ItemStack(Items.BREAD, 4));
 
         VendingQuickTrade.handle(buyer, helper.absolutePos(VENDOR), true);
-        helper.assertValueEqual(count(buyer, Items.BREAD), 4, "sneak + attack doesn't buy or sell at a selling block");
-        helper.assertValueEqual(balance(buyer.getUUID()), 1_000L, "no money moved");
-        helper.assertValueEqual(count(vendor.stock(), Items.BREAD), 64, "stock untouched");
+        assertEqual(helper, count(buyer, Items.BREAD), 4, "sneak + attack doesn't buy or sell at a selling block");
+        assertEqual(helper, balance(buyer.getUUID()), 1_000L, "no money moved");
+        assertEqual(helper, count(vendor.stock(), Items.BREAD), 64, "stock untouched");
         VendingTrades.forget(buyer);
         helper.succeed();
     }
@@ -412,12 +417,12 @@ public final class VendingGameTests {
         BlockPos pos = helper.absolutePos(VENDOR);
 
         VendingQuickTrade.handle(seller, pos, false);
-        helper.assertValueEqual(count(seller, Items.COBBLESTONE), 20, "sneak + use doesn't sell");
+        assertEqual(helper, count(seller, Items.COBBLESTONE), 20, "sneak + use doesn't sell");
         VendingQuickTrade.handle(seller, pos, true);
-        helper.assertValueEqual(count(seller, Items.COBBLESTONE), 12, "sold one lot of 8");
-        helper.assertValueEqual(count(vendor.stock(), Items.COBBLESTONE), 8, "the block got the 8");
-        helper.assertValueEqual(balance(ownerId), 900L, "the owner paid 1.00");
-        helper.assertValueEqual(balance(seller.getUUID()), 100L - 100 * 2 / 100, "the seller got 1.00 minus the fee");
+        assertEqual(helper, count(seller, Items.COBBLESTONE), 12, "sold one lot of 8");
+        assertEqual(helper, count(vendor.stock(), Items.COBBLESTONE), 8, "the block got the 8");
+        assertEqual(helper, balance(ownerId), 900L, "the owner paid 1.00");
+        assertEqual(helper, balance(seller.getUUID()), 100L - 100 * 2 / 100, "the seller got 1.00 minus the fee");
         VendingQuickTrade.forget(seller);
         VendingTrades.forget(seller);
         helper.succeed();
@@ -432,8 +437,8 @@ public final class VendingGameTests {
         buyer.setPos(buyer.getX(), buyer.getY(), buyer.getZ() - 20);
 
         VendingQuickTrade.handle(buyer, helper.absolutePos(VENDOR), false);
-        helper.assertValueEqual(count(buyer, Items.BREAD), 0, "out of reach: refused");
-        helper.assertValueEqual(balance(buyer.getUUID()), 1_000L, "no money moved");
+        assertEqual(helper, count(buyer, Items.BREAD), 0, "out of reach: refused");
+        assertEqual(helper, balance(buyer.getUUID()), 1_000L, "no money moved");
         VendingTrades.forget(buyer);
         helper.succeed();
     }

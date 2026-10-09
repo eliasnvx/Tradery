@@ -18,9 +18,9 @@ jobs:
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          # 21 compiles the 1.21.1 mod (Gradle toolchain), 25 runs Gradle itself
+          # 17 compiles the 1.20.1 mod (Gradle toolchain), 25 runs Gradle itself
           java-version: |
-            21
+            17
             25
 
       - uses: gradle/actions/setup-gradle@v6
@@ -65,7 +65,7 @@ jobs:
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
-        run: ./gradlew :fabric:publishMods :neoforge:publishMods --console=plain
+        run: ./gradlew :fabric:publishMods :forge:publishMods --console=plain
 
       - name: Publish the API to Maven
         if: ${{ vars.TRADERY_MAVEN_URL != '' }}
@@ -79,5 +79,5 @@ jobs:
         with:
           files: |
             fabric/build/libs/tradery-fabric-*.jar
-            neoforge/build/libs/tradery-neoforge-*.jar
+            forge/build/libs/tradery-forge-*.jar
             api/build/libs/tradery-api-*.jar

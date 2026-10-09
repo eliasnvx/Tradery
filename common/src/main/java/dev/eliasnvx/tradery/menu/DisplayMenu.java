@@ -6,8 +6,7 @@ import dev.eliasnvx.tradery.vending.DisplayBlockEntity;
 import dev.eliasnvx.tradery.vending.VendingConfigurator;
 import dev.eliasnvx.tradery.vending.VendingSettings;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -27,27 +26,21 @@ public class DisplayMenu extends AbstractContainerMenu implements VendingMenu {
     public static final int INVENTORY_TOP = 70;
 
     public record Data(BlockPos pos, ItemStack shown, DisplayAnimation animation) {
-        public static final StreamCodec<RegistryFriendlyByteBuf, Data> STREAM_CODEC = StreamCodec.of(
-            (buf, d) -> {
-                BlockPos.STREAM_CODEC.encode(buf, d.pos);
-                ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, d.shown);
-                buf.writeVarInt(d.animation.ordinal());
-            },
-            buf -> new Data(BlockPos.STREAM_CODEC.decode(buf), ItemStack.OPTIONAL_STREAM_CODEC.decode(buf),
-                VendingSettings.enumAt(DisplayAnimation.values(), buf.readVarInt())));
+        public void write(FriendlyByteBuf buf) {
+            buf.writeBlockPos(pos);
+            buf.writeItem(shown);
+            buf.writeVarInt(animation.ordinal());
+        }
+
+        public static Data read(FriendlyByteBuf buf) {
+            return new Data(buf.readBlockPos(), buf.readItem(), VendingSettings.enumAt(DisplayAnimation.values(), buf.readVarInt()));
+        }
     }
 
     private final @Nullable DisplayBlockEntity display;
     private final Data data;
-    private final SimpleContainer sample = new SimpleContainer(1) {
-        @Override
-        public void setChanged() {
-            super.setChanged();
-            if (display != null) {
-                display.setShown(getItem(0));
-            }
-        }
-    };
+    /** The shown item; edits go straight to the block entity (server side). */
+    private final SimpleContainer sample;
     private final DataSlot animation = DataSlot.standalone();
 
     public DisplayMenu(int containerId, Inventory inventory, Data data) {
@@ -58,7 +51,16 @@ public class DisplayMenu extends AbstractContainerMenu implements VendingMenu {
         super(TraderyMenus.DISPLAY.get(), containerId);
         this.display = display;
         this.data = data;
-        sample.getItems().set(0, data.shown().copy());
+        // Starts with the current item without writing it back to the block
+        sample = new SimpleContainer(data.shown().copy()) {
+            @Override
+            public void setChanged() {
+                super.setChanged();
+                if (DisplayMenu.this.display != null) {
+                    DisplayMenu.this.display.setShown(getItem(0));
+                }
+            }
+        };
         addSlot(new GhostSlot(sample, 0, SAMPLE_X, SAMPLE_Y, VendingConfigurator::isTradeable));
         PlayerInventorySlots.add(this::addSlot, inventory, 8, INVENTORY_TOP);
         animation.set(data.animation().ordinal());

@@ -1,9 +1,9 @@
-// Modrinth + CurseForge publishing, applied by :fabric and :neoforge.
+// Modrinth + CurseForge publishing, applied by :fabric and :forge.
 // Run by .github/workflows/release.yml on a v* tag. Without tokens (or project ids) it's a dry run:
 //   ./gradlew :fabric:publishMods   (prints what would be uploaded)
 apply plugin: 'me.modmuss50.mod-publish-plugin'
 
-def loader = project.name // "fabric" | "neoforge"
+def loader = project.name // "fabric" | "forge"
 def modrinthEnabled = rootProject.modrinth_project_id != '0'
 def curseforgeEnabled = rootProject.curseforge_project_id != '0'
 def changelogText = providers.provider {
@@ -14,11 +14,11 @@ def changelogText = providers.provider {
 }
 
 publishMods {
-    // Fabric 1.21.1 is remapped: upload the intermediary jar (remapJar), not the Mojang-named dev jar
-    file = tasks.named(loader == 'fabric' ? 'remapJar' : 'jar').flatMap { it.archiveFile }
+    // 1.20.1 is obfuscated: upload the production jars (Fabric: intermediary, remapJar; Forge: SRG, reobfJar)
+    file = tasks.named(loader == 'fabric' ? 'remapJar' : 'reobfJar').flatMap { it.archiveFile }
     changelog = changelogText
     version = "${rootProject.version}+${rootProject.minecraft_version}-${loader}"
-    displayName = "Tradery ${rootProject.version} (${loader == 'fabric' ? 'Fabric' : 'NeoForge'} ${rootProject.minecraft_version})"
+    displayName = "Tradery ${rootProject.version} (${loader == 'fabric' ? 'Fabric' : 'Forge'} ${rootProject.minecraft_version})"
     def v = rootProject.version.toString()
     type = v.contains('-alpha') ? ALPHA : (v.contains('-beta') || v.contains('-rc')) ? BETA : STABLE
     modLoaders.add(loader)
@@ -42,7 +42,7 @@ publishMods {
         accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
         projectId = rootProject.curseforge_project_id
         minecraftVersions.add(rootProject.minecraft_version)
-        javaVersions.add(JavaVersion.VERSION_21)
+        javaVersions.add(JavaVersion.VERSION_17)
         clientRequired = true
         serverRequired = true
         if (loader == 'fabric') {

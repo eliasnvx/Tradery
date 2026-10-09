@@ -18,7 +18,6 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -57,14 +56,14 @@ public final class SourcesGameTests {
 
     // ------------------------------------------------------------------ helpers
 
-    /** Like {@code makeMockServerPlayerInLevel}, but in survival (coin ore pays only survival players). */
+    /** Like {@link MockPlayers#create}, but in survival (coin ore pays only survival players). */
     static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos near) {
         ServerLevel level = helper.getLevel();
-        CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "tradery-test"), false);
-        ServerPlayer player = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
+        // Not MockPlayers.create: its player is always creative
+        ServerPlayer player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "tradery-test"));
         Connection connection = new Connection(PacketFlow.SERVERBOUND);
-        new EmbeddedChannel(connection);
-        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        new EmbeddedChannel(connection); // a netty channel, which Forge's join hooks need
+        level.getServer().getPlayerList().placeNewPlayer(connection, player);
         player.setGameMode(GameType.SURVIVAL);
         Vec3 at = Vec3.atCenterOf(helper.absolutePos(near));
         player.setPos(at.x, at.y, at.z);
@@ -107,7 +106,7 @@ public final class SourcesGameTests {
         long paid = balance(miner);
         long coin = CoinTier.COPPER.value();
         helper.assertTrue(paid >= coin && paid <= 3 * coin, "1-3 copper coins straight to the balance, got " + paid);
-        helper.assertValueEqual(itemsAround(helper, TraderyItems.coin(CoinTier.COPPER)), 0, "no coin items dropped");
+        EconomyGameTests.assertValueEqual(helper, itemsAround(helper, TraderyItems.coin(CoinTier.COPPER)), 0, "no coin items dropped");
         helper.succeed();
     }
 
@@ -117,7 +116,7 @@ public final class SourcesGameTests {
         helper.getLevel().destroyBlock(helper.absolutePos(ORE), true);
         int coins = itemsAround(helper, TraderyItems.coin(CoinTier.SILVER));
         helper.assertTrue(coins >= 1 && coins <= 2, "1-2 silver coins dropped, got " + coins);
-        helper.assertValueEqual(EconomyService.INSTANCE.stats().cashOutstanding() - cashBefore, coins * CoinTier.SILVER.value(),
+        EconomyGameTests.assertValueEqual(helper, EconomyService.INSTANCE.stats().cashOutstanding() - cashBefore, coins * CoinTier.SILVER.value(),
             "minted coins counted as cash in the world");
         helper.succeed();
     }
@@ -133,9 +132,9 @@ public final class SourcesGameTests {
                 helper.setBlock(ORE, TraderyItems.ore(CoinTier.GOLD, false));
                 miner.gameMode.destroyBlock(helper.absolutePos(ORE));
             }
-            helper.assertValueEqual(balance(miner), EconomyService.INSTANCE.toMinorOrMax(new BigDecimal("150"), "test"),
+            EconomyGameTests.assertValueEqual(helper, balance(miner), EconomyService.INSTANCE.toMinorOrMax(new BigDecimal("150"), "test"),
                 "three gold coins mined, capped at 150");
-            helper.assertValueEqual(itemsAround(helper, TraderyItems.coin(CoinTier.GOLD)), 0, "the cap drops nothing either");
+            EconomyGameTests.assertValueEqual(helper, itemsAround(helper, TraderyItems.coin(CoinTier.GOLD)), 0, "the cap drops nothing either");
         } finally {
             TraderyConfig.setServerForTests(original);
         }
@@ -154,7 +153,7 @@ public final class SourcesGameTests {
         helper.getLevel().addFreshEntity(coins);
         coins.playerTouch(player);
         helper.assertTrue(coins.isRemoved(), "coins picked up");
-        helper.assertValueEqual(balance(player), 3 * CoinTier.SILVER.value(), "credited even with a full inventory");
+        EconomyGameTests.assertValueEqual(helper, balance(player), 3 * CoinTier.SILVER.value(), "credited even with a full inventory");
         helper.succeed();
     }
 
@@ -165,13 +164,13 @@ public final class SourcesGameTests {
         long copper = CoinTier.COPPER.value();
         setBalance(player, 2 * gold);
 
-        helper.assertValueEqual(CoinWithdraw.withdraw(player, copper / 2 + gold), 0, "half a copper coin can't be paid out");
-        helper.assertValueEqual(balance(player), 2 * gold, "nothing withdrawn");
-        helper.assertValueEqual(CoinWithdraw.withdraw(player, gold + silver + copper), 1, "withdraw one of each");
-        helper.assertValueEqual(balance(player), gold - silver - copper, "balance down by 111");
-        helper.assertValueEqual(player.getInventory().countItem(TraderyItems.coin(CoinTier.GOLD)), 1, "one gold coin");
-        helper.assertValueEqual(player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 1, "one silver coin");
-        helper.assertValueEqual(player.getInventory().countItem(TraderyItems.coin(CoinTier.COPPER)), 1, "one copper coin");
+        EconomyGameTests.assertValueEqual(helper, CoinWithdraw.withdraw(player, copper / 2 + gold), 0, "half a copper coin can't be paid out");
+        EconomyGameTests.assertValueEqual(helper, balance(player), 2 * gold, "nothing withdrawn");
+        EconomyGameTests.assertValueEqual(helper, CoinWithdraw.withdraw(player, gold + silver + copper), 1, "withdraw one of each");
+        EconomyGameTests.assertValueEqual(helper, balance(player), gold - silver - copper, "balance down by 111");
+        EconomyGameTests.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.GOLD)), 1, "one gold coin");
+        EconomyGameTests.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 1, "one silver coin");
+        EconomyGameTests.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.COPPER)), 1, "one copper coin");
 
         // Sneak + use puts every coin back
         player.setShiftKeyDown(true);
@@ -180,14 +179,14 @@ public final class SourcesGameTests {
         player.setItemInHand(InteractionHand.MAIN_HAND, held.copy());
         held.setCount(0);
         TraderyItems.coin(CoinTier.GOLD).use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
-        helper.assertValueEqual(balance(player), 2 * gold, "all coins deposited");
-        helper.assertValueEqual(player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 0, "coins gone after deposit");
+        EconomyGameTests.assertValueEqual(helper, balance(player), 2 * gold, "all coins deposited");
+        EconomyGameTests.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 0, "coins gone after deposit");
 
         for (int i = 0; i < player.getInventory().items.size(); i++) {
             player.getInventory().items.set(i, new ItemStack(Items.DIRT, 64));
         }
-        helper.assertValueEqual(CoinWithdraw.withdraw(player, gold), 0, "no room: refused");
-        helper.assertValueEqual(balance(player), 2 * gold, "no money taken without room");
+        EconomyGameTests.assertValueEqual(helper, CoinWithdraw.withdraw(player, gold), 0, "no room: refused");
+        EconomyGameTests.assertValueEqual(helper, balance(player), 2 * gold, "no money taken without room");
         helper.succeed();
     }
 
@@ -197,7 +196,7 @@ public final class SourcesGameTests {
         Zombie farmed = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, ORE.east());
         farmed.addTag(Rewards.SPAWNER_TAG);
         farmed.hurt(hunter.damageSources().playerAttack(hunter), 1000);
-        helper.assertValueEqual(balance(hunter), 0L, "a spawner zombie pays nothing");
+        EconomyGameTests.assertValueEqual(helper, balance(hunter), 0L, "a spawner zombie pays nothing");
 
         Zombie wild = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, ORE.west());
         wild.hurt(hunter.damageSources().playerAttack(hunter), 1000);
@@ -221,11 +220,11 @@ public final class SourcesGameTests {
             helper.setBlock(ORE, Blocks.DIAMOND_ORE);
             Rewards.onBlockPlaced(helper.getLevel(), helper.absolutePos(ORE), Blocks.DIAMOND_ORE.defaultBlockState());
             miner.gameMode.destroyBlock(helper.absolutePos(ORE));
-            helper.assertValueEqual(balance(miner), 0L, "a placed ore pays nothing");
+            EconomyGameTests.assertValueEqual(helper, balance(miner), 0L, "a placed ore pays nothing");
 
             helper.setBlock(ORE, Blocks.DIAMOND_ORE);
             miner.gameMode.destroyBlock(helper.absolutePos(ORE));
-            helper.assertValueEqual(balance(miner), EconomyService.INSTANCE.toMinorOrMax(BigDecimal.valueOf(5), "test"), "a natural ore pays 5");
+            EconomyGameTests.assertValueEqual(helper, balance(miner), EconomyService.INSTANCE.toMinorOrMax(BigDecimal.valueOf(5), "test"), "a natural ore pays 5");
         } finally {
             Rewards.setConfigForTests(original);
         }
@@ -243,7 +242,6 @@ public final class SourcesGameTests {
             "net.minecraft.world.entity.projectile.FishingHook",
             "net.minecraft.server.PlayerAdvancements",
             "net.minecraft.world.level.BaseSpawner",
-            "net.minecraft.world.level.block.entity.trialspawner.TrialSpawner",
             "net.minecraft.world.item.BlockItem"
         };
         for (String target : targets) {
@@ -257,7 +255,7 @@ public final class SourcesGameTests {
         helper.succeed();
     }
 
-    /** The loader's biome modification (Fabric code / NeoForge biome modifier) added the coin ore features. */
+    /** The loader's biome modification (Fabric code / Forge biome modifier) added the coin ore features. */
     public static void coinOreInOverworldBiomes(GameTestHelper helper) {
         var registries = helper.getLevel().registryAccess();
         var biomes = registries.lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
@@ -274,22 +272,25 @@ public final class SourcesGameTests {
     }
 
     /**
-     * Ore doublers (Create crushing, Mekanism enriching, mods that smelt "#c:ores") must not multiply money: coin ore
-     * is in no conventional ore/raw/dust tag, and no furnace recipe takes it or a coin.
+     * Ore doublers (Create crushing, Mekanism enriching, mods that smelt "#c:ores" / "#forge:ores") must not multiply
+     * money: coin ore is in no conventional ore/raw/dust tag of either loader, and no furnace recipe takes it or a coin.
      */
     public static void coinOreNotProcessable(GameTestHelper helper) {
         List<String> processingTags = List.of("ores", "raw_materials", "dusts", "ingots", "nuggets");
+        List<String> conventionNamespaces = List.of("c", "forge");
         var level = helper.getLevel();
         for (CoinTier tier : CoinTier.values()) {
             for (boolean deepslate : new boolean[] {false, true}) {
                 var block = TraderyItems.ore(tier, deepslate);
                 var stack = new ItemStack(block.asItem());
-                for (String tag : processingTags) {
-                    var id = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", tag);
-                    helper.assertFalse(block.defaultBlockState().is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, id)),
-                        block + " is not in #c:" + tag);
-                    helper.assertFalse(stack.is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, id)),
-                        stack.getItem() + " is not in #c:" + tag);
+                for (String namespace : conventionNamespaces) {
+                    for (String tag : processingTags) {
+                        var id = new net.minecraft.resources.ResourceLocation(namespace, tag);
+                        helper.assertFalse(block.defaultBlockState().is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, id)),
+                            block + " is not in #" + id);
+                        helper.assertFalse(stack.is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, id)),
+                            stack.getItem() + " is not in #" + id);
+                    }
                 }
                 assertNoFurnaceRecipe(helper, level, stack);
             }
@@ -299,7 +300,7 @@ public final class SourcesGameTests {
     }
 
     private static void assertNoFurnaceRecipe(GameTestHelper helper, ServerLevel level, ItemStack stack) {
-        var input = new net.minecraft.world.item.crafting.SingleRecipeInput(stack);
+        var input = new net.minecraft.world.SimpleContainer(stack);
         var recipes = level.getServer().getRecipeManager();
         helper.assertTrue(recipes.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.SMELTING, input, level).isEmpty(),
             "no smelting recipe for " + stack.getItem());

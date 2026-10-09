@@ -1,12 +1,12 @@
 package dev.eliasnvx.tradery.platform;
 
 import dev.eliasnvx.tradery.command.TraderyPermission;
+import dev.eliasnvx.tradery.network.TraderyPacket;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -15,6 +15,8 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -23,7 +25,7 @@ import java.util.function.Supplier;
  */
 public interface Platform {
 
-    /** "fabric" or "neoforge". */
+    /** "fabric" or "forge". */
     String loaderName();
 
     boolean isModLoaded(String modId);
@@ -31,7 +33,7 @@ public interface Platform {
     /** The game's config directory ({@code config/}). */
     Path configDir();
 
-    /** A mod's machine acting as a player (Fabric / NeoForge {@code FakePlayer}). */
+    /** A mod's machine acting as a player (Fabric / Forge {@code FakePlayer}). */
     boolean isFakePlayer(ServerPlayer player);
 
     /** Permission check through the loader's permission API (LuckPerms), falling back to the node's op level. */
@@ -40,26 +42,26 @@ public interface Platform {
     /** Same for a player outside of commands (GUI actions). */
     boolean hasPermission(ServerPlayer player, TraderyPermission permission);
 
-    /** Sends a payload if the player's client has Tradery; vanilla clients never get it. */
-    void sendToPlayer(ServerPlayer player, CustomPacketPayload payload);
+    /** Sends a packet if the player's client has Tradery; vanilla clients and fake players never get it. */
+    void sendToPlayer(ServerPlayer player, TraderyPacket packet);
 
-    /** Client side: whether the connected server accepts this payload (it has Tradery too). */
-    boolean canSendToServer(CustomPacketPayload.Type<?> type);
+    /** Client side: whether the connected server accepts this packet channel (it has Tradery too). */
+    boolean canSendToServer(ResourceLocation id);
 
-    /** Client side: sends a payload to the server; check {@link #canSendToServer} first. */
-    void sendToServer(CustomPacketPayload payload);
+    /** Client side: sends a packet to the server; check {@link #canSendToServer} first. */
+    void sendToServer(TraderyPacket packet);
 
     /**
-     * Registers an object into a vanilla registry. Fabric registers at once; NeoForge defers to its registry
+     * Registers an object into a vanilla registry. Fabric registers at once; Forge defers to its registry
      * events. The returned supplier works once registries are populated (after mod construction).
      */
     <T> Supplier<T> register(ResourceKey<? extends Registry<? super T>> registry, String name, Supplier<? extends T> factory);
 
-    /** A menu type whose client-side menu is built from data sent when it opens. */
-    <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec);
+    /** A menu type whose client-side menu is built from data sent when it opens ({@code reader} bounds what it reads). */
+    <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory, Function<FriendlyByteBuf, D> reader);
 
     /** Opens a menu of a {@link #menuType} type, sending its opening data. */
-    <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec, D data);
+    <D> void openMenu(ServerPlayer player, MenuProvider provider, BiConsumer<FriendlyByteBuf, D> writer, D data);
 
     /** Positions ({@code BlockPos#asLong}) of player-placed blocks in this chunk that matter for rewards. Don't mutate. */
     it.unimi.dsi.fastutil.longs.LongSet placedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk);

@@ -21,7 +21,7 @@ import java.util.UUID;
  * (Common Economy API 1.x uses {@code long}).
  */
 final class TraderyEconomyAccount implements EconomyAccount {
-    static final ResourceLocation REASON = ResourceLocation.fromNamespaceAndPath("tradery", "bridge/common_economy");
+    static final ResourceLocation REASON = new ResourceLocation("tradery", "bridge/common_economy");
 
     private final EconomyProvider provider;
     private final EconomyCurrency currency;
@@ -55,7 +55,7 @@ final class TraderyEconomyAccount implements EconomyAccount {
 
     @Override
     public ResourceLocation id() {
-        return ResourceLocation.fromNamespaceAndPath(TraderyEconomyProvider.ID, TraderyEconomyProvider.MAIN_ACCOUNT);
+        return new ResourceLocation(TraderyEconomyProvider.ID, TraderyEconomyProvider.MAIN_ACCOUNT);
     }
 
     @Override

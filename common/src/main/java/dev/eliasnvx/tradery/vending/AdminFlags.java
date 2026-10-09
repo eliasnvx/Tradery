@@ -2,9 +2,7 @@ package dev.eliasnvx.tradery.vending;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * Admin-only vendor settings (vendor key).
@@ -22,11 +20,15 @@ public record AdminFlags(boolean infiniteStock, boolean burnPayment, boolean noF
         Codec.BOOL.optionalFieldOf("no_fee", false).forGetter(AdminFlags::noFee)
     ).apply(i, AdminFlags::new));
 
-    public static final StreamCodec<ByteBuf, AdminFlags> STREAM_CODEC = StreamCodec.composite(
-        ByteBufCodecs.BOOL, AdminFlags::infiniteStock,
-        ByteBufCodecs.BOOL, AdminFlags::burnPayment,
-        ByteBufCodecs.BOOL, AdminFlags::noFee,
-        AdminFlags::new);
+    public void write(FriendlyByteBuf buf) {
+        buf.writeBoolean(infiniteStock);
+        buf.writeBoolean(burnPayment);
+        buf.writeBoolean(noFee);
+    }
+
+    public static AdminFlags read(FriendlyByteBuf buf) {
+        return new AdminFlags(buf.readBoolean(), buf.readBoolean(), buf.readBoolean());
+    }
 
     public boolean any() {
         return infiniteStock || burnPayment || noFee;

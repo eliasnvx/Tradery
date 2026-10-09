@@ -1,9 +1,10 @@
 plugins {
     // https://maven.fabricmc.net/fabric-loom/fabric-loom.gradle.plugin/maven-metadata.xml
-    // `fabric-loom` remaps: Minecraft 1.21.1 is obfuscated, the mod is written against Mojang's names
+    // `fabric-loom` remaps: Minecraft 1.20.1 is obfuscated, the mod is written against Mojang's names
     id 'fabric-loom' version '1.18.2' apply false
-    // https://projects.neoforged.net/neoforged/moddevgradle
-    id 'net.neoforged.moddev' version '2.0.148' apply false
+    // https://projects.neoforged.net/neoforged/moddevgradle: the legacy plugin builds Forge 47 (SRG at runtime, reobf)
+    // and compiles :api/:common against vanilla through MCP
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148' apply false
     // Modrinth + CurseForge uploads, see gradle/publish-mod.gradle
     id 'me.modmuss50.mod-publish-plugin' version '2.2.1' apply false
 }

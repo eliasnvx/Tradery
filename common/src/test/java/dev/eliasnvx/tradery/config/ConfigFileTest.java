@@ -68,12 +68,12 @@ class ConfigFileTest {
     void commentsCoverRealKeys() {
         // A typo in a comment key would silently drop the comment
         com.google.gson.JsonObject json = ServerConfig.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, ServerConfig.DEFAULT)
-            .getOrThrow().getAsJsonObject();
+            .getOrThrow(false, error -> { }).getAsJsonObject();
         for (String path : ServerConfig.COMMENTS.keySet()) {
             assertTrue(exists(json, path), "comment for unknown key " + path);
         }
         com.google.gson.JsonObject client = ClientConfig.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, ClientConfig.DEFAULT)
-            .getOrThrow().getAsJsonObject();
+            .getOrThrow(false, error -> { }).getAsJsonObject();
         for (String path : ClientConfig.COMMENTS.keySet()) {
             assertTrue(exists(client, path), "comment for unknown key " + path);
         }

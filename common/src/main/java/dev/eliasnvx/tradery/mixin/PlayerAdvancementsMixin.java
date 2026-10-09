@@ -1,7 +1,7 @@
 package dev.eliasnvx.tradery.mixin;
 
 import dev.eliasnvx.tradery.rewards.Rewards;
-import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,7 +18,7 @@ public abstract class PlayerAdvancementsMixin {
 
     @Inject(method = "award", at = @At(value = "INVOKE",
         target = "Lnet/minecraft/advancements/AdvancementRewards;grant(Lnet/minecraft/server/level/ServerPlayer;)V"))
-    private void tradery$advancementReward(AdvancementHolder holder, String criterion, CallbackInfoReturnable<Boolean> cir) {
-        Rewards.onAdvancement(player, holder.id());
+    private void tradery$advancementReward(Advancement advancement, String criterion, CallbackInfoReturnable<Boolean> cir) {
+        Rewards.onAdvancement(player, advancement.getId());
     }
 }

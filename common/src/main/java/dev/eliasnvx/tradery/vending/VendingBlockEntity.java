@@ -3,7 +3,6 @@ package dev.eliasnvx.tradery.vending;
 import dev.eliasnvx.tradery.api.AccountId;
 import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
@@ -210,38 +209,38 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity,
     // ------------------------------------------------------------------ save / sync
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        owner = TagCodecs.read(tag, "owner", AccountId.CODEC, registries).orElse(null);
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        owner = TagCodecs.read(tag, "owner", AccountId.CODEC).orElse(null);
         ownerName = tag.getString("owner_name");
-        settings = TagCodecs.read(tag, "settings", VendingSettings.CODEC, registries).orElse(VendingSettings.EMPTY);
-        admin = TagCodecs.read(tag, "admin", AdminFlags.CODEC, registries).orElse(AdminFlags.NONE);
-        facade = TagCodecs.read(tag, "facade", BlockState.CODEC, registries).orElse(null);
+        settings = TagCodecs.read(tag, "settings", VendingSettings.CODEC).orElse(VendingSettings.EMPTY);
+        admin = TagCodecs.read(tag, "admin", AdminFlags.CODEC).orElse(AdminFlags.NONE);
+        facade = TagCodecs.read(tag, "facade", BlockState.CODEC).orElse(null);
         stock.getItems().replaceAll(stack -> ItemStack.EMPTY);
         revenue.getItems().replaceAll(stack -> ItemStack.EMPTY);
         if (tag.contains("stock", Tag.TAG_COMPOUND)) {
-            ContainerHelper.loadAllItems(tag.getCompound("stock"), stock.getItems(), registries);
+            ContainerHelper.loadAllItems(tag.getCompound("stock"), stock.getItems());
         }
         if (tag.contains("revenue", Tag.TAG_COMPOUND)) {
-            ContainerHelper.loadAllItems(tag.getCompound("revenue"), revenue.getItems(), registries);
+            ContainerHelper.loadAllItems(tag.getCompound("revenue"), revenue.getItems());
         }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        writeShared(tag, registries);
-        tag.put("stock", ContainerHelper.saveAllItems(new CompoundTag(), stock.getItems(), true, registries));
-        tag.put("revenue", ContainerHelper.saveAllItems(new CompoundTag(), revenue.getItems(), true, registries));
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        writeShared(tag);
+        tag.put("stock", ContainerHelper.saveAllItems(new CompoundTag(), stock.getItems(), true));
+        tag.put("revenue", ContainerHelper.saveAllItems(new CompoundTag(), revenue.getItems(), true));
     }
 
     /** What both the save file and the client get. */
-    private void writeShared(CompoundTag tag, HolderLookup.Provider registries) {
-        TagCodecs.putNullable(tag, "owner", AccountId.CODEC, owner, registries);
+    private void writeShared(CompoundTag tag) {
+        TagCodecs.putNullable(tag, "owner", AccountId.CODEC, owner);
         tag.putString("owner_name", ownerName);
-        TagCodecs.put(tag, "settings", VendingSettings.CODEC, settings, registries);
-        TagCodecs.put(tag, "admin", AdminFlags.CODEC, admin, registries);
-        TagCodecs.putNullable(tag, "facade", BlockState.CODEC, facade, registries);
+        TagCodecs.put(tag, "settings", VendingSettings.CODEC, settings);
+        TagCodecs.put(tag, "admin", AdminFlags.CODEC, admin);
+        TagCodecs.putNullable(tag, "facade", BlockState.CODEC, facade);
     }
 
     @Override
@@ -250,9 +249,9 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity,
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        writeShared(tag, registries);
+        writeShared(tag);
         return tag;
     }
 

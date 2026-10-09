@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 /**
  * Loader-independent GameTest bodies. The Fabric glue ({@code fabric/src/gametest}) and
- * {@code TraderyGameTestsNeoForge} register {@link #all()}; a count check in the Fabric glue catches a test that
+ * {@code TraderyGameTestsForge} register {@link #all()}; a count check in the Fabric glue catches a test that
  * was added here but not wired there.
  */
 public final class TraderyGameTests {

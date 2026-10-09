@@ -34,7 +34,8 @@ public class CoinOreBlock extends Block {
     }
 
     @Override
-    protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+    @SuppressWarnings("deprecation") // the drops hook every loader still calls on 1.20.1
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         List<ItemStack> drops = super.getDrops(state, params);
         long value = 0;
         List<ItemStack> other = new ArrayList<>();

@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.util.CodecSavedData;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -77,7 +76,7 @@ public final class NotificationsData extends SavedData {
 
     /** File name in the overworld's data storage ({@code data/tradery_notifications.dat}). */
     public static final String NAME = "tradery_notifications";
-    public static final SavedData.Factory<NotificationsData> FACTORY = CodecSavedData.factory(NAME, CODEC, NotificationsData::new);
+    public static final CodecSavedData.Factory<NotificationsData> FACTORY = CodecSavedData.factory(NAME, CODEC, NotificationsData::new);
 
     private final Map<UUID, Pending> pending = new HashMap<>();
 
@@ -93,8 +92,8 @@ public final class NotificationsData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        return CodecSavedData.save(CODEC, this, tag, registries);
+    public CompoundTag save(CompoundTag tag) {
+        return CodecSavedData.save(CODEC, this, tag);
     }
 
     public void add(UUID owner, Line line, boolean sale, long earned) {

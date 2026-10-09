@@ -18,7 +18,7 @@ import java.util.UUID;
  * <pre>{@code
  * TraderyEconomy eco = TraderyEconomy.get();
  * Account player = eco.account(serverPlayer.getUUID());
- * TransactionResult result = eco.withdraw(player, 500, Reason.of(ResourceLocation.fromNamespaceAndPath("mymod", "teleport_fee")));
+ * TransactionResult result = eco.withdraw(player, 500, Reason.of(new ResourceLocation("mymod", "teleport_fee")));
  * if (result instanceof TransactionResult.Failure failure) { ... }
  * }</pre>
  */

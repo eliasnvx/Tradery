@@ -1,0 +1,121 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+// The Forge counterpart of Fabric's client GameTests (Forge has no client test framework)
+sourceSets {
+    clientTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+legacyForge {
+    version = "${minecraft_version}-${forge_version}"
+    def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+        tradery_client_test {
+            sourceSet sourceSets.clientTest
+        }
+    }
+    runs {
+        configureEach {
+            systemProperty('forge.enabledGameTestNamespaces', mod_id)
+            ideName = "Forge ${it.name.capitalize()} (${project.path})"
+            // Runs load every mod in `mods` by default; the dev-only test mod only goes into its own runs below
+            loadedMods = [mods."${mod_id}"]
+        }
+        client {
+            client()
+            gameDirectory = project.file('runs/client')
+        }
+        server {
+            server()
+            gameDirectory = project.file('runs/server')
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = project.file('build/run/gameTest')
+        }
+        // Dev only, needs a display: drives a client through quick trade and the hint, then quits.
+        // ./gradlew :forge:runClientTest (screenshots in build/run/clientTest/screenshots)
+        clientTest {
+            client()
+            sourceSet = sourceSets.clientTest
+            loadedMods = [mods."${mod_id}", mods.tradery_client_test]
+            gameDirectory = project.file('build/run/clientTest')
+        }
+        // Dev only: two launches with a kill -9 in between, driven by tools/crash-test.sh
+        crashTest {
+            server()
+            sourceSet = sourceSets.clientTest
+            loadedMods = [mods."${mod_id}", mods.tradery_client_test]
+            gameDirectory = project.file('build/run/crashTest')
+        }
+    }
+}
+legacyForge.addModdingDependenciesTo(sourceSets.clientTest)
+
+// Forge 47 runs on SRG names: the mixins need a refmap, and Forge only loads the configs listed in the manifest
+mixin {
+    add(sourceSets.main, "${mod_id}.refmap.json")
+    config("${mod_id}.mixins.json")
+}
+
+dependencies {
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    // Optional integrations, as in :common (Forge jars are SRG-named: modCompileOnly remaps them)
+    compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-forge:${rei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-forge:${rei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}") { transitive = false }
+    compileOnly("me.shedaniel.cloth:basic-math:0.6.1") { transitive = false }
+    modCompileOnly("dev.architectury:architectury-forge:${architectury_version}") { transitive = false }
+    modCompileOnly("maven.modrinth:jade:${jade_forge_version}") { transitive = false }
+    // REI finds Forge plugins by an annotation that only its Forge jar has
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-forge:${rei_version}") { transitive = false }
+
+    // Dev only: run with the optional mods installed: ./gradlew :forge:runClient -Pcompat=true
+    if (project.hasProperty('compat')) {
+        modRuntimeOnly("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
+        modRuntimeOnly("maven.modrinth:jade:${jade_forge_version}")
+        modRuntimeOnly("me.shedaniel:RoughlyEnoughItems-forge:${rei_version}")
+        modRuntimeOnly("dev.architectury:architectury-forge:${architectury_version}")
+        modRuntimeOnly("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
+    }
+}
+
+jar {
+    manifest.attributes(['MixinConfigs': "${mod_id}.mixins.json"])
+}
+
+// `build` -> `check` -> GameTests on Forge too (Fabric wires runGameTest into build itself)
+tasks.named('check') { dependsOn 'runGameTestServer' }
+
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->
+    configurations.named(variant) {
+        attributes {
+            attribute(loaderAttribute, 'forge')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName, it.getTaskName(null, 'jarJar')].each { variant ->
+        configurations.named(variant) {
+            attributes {
+                attribute(loaderAttribute, 'forge')
+            }
+        }
+    }
+}
+
+apply from: rootProject.file('gradle/publish-mod.gradle')

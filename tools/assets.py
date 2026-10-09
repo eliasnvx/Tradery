@@ -4,10 +4,13 @@
 Run from the repo root: python3 tools/assets.py. Output goes to common/src/main/resources. Hand edits to generated
 files are overwritten: change this script instead.
 
-Formats are Minecraft 1.21.1's: item models in models/item (no item model definitions), configured features in
-worldgen/configured_feature, loot "functions"/"conditions", recipe ingredients as {"item"}/{"tag"} objects.
-Translucent and cutout parts use NeoForge's model "render_type" (vanilla and Fabric ignore it; Fabric gets the same
-layers from BlockRenderLayerMap in code). Emissive faces use NeoForge's "neoforge_data" block light (Fabric: no glow).
+Formats are Minecraft 1.20.1's (pack format 15): plural data folders (loot_tables, recipes, tags/blocks, tags/items),
+item models in models/item, configured features in worldgen/configured_feature, loot "functions"/"conditions", recipe
+ingredients as {"item"}/{"tag"} objects and results as {"item", "count"}, match_tool predicates as
+{"enchantments": [{"enchantment", "levels"}]}. Translucent and cutout parts use Forge's model "render_type" (vanilla and
+Fabric ignore it; Fabric gets the same layers from BlockRenderLayerMap in code). Emissive faces use Forge's "forge_data"
+block light (Fabric: no glow). Coin ores reach the biomes through a Forge biome modifier (forge/biome_modifier) or
+Fabric's BiomeModifications in code.
 """
 import json
 import os
@@ -15,7 +18,7 @@ import os
 RES = os.path.join(os.path.dirname(__file__), "..", "common", "src", "main", "resources")
 NS = "tradery"
 FACINGS = {"north": 0, "east": 90, "south": 180, "west": 270}
-# NeoForge render types (model "render_type"): the case glass is translucent, the ore overlay is cut out like grass
+# Forge render types (model "render_type"): the case glass is translucent, the ore overlay is cut out like grass
 TRANSLUCENT = "minecraft:translucent"
 CUTOUT_MIPPED = "minecraft:cutout_mipped"
 
@@ -51,8 +54,8 @@ def box(frm, to, tex_for_side, uv_for_side, cull=False, emission=None):
         faces[side] = face(t, uv_for_side(side), cullface)
     element = {"from": frm, "to": to, "faces": faces}
     if emission is not None:
-        # 1.21.1 has no per-element "light_emission"; NeoForge reads the face block light from "neoforge_data"
-        element["neoforge_data"] = {"block_light": emission}
+        # 1.20.1 has no per-element "light_emission"; Forge reads the face block light from "forge_data" (ForgeFaceData)
+        element["forge_data"] = {"block_light": emission}
     return element
 
 
@@ -107,7 +110,7 @@ def case_elements(bottom):
 
 
 def vending_case():
-    # Its own multipart model, so on NeoForge only the case renders translucent and the base stays solid
+    # Its own multipart model, so on Forge only the case renders translucent and the base stays solid
     return {
         "parent": "minecraft:block/block",
         "render_type": TRANSLUCENT,
@@ -196,8 +199,13 @@ def generated_item(texture):
 
 
 def ingredient(item_id):
-    """A recipe ingredient: 1.21.1 takes {"item": id} or {"tag": id} objects, not plain strings ("#tag")."""
+    """A recipe ingredient: 1.20.1 takes {"item": id} or {"tag": id} objects, not plain strings ("#tag")."""
     return {"tag": item_id[1:]} if item_id.startswith("#") else {"item": item_id}
+
+
+def result(item_id, count=1):
+    """A recipe result: 1.20.1 names the item "item" (1.20.5+ renamed it to "id")."""
+    return {"item": item_id, "count": count}
 
 
 def block_loot(name):
@@ -209,10 +217,10 @@ def block_loot(name):
     }
 
 
-# Same check as vanilla 1.21.1 ore loot (26.x has it as the predicate minecraft:tool/can_silk_touch)
+# Same check as vanilla 1.20.1 ore loot (1.21.1: item sub-predicates, 26.x: the predicate minecraft:tool/can_silk_touch)
 SILK_TOUCH = {
     "condition": "minecraft:match_tool",
-    "predicate": {"predicates": {"minecraft:enchantments": [{"enchantments": "minecraft:silk_touch", "levels": {"min": 1}}]}},
+    "predicate": {"enchantments": [{"enchantment": "minecraft:silk_touch", "levels": {"min": 1}}]},
 }
 
 
@@ -232,7 +240,7 @@ def ore_model(base_texture, overlay_texture):
                          for side in ("down", "up", "north", "south", "west", "east")}
     return {
         "parent": "minecraft:block/block",
-        # 1.21.1 picks the layer per block, not per sprite: the overlay's clear pixels need a cutout layer (like grass)
+        # 1.20.1 picks the layer per block, not per sprite: the overlay's clear pixels need a cutout layer (like grass)
         "render_type": CUTOUT_MIPPED,
         "textures": {"particle": base_texture, "base": base_texture, "overlay": overlay_texture},
         "elements": [
@@ -304,20 +312,21 @@ def coins_and_ores():
             write(f"assets/{NS}/models/block/{block}.json", ore_model(base, f"{NS}:block/{tier}_coin_ore_overlay"))
             write(f"assets/{NS}/blockstates/{block}.json", {"variants": {"": {"model": f"{NS}:block/{block}"}}})
             write(f"assets/{NS}/models/item/{block}.json", block_item_model(f"{NS}:block/{block}"))
-            write(f"data/{NS}/loot_table/blocks/{block}.json", ore_loot(block, coin, cmin, cmax))
+            write(f"data/{NS}/loot_tables/blocks/{block}.json", ore_loot(block, coin, cmin, cmax))
             tool_tags.setdefault(tool, []).append(f"{NS}:{block}")
             ores.append(f"{NS}:{block}")
         write(f"data/{NS}/worldgen/configured_feature/{tier}_coin_ore.json", ore_feature(tier, size))
         write(f"data/{NS}/worldgen/placed_feature/{tier}_coin_ore.json", ore_placed(tier, count, lo, hi))
     for tag, blocks in tool_tags.items():
         ns, path = tag.split(":")
-        write(f"data/{ns}/tags/block/{path}.json", {"values": blocks})
-    write(f"data/{NS}/tags/block/coin_ores.json", {"values": ores})
-    write(f"data/{NS}/tags/item/coin_ores.json", {"values": ores})
-    write(f"data/{NS}/tags/item/coins.json", {"values": [f"{NS}:{t}_coin" for t in TIERS]})
+        write(f"data/{ns}/tags/blocks/{path}.json", {"values": blocks})
+    write(f"data/{NS}/tags/blocks/coin_ores.json", {"values": ores})
+    write(f"data/{NS}/tags/items/coin_ores.json", {"values": ores})
+    write(f"data/{NS}/tags/items/coins.json", {"values": [f"{NS}:{t}_coin" for t in TIERS]})
     write(f"data/{NS}/tags/worldgen/biome/has_coin_ore.json", {"values": ["#minecraft:is_overworld"]})
-    write(f"data/{NS}/neoforge/biome_modifier/coin_ores.json", {
-        "type": "neoforge:add_features",
+    # Forge 47 reads its biome_modifier registry from data/<ns>/forge/biome_modifier (Fabric ignores the file)
+    write(f"data/{NS}/forge/biome_modifier/coin_ores.json", {
+        "type": "forge:add_features",
         "biomes": f"#{NS}:has_coin_ore",
         "features": [f"{NS}:{t}_coin_ore" for t in TIERS],
         "step": "underground_ores",
@@ -341,21 +350,21 @@ def main():
     write(f"assets/{NS}/models/item/vendor_key.json", generated_item(f"{NS}:item/vendor_key"))
 
     for name in ("vending_block", "display_block"):
-        write(f"data/{NS}/loot_table/blocks/{name}.json", block_loot(name))
+        write(f"data/{NS}/loot_tables/blocks/{name}.json", block_loot(name))
     ores = coins_and_ores()
-    write("data/minecraft/tags/block/mineable/pickaxe.json", {"values": [f"{NS}:vending_block", f"{NS}:display_block"] + ores})
+    write("data/minecraft/tags/blocks/mineable/pickaxe.json", {"values": [f"{NS}:vending_block", f"{NS}:display_block"] + ores})
 
-    write(f"data/{NS}/recipe/vending_block.json", {
+    write(f"data/{NS}/recipes/vending_block.json", {
         "type": "minecraft:crafting_shaped", "category": "misc",
         "key": {"G": ingredient("minecraft:glass"), "C": ingredient("minecraft:chest"), "O": ingredient("minecraft:gold_ingot")},
         "pattern": [" G ", "GCG", "OOO"],
-        "result": {"count": 1, "id": f"{NS}:vending_block"},
+        "result": result(f"{NS}:vending_block"),
     })
-    write(f"data/{NS}/recipe/display_block.json", {
+    write(f"data/{NS}/recipes/display_block.json", {
         "type": "minecraft:crafting_shaped", "category": "misc",
         "key": {"G": ingredient("minecraft:glass"), "S": ingredient("#minecraft:slabs")},
         "pattern": ["GGG", "G G", "SSS"],
-        "result": {"count": 1, "id": f"{NS}:display_block"},
+        "result": result(f"{NS}:display_block"),
     })
 
 

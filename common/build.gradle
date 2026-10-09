@@ -1,12 +1,12 @@
 // All loader-agnostic logic. Compiled against vanilla Minecraft; loader APIs are reached through Platform.
 plugins {
     id 'multiloader-shared'
-    id 'net.neoforged.moddev'
+    id 'net.neoforged.moddev.legacyforge'
 }
 
-neoForge {
-    neoFormVersion = neo_form_version
-    // JUnit tests use vanilla classes (Identifier, Codec, Gson) too
+legacyForge {
+    mcpVersion = minecraft_version
+    // JUnit tests use vanilla classes (ResourceLocation, Codec, Gson) too
     addModdingDependenciesTo(sourceSets.test)
     def at = file('src/main/resources/META-INF/accesstransformer.cfg')
     if (at.exists()) {
@@ -17,10 +17,20 @@ neoForge {
 dependencies {
     implementation project(':api')
 
-    // Both loaders ship Fabric Mixin and MixinExtras, so common mixins can use them
-    // NeoForge 21.1.256 ships Mixin 0.16.4, Fabric Loader 0.19.5 Mixin 0.17.4; both MixinExtras 0.5.5. Compile against the lowest
-    compileOnly 'net.fabricmc:sponge-mixin:0.16.4+mixin.0.8.7'
-    compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.3'))
+    // Optional integrations (compile only). JEI's common API is Mojang-named; REI, Cloth, Architectury and Jade ship
+    // SRG-named Forge jars, which legacyforge remaps to Mojang names (modCompileOnly)
+    compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-forge:${rei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-forge:${rei_version}") { transitive = false }
+    // REI's API signatures mention these (Rectangle, FluidStack)
+    modCompileOnly("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}") { transitive = false }
+    compileOnly("me.shedaniel.cloth:basic-math:0.6.1") { transitive = false }
+    modCompileOnly("dev.architectury:architectury-forge:${architectury_version}") { transitive = false }
+    modCompileOnly("maven.modrinth:jade:${jade_forge_version}") { transitive = false }
+
+    // Both loaders ship Mixin; Forge resolves the mixins through the refmap the :forge build generates
+    // Forge 47 ships plain Mixin 0.8.5 and no MixinExtras: common mixins use plain Mixin only
+    compileOnly 'org.spongepowered:mixin:0.8.5'
 }
 
 // TraderyApi.API_VERSION must match api_version (ApiVersionTest); the lang test scans the sources

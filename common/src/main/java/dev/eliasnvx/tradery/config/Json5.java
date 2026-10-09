@@ -315,7 +315,7 @@ public final class Json5 {
     private static void writeValue(StringBuilder out, JsonElement value, Map<String, String> comments, String path, String indent) {
         if (value.isJsonObject()) {
             JsonObject object = value.getAsJsonObject();
-            if (object.isEmpty()) {
+            if (object.size() == 0) {
                 out.append("{}");
                 return;
             }

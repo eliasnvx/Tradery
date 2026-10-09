@@ -3,7 +3,6 @@ package dev.eliasnvx.tradery.economy;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.eliasnvx.tradery.util.CodecSavedData;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -95,7 +94,7 @@ public final class StatsData extends SavedData {
     ).apply(i, StatsData::new));
 
     public static final String NAME = "tradery_stats";
-    public static final SavedData.Factory<StatsData> FACTORY = CodecSavedData.factory(NAME, CODEC, StatsData::new);
+    public static final CodecSavedData.Factory<StatsData> FACTORY = CodecSavedData.factory(NAME, CODEC, StatsData::new);
 
     private final TreeMap<String, Day> days = new TreeMap<>();
     private long cashOutstanding;
@@ -115,8 +114,8 @@ public final class StatsData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        return CodecSavedData.save(CODEC, this, tag, registries);
+    public CompoundTag save(CompoundTag tag) {
+        return CodecSavedData.save(CODEC, this, tag);
     }
 
     public static String today() {

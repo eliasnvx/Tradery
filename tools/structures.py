@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Generates the GameTest structure data/tradery/structure/empty.nbt (5x5x5 of air) without dependencies.
+"""Generates the GameTest structure data/tradery/structures/empty.nbt (5x5x5 of air) without dependencies.
 
-Run from the repo root: python3 tools/structures.py. DATA_VERSION is Minecraft 1.21.1's world version
+Run from the repo root: python3 tools/structures.py. DATA_VERSION is Minecraft 1.20.1's world version
 (SharedConstants.WORLD_VERSION): a newer one than the game's would go through the data fixer the wrong way.
+1.20.1 loads structure templates from the plural "structures" folder (1.21+ renamed it to "structure").
 """
 import gzip
 import os
 import struct
 
-DATA_VERSION = 3955
+DATA_VERSION = 3465
 SIZE = (5, 5, 5)
-OUT = os.path.join(os.path.dirname(__file__), "..", "common", "src", "main", "resources", "data", "tradery", "structure", "empty.nbt")
+OUT = os.path.join(os.path.dirname(__file__), "..", "common", "src", "main", "resources", "data", "tradery", "structures", "empty.nbt")
 
 TAG_END, TAG_INT, TAG_STRING, TAG_LIST, TAG_COMPOUND = 0, 3, 8, 9, 10
 

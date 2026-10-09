@@ -3,6 +3,7 @@ package dev.eliasnvx.tradery.client.screen;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.eliasnvx.tradery.api.vending.PriceMode;
 import dev.eliasnvx.tradery.client.ClientEconomy;
+import dev.eliasnvx.tradery.menu.GhostSlot;
 import dev.eliasnvx.tradery.menu.VendingOwnerMenu;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.platform.Platform;
@@ -138,6 +139,8 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
     @Override
     protected void containerTick() {
         super.containerTick();
+        // 1.20.1 text boxes blink their cursor by ticks
+        priceBox.tick();
         refreshWidgets();
     }
 
@@ -174,6 +177,8 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // 1.20.1 container screens don't dim the world themselves
+        renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
     }
@@ -240,7 +245,7 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
     @Override
     protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         super.renderTooltip(graphics, mouseX, mouseY);
-        if (hoveredSlot != null && !hoveredSlot.hasItem() && hoveredSlot.isFake()) {
+        if (hoveredSlot instanceof GhostSlot && !hoveredSlot.hasItem()) {
             String key = hoveredSlot.index == VendingOwnerMenu.GOODS_SLOT ? "tradery.screen.goods_tip"
                 : hoveredSlot.index == VendingOwnerMenu.PRICE_SLOT ? "tradery.screen.price_tip" : "tradery.screen.facade_tip";
             graphics.renderTooltip(font, Component.translatable(key), mouseX, mouseY);

@@ -2,12 +2,19 @@ package dev.eliasnvx.tradery.fabric;
 
 import dev.eliasnvx.tradery.Tradery;
 import dev.eliasnvx.tradery.command.TraderyPermission;
+import dev.eliasnvx.tradery.network.TraderyPacket;
 import dev.eliasnvx.tradery.platform.Platform;
+import dev.eliasnvx.tradery.rewards.PlacedBlocks;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.api.EnvType;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
@@ -15,11 +22,10 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -27,12 +33,19 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 final class FabricPlatform implements Platform {
+    /** Player-placed block marks per chunk; saved with the chunk. */
+    private static final AttachmentType<LongSet> PLACED = AttachmentRegistry.createPersistent(Tradery.id("placed_blocks"),
+        PlacedBlocks.CODEC);
+
     @Override
     public String loaderName() {
         return "fabric";
@@ -64,25 +77,32 @@ final class FabricPlatform implements Platform {
         return Permissions.check(player, permission.node(), permission.fallback());
     }
 
+    /** Clients without Tradery never registered the channel; fake players have no client at all. */
     @Override
-    public void sendToPlayer(ServerPlayer player, CustomPacketPayload payload) {
-        if (ServerPlayNetworking.canSend(player, payload.type())) {
-            ServerPlayNetworking.send(player, payload);
+    public void sendToPlayer(ServerPlayer player, TraderyPacket packet) {
+        if (!(player instanceof FakePlayer) && ServerPlayNetworking.canSend(player, packet.id())) {
+            ServerPlayNetworking.send(player, packet.id(), encode(packet));
         }
     }
 
     @Override
-    public boolean canSendToServer(CustomPacketPayload.Type<?> type) {
-        return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT && Client.canSend(type);
+    public boolean canSendToServer(ResourceLocation id) {
+        return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT && Client.canSend(id);
     }
 
     @Override
-    public void sendToServer(CustomPacketPayload payload) {
-        Client.send(payload);
+    public void sendToServer(TraderyPacket packet) {
+        Client.send(packet);
+    }
+
+    static FriendlyByteBuf encode(TraderyPacket packet) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
+        packet.write(buf);
+        return buf;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> Supplier<T> register(ResourceKey<? extends Registry<? super T>> registry, String name, Supplier<? extends T> factory) {
         Registry<? super T> target = (Registry<? super T>) BuiltInRegistries.REGISTRY.getOrThrow((ResourceKey) registry);
         T value = Registry.register(target, Tradery.id(name), factory.get());
@@ -90,17 +110,17 @@ final class FabricPlatform implements Platform {
     }
 
     @Override
-    public <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory,
-                                                                     StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec) {
-        return new ExtendedScreenHandlerType<>(factory::create, dataCodec);
+    public <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory, Function<FriendlyByteBuf, D> reader) {
+        return new ExtendedScreenHandlerType<>((containerId, inventory, buf) -> factory.create(containerId, inventory, reader.apply(buf)));
     }
 
+    /** Fabric's FakePlayer#openMenu opens nothing, so fake players get no menu here either. */
     @Override
-    public <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec, D data) {
-        player.openMenu(new ExtendedScreenHandlerFactory<D>() {
+    public <D> void openMenu(ServerPlayer player, MenuProvider provider, BiConsumer<FriendlyByteBuf, D> writer, D data) {
+        player.openMenu(new ExtendedScreenHandlerFactory() {
             @Override
-            public D getScreenOpeningData(ServerPlayer opener) {
-                return data;
+            public void writeScreenOpeningData(ServerPlayer opener, FriendlyByteBuf buf) {
+                writer.accept(buf, data);
             }
 
             @Override
@@ -115,18 +135,14 @@ final class FabricPlatform implements Platform {
         });
     }
 
-    /** Player-placed block marks per chunk; saved with the chunk. */
-    private static final net.fabricmc.fabric.api.attachment.v1.AttachmentType<it.unimi.dsi.fastutil.longs.LongSet> PLACED =
-        net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry.create(Tradery.id("placed_blocks"),
-            builder -> builder.persistent(dev.eliasnvx.tradery.rewards.PlacedBlocks.CODEC));
-
     @Override
-    public it.unimi.dsi.fastutil.longs.LongSet placedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk) {
-        return chunk.getAttachedOrElse(PLACED, it.unimi.dsi.fastutil.longs.LongSets.EMPTY_SET);
+    public LongSet placedBlocks(LevelChunk chunk) {
+        return chunk.getAttachedOrElse(PLACED, LongSets.EMPTY_SET);
     }
 
+    /** Setting or removing an attachment marks the chunk unsaved (Fabric API does it). */
     @Override
-    public void setPlacedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk, it.unimi.dsi.fastutil.longs.LongSet positions) {
+    public void setPlacedBlocks(LevelChunk chunk, LongSet positions) {
         if (positions.isEmpty()) {
             chunk.removeAttached(PLACED);
         } else {
@@ -141,12 +157,12 @@ final class FabricPlatform implements Platform {
 
     /** Client-only classes, loaded only when these are called on the client. */
     private static final class Client {
-        static boolean canSend(CustomPacketPayload.Type<?> type) {
-            return ClientPlayNetworking.canSend(type);
+        static boolean canSend(ResourceLocation id) {
+            return ClientPlayNetworking.canSend(id);
         }
 
-        static void send(CustomPacketPayload payload) {
-            ClientPlayNetworking.send(payload);
+        static void send(TraderyPacket packet) {
+            ClientPlayNetworking.send(packet.id(), encode(packet));
         }
     }
 }

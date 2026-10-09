@@ -9,7 +9,7 @@ import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 /**
  * Coin ore worldgen: the placed features in {@code data/tradery/worldgen/placed_feature} go into every biome of
- * {@code #tradery:has_coin_ore} (NeoForge: a biome modifier file, Fabric: {@code BiomeModifications}).
+ * {@code #tradery:has_coin_ore} (Forge: a biome modifier file, Fabric: {@code BiomeModifications}).
  */
 public final class CoinOreGeneration {
     public static final TagKey<Biome> BIOMES = TagKey.create(Registries.BIOME, Tradery.id("has_coin_ore"));

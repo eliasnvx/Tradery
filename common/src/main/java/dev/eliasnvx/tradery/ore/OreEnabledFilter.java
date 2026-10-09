@@ -1,6 +1,6 @@
 package dev.eliasnvx.tradery.ore;
 
-import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.Codec;
 import dev.eliasnvx.tradery.config.TraderyConfig;
 import dev.eliasnvx.tradery.registry.TraderyItems;
 import net.minecraft.core.BlockPos;
@@ -15,7 +15,7 @@ import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
  */
 public final class OreEnabledFilter extends PlacementFilter {
     public static final OreEnabledFilter INSTANCE = new OreEnabledFilter();
-    public static final MapCodec<OreEnabledFilter> CODEC = MapCodec.unit(() -> INSTANCE);
+    public static final Codec<OreEnabledFilter> CODEC = Codec.unit(() -> INSTANCE);
 
     private OreEnabledFilter() {
     }

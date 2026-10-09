@@ -23,7 +23,7 @@ public final class VendingMenus {
         VendingBuyerMenu.Data data = new VendingBuyerMenu.Data(vendor.getBlockPos(), vendor.settings(), vendor.ownerName());
         Platform.get().openMenu(player, new SimpleMenuProvider(
                 (id, inventory, opener) -> new VendingBuyerMenu(id, inventory, data, vendor), title(vendor)),
-            VendingBuyerMenu.Data.STREAM_CODEC, data);
+            (buf, d) -> d.write(buf), data);
     }
 
     public static void openOwner(ServerPlayer player, VendingBlockEntity vendor, boolean adminMode) {
@@ -31,7 +31,7 @@ public final class VendingMenus {
             Optional.ofNullable(vendor.facade()), adminMode, vendor.owner() instanceof AccountId.System, VendingConfigurator.feeText());
         Platform.get().openMenu(player, new SimpleMenuProvider(
                 (id, inventory, opener) -> new VendingOwnerMenu(id, inventory, data, vendor), title(vendor)),
-            VendingOwnerMenu.Data.STREAM_CODEC, data);
+            (buf, d) -> d.write(buf), data);
     }
 
     public static void openDisplay(ServerPlayer player, DisplayBlockEntity display) {
@@ -39,7 +39,7 @@ public final class VendingMenus {
         Platform.get().openMenu(player, new SimpleMenuProvider(
                 (id, inventory, opener) -> new DisplayMenu(id, inventory, data, display),
                 Component.translatable("block.tradery.display_block")),
-            DisplayMenu.Data.STREAM_CODEC, data);
+            (buf, d) -> d.write(buf), data);
     }
 
     private static Component title(VendingBlockEntity vendor) {

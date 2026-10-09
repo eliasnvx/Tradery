@@ -82,10 +82,7 @@ public final class LedgerAccount implements Account {
         if (!name.isEmpty()) {
             return name;
         }
-        return switch (id) {
-            case AccountId.Player player -> player.uuid().toString();
-            case AccountId.System system -> system.id().toString();
-        };
+        return id instanceof AccountId.Player player ? player.uuid().toString() : ((AccountId.System) id).id().toString();
     }
 
     /** Last known player name, or empty. */

@@ -10,9 +10,7 @@ import dev.eliasnvx.tradery.vending.VendingConfigurator;
 import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.StackMath;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -85,20 +83,23 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
      */
     public record Data(BlockPos pos, VendingSettings settings, AdminFlags admin, Optional<BlockState> facade, boolean adminMode,
                        boolean serverOwned, String feePercent) {
-        private static final StreamCodec<io.netty.buffer.ByteBuf, BlockState> BLOCK_STATE = ByteBufCodecs.idMapper(Block::stateById, Block::getId);
+        /** Longest fee text sent ("2.5%"). */
+        public static final int MAX_FEE_TEXT = 16;
 
-        public static final StreamCodec<RegistryFriendlyByteBuf, Data> STREAM_CODEC = StreamCodec.of(
-            (buf, d) -> {
-                BlockPos.STREAM_CODEC.encode(buf, d.pos);
-                VendingSettings.STREAM_CODEC.encode(buf, d.settings);
-                AdminFlags.STREAM_CODEC.encode(buf, d.admin);
-                ByteBufCodecs.optional(BLOCK_STATE).encode(buf, d.facade);
-                buf.writeBoolean(d.adminMode);
-                buf.writeBoolean(d.serverOwned);
-                buf.writeUtf(d.feePercent, 16);
-            },
-            buf -> new Data(BlockPos.STREAM_CODEC.decode(buf), VendingSettings.STREAM_CODEC.decode(buf), AdminFlags.STREAM_CODEC.decode(buf),
-                ByteBufCodecs.optional(BLOCK_STATE).decode(buf), buf.readBoolean(), buf.readBoolean(), buf.readUtf(16)));
+        public void write(FriendlyByteBuf buf) {
+            buf.writeBlockPos(pos);
+            settings.write(buf);
+            admin.write(buf);
+            buf.writeOptional(facade, (b, state) -> b.writeVarInt(Block.getId(state)));
+            buf.writeBoolean(adminMode);
+            buf.writeBoolean(serverOwned);
+            buf.writeUtf(feePercent, MAX_FEE_TEXT);
+        }
+
+        public static Data read(FriendlyByteBuf buf) {
+            return new Data(buf.readBlockPos(), VendingSettings.read(buf), AdminFlags.read(buf),
+                buf.readOptional(b -> Block.stateById(b.readVarInt())), buf.readBoolean(), buf.readBoolean(), buf.readUtf(MAX_FEE_TEXT));
+        }
     }
 
     private final @Nullable VendingBlockEntity vendor;

@@ -273,12 +273,14 @@ public final class VendingTrades {
 
     public static Account ownerAccount(VendingBlockEntity vendor) {
         EconomyService economy = EconomyService.INSTANCE;
-        return switch (vendor.owner()) {
-            case AccountId.Player player -> economy.account(player.uuid());
-            case AccountId.System system -> system.id().equals(EconomyService.SERVER_ACCOUNT)
-                ? economy.serverAccount() : economy.systemAccount(system.id());
-            case null -> throw new IllegalStateException("Vending block without owner at " + vendor.getBlockPos());
-        };
+        AccountId owner = vendor.owner();
+        if (owner instanceof AccountId.Player player) {
+            return economy.account(player.uuid());
+        }
+        if (owner instanceof AccountId.System system) {
+            return system.id().equals(EconomyService.SERVER_ACCOUNT) ? economy.serverAccount() : economy.systemAccount(system.id());
+        }
+        throw new IllegalStateException("Vending block without owner at " + vendor.getBlockPos());
     }
 
     /** How many trades the player can pay for (or, for buyback, supply), capped for the menu. */
