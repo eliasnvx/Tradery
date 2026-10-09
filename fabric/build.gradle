@@ -42,7 +42,8 @@ dependencies {
 
     // Dev only: run with the optional mods installed: ./gradlew :fabric:runClient -Pcompat=true
     if (project.hasProperty('compat')) {
-        modRuntimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}")
+        modRuntimeOnly("mezz.jei:jei-${minecraft_version}-fabric:${jei_version}") { transitive = false } // the full mod jar; its POM lists dev-only modules
+        modRuntimeOnly("net.mezzdev.config:mezz_config-${minecraft_version}-fabric:${mezz_config_version}") { transitive = false }
         modRuntimeOnly("maven.modrinth:jade:${jade_fabric_version}")
         modRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}")
         modRuntimeOnly("dev.architectury:architectury-fabric:${architectury_version}")
