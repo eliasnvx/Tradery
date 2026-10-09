@@ -11,7 +11,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -46,13 +46,13 @@ public final class TraderyNeoForge {
                 TraderyServer.onPlayerLeave(player);
             }
         });
-        NeoForge.EVENT_BUS.addListener((BreakBlockEvent event) -> {
+        NeoForge.EVENT_BUS.addListener((BlockEvent.BreakEvent event) -> {
             if (!TraderyServer.mayBreak(event.getPlayer(), (net.minecraft.world.level.Level) event.getLevel(), event.getPos())) {
                 event.setCanceled(true);
             }
         });
         // Last, so protections of other mods had their say
-        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (BreakBlockEvent event) -> {
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (BlockEvent.BreakEvent event) -> {
             if (!event.isCanceled()) {
                 TraderyServer.onBlockBroken(event.getPlayer(), (net.minecraft.world.level.Level) event.getLevel(), event.getPos(), event.getState());
             }
@@ -77,7 +77,7 @@ public final class TraderyNeoForge {
 
     /** Optional channels: a server without Tradery on the client side just doesn't get the HUD packets. */
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar(Tradery.MOD_ID).versioned("1").optional().executesOn(HandlerThread.MAIN);
+        PayloadRegistrar registrar = event.registrar("1").optional().executesOn(HandlerThread.MAIN);
         for (TraderyPayloads.Entry<?> entry : TraderyPayloads.CLIENTBOUND) {
             registerClientbound(registrar, entry);
         }

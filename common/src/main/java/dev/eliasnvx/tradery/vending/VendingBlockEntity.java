@@ -5,25 +5,21 @@ import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.TagValueOutput;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.ContainerHelper;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
@@ -31,8 +27,7 @@ import java.util.UUID;
  * A vending block: owner, what it trades ({@link VendingSettings}), 27 slots of stock, 9 slots of item revenue,
  * an optional facade and admin flags. Never ticks. The client copy knows everything except the two inventories.
  */
-public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Tradery");
+public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity, Clearable {
     public static final int STOCK_SIZE = 27;
     public static final int REVENUE_SIZE = 9;
     /** How far a player may be to use the block (spec: 8 blocks). */
@@ -185,11 +180,13 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity 
         }
     }
 
-    /** The block is being removed for good (not unloaded): drop the contents once and close menus. */
-    @Override
-    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
-        super.preRemoveSideEffects(pos, state);
+    /**
+     * The block is being removed for good (not unloaded): drop the contents once and close menus. Called by
+     * {@link VendingBlock#onRemove} on the server when the block changes to another block.
+     */
+    void removedForGood() {
         if (level instanceof ServerLevel serverLevel) {
+            BlockPos pos = worldPosition;
             VendingMenus.closeAllFor(serverLevel, pos);
             Containers.dropContents(serverLevel, pos, stock);
             Containers.dropContents(serverLevel, pos, revenue);
@@ -199,37 +196,52 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity 
         }
     }
 
+    /**
+     * {@code /setblock}, {@code /clone}, {@code /fill} and structure placement call this before they replace the block,
+     * so the contents vanish instead of dropping (and {@code /clone ... move} can't copy them and drop them too).
+     * Not a {@link net.minecraft.world.Container}: hoppers still can't reach the storage.
+     */
+    @Override
+    public void clearContent() {
+        stock.clearContent();
+        revenue.clearContent();
+    }
+
     // ------------------------------------------------------------------ save / sync
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        owner = input.read("owner", AccountId.CODEC).orElse(null);
-        ownerName = input.getStringOr("owner_name", "");
-        settings = input.read("settings", VendingSettings.CODEC).orElse(VendingSettings.EMPTY);
-        admin = input.read("admin", AdminFlags.CODEC).orElse(AdminFlags.NONE);
-        facade = input.read("facade", BlockState.CODEC).orElse(null);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        owner = TagCodecs.read(tag, "owner", AccountId.CODEC, registries).orElse(null);
+        ownerName = tag.getString("owner_name");
+        settings = TagCodecs.read(tag, "settings", VendingSettings.CODEC, registries).orElse(VendingSettings.EMPTY);
+        admin = TagCodecs.read(tag, "admin", AdminFlags.CODEC, registries).orElse(AdminFlags.NONE);
+        facade = TagCodecs.read(tag, "facade", BlockState.CODEC, registries).orElse(null);
         stock.getItems().replaceAll(stack -> ItemStack.EMPTY);
         revenue.getItems().replaceAll(stack -> ItemStack.EMPTY);
-        input.child("stock").ifPresent(child -> ContainerHelper.loadAllItems(child, stock.getItems()));
-        input.child("revenue").ifPresent(child -> ContainerHelper.loadAllItems(child, revenue.getItems()));
+        if (tag.contains("stock", Tag.TAG_COMPOUND)) {
+            ContainerHelper.loadAllItems(tag.getCompound("stock"), stock.getItems(), registries);
+        }
+        if (tag.contains("revenue", Tag.TAG_COMPOUND)) {
+            ContainerHelper.loadAllItems(tag.getCompound("revenue"), revenue.getItems(), registries);
+        }
     }
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        writeShared(output);
-        ContainerHelper.saveAllItems(output.child("stock"), stock.getItems(), true);
-        ContainerHelper.saveAllItems(output.child("revenue"), revenue.getItems(), true);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        writeShared(tag, registries);
+        tag.put("stock", ContainerHelper.saveAllItems(new CompoundTag(), stock.getItems(), true, registries));
+        tag.put("revenue", ContainerHelper.saveAllItems(new CompoundTag(), revenue.getItems(), true, registries));
     }
 
     /** What both the save file and the client get. */
-    private void writeShared(ValueOutput output) {
-        output.storeNullable("owner", AccountId.CODEC, owner);
-        output.putString("owner_name", ownerName);
-        output.store("settings", VendingSettings.CODEC, settings);
-        output.store("admin", AdminFlags.CODEC, admin);
-        output.storeNullable("facade", BlockState.CODEC, facade);
+    private void writeShared(CompoundTag tag, HolderLookup.Provider registries) {
+        TagCodecs.putNullable(tag, "owner", AccountId.CODEC, owner, registries);
+        tag.putString("owner_name", ownerName);
+        TagCodecs.put(tag, "settings", VendingSettings.CODEC, settings, registries);
+        TagCodecs.put(tag, "admin", AdminFlags.CODEC, admin, registries);
+        TagCodecs.putNullable(tag, "facade", BlockState.CODEC, facade, registries);
     }
 
     @Override
@@ -239,11 +251,9 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity 
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(problemPath(), LOGGER)) {
-            TagValueOutput output = TagValueOutput.createWithContext(reporter, registries);
-            writeShared(output);
-            return output.buildResult();
-        }
+        CompoundTag tag = new CompoundTag();
+        writeShared(tag, registries);
+        return tag;
     }
 
     /** Client side: the stock and revenue aren't sent; this reads only what the update tag has. */

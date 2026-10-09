@@ -1,5 +1,6 @@
 package dev.eliasnvx.tradery.vending;
 
+import com.mojang.serialization.MapCodec;
 import dev.eliasnvx.tradery.api.AccountId;
 import dev.eliasnvx.tradery.api.event.VendingPlacedEvent;
 import dev.eliasnvx.tradery.command.Messages;
@@ -10,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +21,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -38,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * can trade. Only the owner (or an admin holding the vendor key) can break it; explosions and pistons can't.
  */
 public class VendingBlock extends BaseEntityBlock {
+    public static final MapCodec<VendingBlock> CODEC = simpleCodec(VendingBlock::new);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     /** Green light: configured and in stock (or buying). */
     public static final BooleanProperty STOCKED = BooleanProperty.create("stocked");
@@ -55,6 +59,16 @@ public class VendingBlock extends BaseEntityBlock {
     public VendingBlock(BlockBehaviour.Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(STOCKED, false).setValue(FACADE, false));
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
     @Override
@@ -81,13 +95,13 @@ public class VendingBlock extends BaseEntityBlock {
         int limit = TraderyConfig.server().vending().maxPerPlayer();
         if (limit > 0 && !VendingProtection.isAdmin(player)
             && VendorsData.get(level.getServer()).countOwnedBy(AccountId.player(player.getUUID())) >= limit) {
-            player.sendOverlayMessage(Messages.tr("tradery.vending.limit", "You already own %s vending blocks", limit));
+            player.displayClientMessage(Messages.tr("tradery.vending.limit", "You already own %s vending blocks", limit), true);
             return false;
         }
         VendingPlacedEvent event = VendingPlacedEvent.EVENT.post(new VendingPlacedEvent(player, level, pos));
         if (event.isCancelled()) {
-            player.sendOverlayMessage(event.cancelMessage() != null ? event.cancelMessage()
-                : Messages.tr("tradery.vending.place_denied", "You can't place a vending block here"));
+            player.displayClientMessage(event.cancelMessage() != null ? event.cancelMessage()
+                : Messages.tr("tradery.vending.place_denied", "You can't place a vending block here"), true);
             return false;
         }
         return true;
@@ -99,27 +113,27 @@ public class VendingBlock extends BaseEntityBlock {
         if (level instanceof ServerLevel serverLevel && by instanceof ServerPlayer player
             && level.getBlockEntity(pos) instanceof VendingBlockEntity vendor) {
             AccountId owner = AccountId.player(player.getUUID());
-            vendor.setOwner(owner, player.nameAndId().name());
+            vendor.setOwner(owner, player.getGameProfile().getName());
             vendor.setSettings(VendingSettings.EMPTY.withAnimation(TraderyConfig.server().vending().defaultAnimation()));
             VendorsData.get(serverLevel.getServer()).add(serverLevel, pos, owner, true);
         }
     }
 
     @Override
-    protected InteractionResult useItemOn(ItemStack itemStack, BlockState state, Level level, BlockPos pos, Player player,
-                                          InteractionHand hand, BlockHitResult hitResult) {
+    protected ItemInteractionResult useItemOn(ItemStack itemStack, BlockState state, Level level, BlockPos pos, Player player,
+                                              InteractionHand hand, BlockHitResult hitResult) {
         if (itemStack.getItem() instanceof VendorKeyItem) {
             if (level instanceof ServerLevel && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof VendingBlockEntity vendor) {
                 if (VendingProtection.isAdmin(serverPlayer)) {
                     VendingMenus.openOwner(serverPlayer, vendor, true);
                 } else {
-                    serverPlayer.sendOverlayMessage(Messages.tr("tradery.vending.not_admin", "Only admins can use the vendor key"));
+                    serverPlayer.displayClientMessage(Messages.tr("tradery.vending.not_admin", "Only admins can use the vendor key"), true);
                 }
             }
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
-        return InteractionResult.TRY_WITH_EMPTY_HAND;
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @Override
@@ -133,7 +147,7 @@ public class VendingBlock extends BaseEntityBlock {
                 VendingMenus.openBuyer(serverPlayer, vendor);
             }
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override
@@ -142,6 +156,15 @@ public class VendingBlock extends BaseEntityBlock {
             return 0.0f;
         }
         return super.getDestroyProgress(state, player, level, pos);
+    }
+
+    /** Removed for good (broken, exploded, replaced; not a state change, not an unload): drops the contents once. */
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof VendingBlockEntity vendor) {
+            vendor.removedForGood();
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override
@@ -156,6 +179,6 @@ public class VendingBlock extends BaseEntityBlock {
 
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        return rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 }

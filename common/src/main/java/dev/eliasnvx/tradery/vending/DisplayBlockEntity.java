@@ -1,6 +1,8 @@
 package dev.eliasnvx.tradery.vending;
 
+import com.mojang.serialization.Codec;
 import dev.eliasnvx.tradery.api.AccountId;
+import dev.eliasnvx.tradery.config.ConfigCodecs;
 import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -8,21 +10,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.TagValueOutput;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** A showcase: shows one item (a copy, not a real stack) with an animation. Nothing is sold. */
 public class DisplayBlockEntity extends BlockEntity implements OwnedBlockEntity {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Tradery");
+    private static final Codec<DisplayAnimation> ANIMATION_CODEC = ConfigCodecs.enumCodec(DisplayAnimation.class);
 
     private @Nullable AccountId owner;
     private ItemStack shown = ItemStack.EMPTY;
@@ -71,24 +67,23 @@ public class DisplayBlockEntity extends BlockEntity implements OwnedBlockEntity 
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        owner = input.read("owner", AccountId.CODEC).orElse(null);
-        shown = input.read("shown", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
-        animation = input.read("animation", dev.eliasnvx.tradery.config.ConfigCodecs.enumCodec(DisplayAnimation.class))
-            .orElse(DisplayAnimation.SPIN_BOB);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        owner = TagCodecs.read(tag, "owner", AccountId.CODEC, registries).orElse(null);
+        shown = TagCodecs.read(tag, "shown", ItemStack.OPTIONAL_CODEC, registries).orElse(ItemStack.EMPTY);
+        animation = TagCodecs.read(tag, "animation", ANIMATION_CODEC, registries).orElse(DisplayAnimation.SPIN_BOB);
     }
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        write(output);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        write(tag, registries);
     }
 
-    private void write(ValueOutput output) {
-        output.storeNullable("owner", AccountId.CODEC, owner);
-        output.store("shown", ItemStack.OPTIONAL_CODEC, shown);
-        output.store("animation", dev.eliasnvx.tradery.config.ConfigCodecs.enumCodec(DisplayAnimation.class), animation);
+    private void write(CompoundTag tag, HolderLookup.Provider registries) {
+        TagCodecs.putNullable(tag, "owner", AccountId.CODEC, owner, registries);
+        TagCodecs.put(tag, "shown", ItemStack.OPTIONAL_CODEC, shown, registries);
+        TagCodecs.put(tag, "animation", ANIMATION_CODEC, animation, registries);
     }
 
     @Override
@@ -98,10 +93,8 @@ public class DisplayBlockEntity extends BlockEntity implements OwnedBlockEntity 
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(problemPath(), LOGGER)) {
-            TagValueOutput output = TagValueOutput.createWithContext(reporter, registries);
-            write(output);
-            return output.buildResult();
-        }
+        CompoundTag tag = new CompoundTag();
+        write(tag, registries);
+        return tag;
     }
 }

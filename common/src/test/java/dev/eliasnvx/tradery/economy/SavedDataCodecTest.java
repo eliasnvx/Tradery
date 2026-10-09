@@ -1,19 +1,22 @@
 package dev.eliasnvx.tradery.economy;
 
 import dev.eliasnvx.tradery.api.AccountId;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** What a server restart does to our data: encode to NBT, decode, compare. */
 class SavedDataCodecTest {
-    private static final Identifier COIN = Identifier.fromNamespaceAndPath("tradery", "coin");
+    private static final ResourceLocation COIN = ResourceLocation.fromNamespaceAndPath("tradery", "coin");
 
     @Test
     void accountsSurviveARestart() {
@@ -22,8 +25,8 @@ class SavedDataCodecTest {
         Ledger ledger = data.ledger();
         UUID aliceId = UUID.randomUUID();
         LedgerAccount alice = ledger.create(AccountId.player(aliceId), "Alice", false);
-        LedgerAccount bank = ledger.create(AccountId.system(Identifier.fromNamespaceAndPath("mymod", "bank")), "", false);
-        ledger.create(AccountId.system(Identifier.fromNamespaceAndPath("tradery", "server")), "Server", true);
+        LedgerAccount bank = ledger.create(AccountId.system(ResourceLocation.fromNamespaceAndPath("mymod", "bank")), "", false);
+        ledger.create(AccountId.system(ResourceLocation.fromNamespaceAndPath("tradery", "server")), "Server", true);
         ledger.move(null, alice, COIN, 123_456, 0, 0);
         ledger.move(alice, bank, COIN, 456, 0, 0);
         ledger.setLocked(bank, true);
@@ -39,8 +42,37 @@ class SavedDataCodecTest {
         LedgerAccount loadedBank = loaded.ledger().get(bank.id()).orElseThrow();
         assertEquals(456, loadedBank.balance(COIN));
         assertTrue(loadedBank.isLocked());
-        assertTrue(loaded.ledger().get(AccountId.system(Identifier.fromNamespaceAndPath("tradery", "server"))).orElseThrow().isInfinite());
+        assertTrue(loaded.ledger().get(AccountId.system(ResourceLocation.fromNamespaceAndPath("tradery", "server"))).orElseThrow().isInfinite());
         assertEquals(123_456, loaded.ledger().total(COIN), "supply rebuilt from balances");
+    }
+
+    /** The path the world save takes: {@code save} into the file's "data" tag, then the factory's deserializer. */
+    @Test
+    void savedDataFilesRoundTrip() {
+        HolderLookup.Provider registries = HolderLookup.Provider.create(Stream.empty());
+        AccountsData data = new AccountsData();
+        data.setDecimals(3);
+        UUID bobId = UUID.randomUUID();
+        LedgerAccount bob = data.ledger().create(AccountId.player(bobId), "Bob", false);
+        data.ledger().move(null, bob, COIN, 7_000, 0, 0);
+
+        CompoundTag saved = data.save(new CompoundTag(), registries);
+        AccountsData loaded = AccountsData.FACTORY.deserializer().apply(saved, registries);
+        assertEquals(3, loaded.decimals());
+        assertEquals(7_000, loaded.ledger().get(AccountId.player(bobId)).orElseThrow().balance(COIN));
+
+        HistoryData history = new HistoryData();
+        history.add(bobId, new HistoryData.Entry(1, 5, 5, COIN, ""), 10);
+        HistoryData loadedHistory = HistoryData.FACTORY.deserializer().apply(history.save(new CompoundTag(), registries), registries);
+        assertEquals(1, loadedHistory.get(bobId).size());
+
+        StatsData stats = new StatsData();
+        stats.recordCashOut(250);
+        StatsData loadedStats = StatsData.FACTORY.deserializer().apply(stats.save(new CompoundTag(), registries), registries);
+        assertEquals(250, loadedStats.cashOutstanding());
+
+        AccountsData fresh = AccountsData.FACTORY.deserializer().apply(new CompoundTag(), registries);
+        assertEquals(AccountsData.UNSET, fresh.decimals(), "an empty tag is a fresh world");
     }
 
     @Test

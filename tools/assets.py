@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Generates Tradery's JSON assets and data (blockstates, models, item definitions, loot, recipes, tags).
+"""Generates Tradery's JSON assets and data (blockstates, block and item models, loot, recipes, tags, worldgen).
 
 Run from the repo root: python3 tools/assets.py. Output goes to common/src/main/resources. Hand edits to generated
 files are overwritten: change this script instead.
+
+Formats are Minecraft 1.21.1's: item models in models/item (no item model definitions), configured features in
+worldgen/configured_feature, loot "functions"/"conditions", recipe ingredients as {"item"}/{"tag"} objects.
+Translucent and cutout parts use NeoForge's model "render_type" (vanilla and Fabric ignore it; Fabric gets the same
+layers from BlockRenderLayerMap in code). Emissive faces use NeoForge's "neoforge_data" block light (Fabric: no glow).
 """
 import json
 import os
@@ -10,6 +15,9 @@ import os
 RES = os.path.join(os.path.dirname(__file__), "..", "common", "src", "main", "resources")
 NS = "tradery"
 FACINGS = {"north": 0, "east": 90, "south": 180, "west": 270}
+# NeoForge render types (model "render_type"): the case glass is translucent, the ore overlay is cut out like grass
+TRANSLUCENT = "minecraft:translucent"
+CUTOUT_MIPPED = "minecraft:cutout_mipped"
 
 
 def write(path, data):
@@ -43,7 +51,8 @@ def box(frm, to, tex_for_side, uv_for_side, cull=False, emission=None):
         faces[side] = face(t, uv_for_side(side), cullface)
     element = {"from": frm, "to": to, "faces": faces}
     if emission is not None:
-        element["light_emission"] = emission
+        # 1.21.1 has no per-element "light_emission"; NeoForge reads the face block light from "neoforge_data"
+        element["neoforge_data"] = {"block_light": emission}
     return element
 
 
@@ -98,9 +107,11 @@ def case_elements(bottom):
 
 
 def vending_case():
+    # Its own multipart model, so on NeoForge only the case renders translucent and the base stays solid
     return {
         "parent": "minecraft:block/block",
-        "textures": {"particle": f"{NS}:block/vending_metal", "glass": {"force_translucent": True, "sprite": f"{NS}:block/case_glass"},
+        "render_type": TRANSLUCENT,
+        "textures": {"particle": f"{NS}:block/vending_metal", "glass": f"{NS}:block/case_glass",
                      "metal": f"{NS}:block/vending_metal"},
         "elements": case_elements(VENDING_BASE),
     }
@@ -124,7 +135,7 @@ def vending_item_model():
     textures.update(base["textures"])
     textures.update(case["textures"])
     textures["light"] = light["textures"]["light"]
-    return {"parent": "minecraft:block/block", "textures": textures,
+    return {"parent": "minecraft:block/block", "render_type": TRANSLUCENT, "textures": textures,
             "elements": base["elements"] + case["elements"] + light["elements"],
             "display": block_item_display()}
 
@@ -156,10 +167,12 @@ def vending_blockstate():
 def display_model():
     frm, to = [0, 0, 0], [16, DISPLAY_BASE, 16]
     base = box(frm, to, lambda s: "#top" if s in ("up", "down") else "#base", uv_box(frm, to), cull=True)
+    # One model for base and case: the whole block renders translucent (opaque pixels still draw as opaque)
     return {
         "parent": "minecraft:block/block",
+        "render_type": TRANSLUCENT,
         "textures": {"particle": f"{NS}:block/display_base", "base": f"{NS}:block/display_base", "top": f"{NS}:block/display_top",
-                     "glass": {"force_translucent": True, "sprite": f"{NS}:block/case_glass"},
+                     "glass": f"{NS}:block/case_glass",
                      "metal": f"{NS}:block/display_metal"},
         "elements": [base] + case_elements(DISPLAY_BASE),
         "display": block_item_display(),
@@ -173,20 +186,34 @@ def display_blockstate():
 
 # ---------------------------------------------------------------- items, loot, recipes, tags
 
-def item_definition(model):
-    return {"model": {"type": "minecraft:model", "model": model}}
+def block_item_model(model):
+    """models/item/<block>.json: the block item shows a block model (its "display" transforms and render type carry over)."""
+    return {"parent": model}
 
 
 def generated_item(texture):
     return {"parent": "minecraft:item/generated", "textures": {"layer0": texture}}
 
 
+def ingredient(item_id):
+    """A recipe ingredient: 1.21.1 takes {"item": id} or {"tag": id} objects, not plain strings ("#tag")."""
+    return {"tag": item_id[1:]} if item_id.startswith("#") else {"item": item_id}
+
+
 def block_loot(name):
     return {
         "type": "minecraft:block",
-        "pools": [{"condition": {"type": "minecraft:survives_explosion"}, "entries": [{"type": "minecraft:item", "name": f"{NS}:{name}"}], "rolls": 1}],
+        "pools": [{"conditions": [{"condition": "minecraft:survives_explosion"}],
+                   "entries": [{"type": "minecraft:item", "name": f"{NS}:{name}"}], "rolls": 1}],
         "random_sequence": f"{NS}:blocks/{name}",
     }
+
+
+# Same check as vanilla 1.21.1 ore loot (26.x has it as the predicate minecraft:tool/can_silk_touch)
+SILK_TOUCH = {
+    "condition": "minecraft:match_tool",
+    "predicate": {"predicates": {"minecraft:enchantments": [{"enchantments": "minecraft:silk_touch", "levels": {"min": 1}}]}},
+}
 
 
 # ---------------------------------------------------------------- coins and coin ore
@@ -205,6 +232,8 @@ def ore_model(base_texture, overlay_texture):
                          for side in ("down", "up", "north", "south", "west", "east")}
     return {
         "parent": "minecraft:block/block",
+        # 1.21.1 picks the layer per block, not per sprite: the overlay's clear pixels need a cutout layer (like grass)
+        "render_type": CUTOUT_MIPPED,
         "textures": {"particle": base_texture, "base": base_texture, "overlay": overlay_texture},
         "elements": [
             {"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces("#base")},
@@ -214,16 +243,16 @@ def ore_model(base_texture, overlay_texture):
 
 
 def ore_loot(block, coin, lo, hi):
-    count = {"type": "minecraft:set_count", "count": lo if lo == hi else {"type": "minecraft:uniform", "min": lo, "max": hi}}
+    count = {"function": "minecraft:set_count", "count": lo if lo == hi else {"type": "minecraft:uniform", "min": lo, "max": hi}}
     return {
         "type": "minecraft:block",
         "pools": [{
             "entries": [{
                 "type": "minecraft:alternatives",
                 "children": [
-                    {"type": "minecraft:item", "condition": "minecraft:tool/can_silk_touch", "name": f"{NS}:{block}"},
+                    {"type": "minecraft:item", "conditions": [SILK_TOUCH], "name": f"{NS}:{block}"},
                     # No apply_bonus: Fortune doesn't multiply money. A data pack can add it here.
-                    {"type": "minecraft:item", "modifier": [count, {"type": "minecraft:explosion_decay"}], "name": f"{NS}:{coin}"},
+                    {"type": "minecraft:item", "functions": [count, {"function": "minecraft:explosion_decay"}], "name": f"{NS}:{coin}"},
                 ],
             }],
             "rolls": 1,
@@ -233,22 +262,25 @@ def ore_loot(block, coin, lo, hi):
 
 
 def ore_feature(tier, size):
+    """A configured feature (worldgen/configured_feature): the feature type plus its "config"; states are {"Name"} objects."""
     return {
         "type": "minecraft:ore",
-        "discard_chance_on_air_exposure": 0.0,
-        "size": size,
-        "targets": [
-            {"state": f"{NS}:{tier}_coin_ore",
-             "target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:stone_ore_replaceables"}},
-            {"state": f"{NS}:deepslate_{tier}_coin_ore",
-             "target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:deepslate_ore_replaceables"}},
-        ],
+        "config": {
+            "discard_chance_on_air_exposure": 0.0,
+            "size": size,
+            "targets": [
+                {"state": {"Name": f"{NS}:{tier}_coin_ore"},
+                 "target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:stone_ore_replaceables"}},
+                {"state": {"Name": f"{NS}:deepslate_{tier}_coin_ore"},
+                 "target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:deepslate_ore_replaceables"}},
+            ],
+        },
     }
 
 
 def ore_placed(tier, count, lo, hi):
     return {
-        "feature": f"{NS}:{tier}_coin_ore",
+        "feature": f"{NS}:{tier}_coin_ore",  # the configured feature of the same name
         "placement": [
             {"type": "minecraft:count", "count": count},
             {"type": "minecraft:in_square"},
@@ -266,17 +298,16 @@ def coins_and_ores():
     for tier, (size, count, lo, hi, cmin, cmax, tool) in TIERS.items():
         coin = f"{tier}_coin"
         write(f"assets/{NS}/models/item/{coin}.json", generated_item(f"{NS}:item/{coin}"))
-        write(f"assets/{NS}/items/{coin}.json", item_definition(f"{NS}:item/{coin}"))
         for deepslate in (False, True):
             block = f"deepslate_{tier}_coin_ore" if deepslate else f"{tier}_coin_ore"
             base = "minecraft:block/deepslate" if deepslate else "minecraft:block/stone"
             write(f"assets/{NS}/models/block/{block}.json", ore_model(base, f"{NS}:block/{tier}_coin_ore_overlay"))
             write(f"assets/{NS}/blockstates/{block}.json", {"variants": {"": {"model": f"{NS}:block/{block}"}}})
-            write(f"assets/{NS}/items/{block}.json", item_definition(f"{NS}:block/{block}"))
+            write(f"assets/{NS}/models/item/{block}.json", block_item_model(f"{NS}:block/{block}"))
             write(f"data/{NS}/loot_table/blocks/{block}.json", ore_loot(block, coin, cmin, cmax))
             tool_tags.setdefault(tool, []).append(f"{NS}:{block}")
             ores.append(f"{NS}:{block}")
-        write(f"data/{NS}/worldgen/feature/{tier}_coin_ore.json", ore_feature(tier, size))
+        write(f"data/{NS}/worldgen/configured_feature/{tier}_coin_ore.json", ore_feature(tier, size))
         write(f"data/{NS}/worldgen/placed_feature/{tier}_coin_ore.json", ore_placed(tier, count, lo, hi))
     for tag, blocks in tool_tags.items():
         ns, path = tag.split(":")
@@ -301,14 +332,13 @@ def main():
     write(f"assets/{NS}/models/block/vending_light_on.json", vending_light(True))
     write(f"assets/{NS}/models/block/vending_light_off.json", vending_light(False))
     write(f"assets/{NS}/models/block/vending_block_item.json", vending_item_model())
-    write(f"assets/{NS}/items/vending_block.json", item_definition(f"{NS}:block/vending_block_item"))
+    write(f"assets/{NS}/models/item/vending_block.json", block_item_model(f"{NS}:block/vending_block_item"))
 
     write(f"assets/{NS}/blockstates/display_block.json", display_blockstate())
     write(f"assets/{NS}/models/block/display_block.json", display_model())
-    write(f"assets/{NS}/items/display_block.json", item_definition(f"{NS}:block/display_block"))
+    write(f"assets/{NS}/models/item/display_block.json", block_item_model(f"{NS}:block/display_block"))
 
     write(f"assets/{NS}/models/item/vendor_key.json", generated_item(f"{NS}:item/vendor_key"))
-    write(f"assets/{NS}/items/vendor_key.json", item_definition(f"{NS}:item/vendor_key"))
 
     for name in ("vending_block", "display_block"):
         write(f"data/{NS}/loot_table/blocks/{name}.json", block_loot(name))
@@ -317,15 +347,15 @@ def main():
 
     write(f"data/{NS}/recipe/vending_block.json", {
         "type": "minecraft:crafting_shaped", "category": "misc",
-        "key": {"G": "minecraft:glass", "C": "minecraft:chest", "O": "minecraft:gold_ingot"},
+        "key": {"G": ingredient("minecraft:glass"), "C": ingredient("minecraft:chest"), "O": ingredient("minecraft:gold_ingot")},
         "pattern": [" G ", "GCG", "OOO"],
-        "result": {"id": f"{NS}:vending_block"},
+        "result": {"count": 1, "id": f"{NS}:vending_block"},
     })
     write(f"data/{NS}/recipe/display_block.json", {
         "type": "minecraft:crafting_shaped", "category": "misc",
-        "key": {"G": "minecraft:glass", "S": "#minecraft:slabs"},
+        "key": {"G": ingredient("minecraft:glass"), "S": ingredient("#minecraft:slabs")},
         "pattern": ["GGG", "G G", "SSS"],
-        "result": {"id": f"{NS}:display_block"},
+        "result": {"count": 1, "id": f"{NS}:display_block"},
     })
 
 

@@ -52,7 +52,7 @@ public final class TraderyEconomyProvider implements EconomyProvider {
         if (!MAIN_ACCOUNT.equals(accountId) || !EconomyService.INSTANCE.isReady()) {
             return null;
         }
-        return new TraderyEconomyAccount(this, currency, profile.id(), profile.name());
+        return new TraderyEconomyAccount(this, currency, profile.getId(), profile.getName());
     }
 
     @Override

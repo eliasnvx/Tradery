@@ -8,14 +8,30 @@
           "children": [
             {
               "type": "minecraft:item",
-              "condition": "minecraft:tool/can_silk_touch",
+              "conditions": [
+                {
+                  "condition": "minecraft:match_tool",
+                  "predicate": {
+                    "predicates": {
+                      "minecraft:enchantments": [
+                        {
+                          "enchantments": "minecraft:silk_touch",
+                          "levels": {
+                            "min": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
               "name": "tradery:copper_coin_ore"
             },
             {
               "type": "minecraft:item",
-              "modifier": [
+              "functions": [
                 {
-                  "type": "minecraft:set_count",
+                  "function": "minecraft:set_count",
                   "count": {
                     "type": "minecraft:uniform",
                     "min": 1,
@@ -23,7 +39,7 @@
                   }
                 },
                 {
-                  "type": "minecraft:explosion_decay"
+                  "function": "minecraft:explosion_decay"
                 }
               ],
               "name": "tradery:copper_coin"

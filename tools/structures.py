@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Generates the GameTest structure data/tradery/structure/empty.nbt (5x5x5 of air) without dependencies.
 
-Run from the repo root: python3 tools/structures.py. DATA_VERSION is Minecraft 26.3's world version.
+Run from the repo root: python3 tools/structures.py. DATA_VERSION is Minecraft 1.21.1's world version
+(SharedConstants.WORLD_VERSION): a newer one than the game's would go through the data fixer the wrong way.
 """
 import gzip
 import os
 import struct
 
-DATA_VERSION = 5023
+DATA_VERSION = 3955
 SIZE = (5, 5, 5)
 OUT = os.path.join(os.path.dirname(__file__), "..", "common", "src", "main", "resources", "data", "tradery", "structure", "empty.nbt")
 
@@ -45,7 +46,7 @@ def main():
     )
     data = bytes([TAG_COMPOUND]) + name("") + root
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with gzip.open(OUT, "wb") as f:
+    with gzip.GzipFile(OUT, "wb", mtime=0) as f:  # fixed mtime: re-running gives the same bytes
         f.write(data)
     print("wrote", os.path.relpath(OUT))
 

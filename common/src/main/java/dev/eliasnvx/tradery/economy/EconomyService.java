@@ -1,6 +1,7 @@
 package dev.eliasnvx.tradery.economy;
 
 import com.google.gson.JsonObject;
+import com.mojang.authlib.GameProfile;
 import dev.eliasnvx.tradery.Tradery;
 import dev.eliasnvx.tradery.api.Account;
 import dev.eliasnvx.tradery.api.AccountId;
@@ -18,11 +19,12 @@ import dev.eliasnvx.tradery.config.ServerConfig;
 import dev.eliasnvx.tradery.config.TraderyConfig;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.platform.Platform;
+import dev.eliasnvx.tradery.util.CodecSavedData;
 import dev.eliasnvx.tradery.util.Money;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.NameAndId;
+import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,8 +44,9 @@ import java.util.UUID;
  */
 public final class EconomyService implements TraderyEconomy {
     public static final EconomyService INSTANCE = new EconomyService();
-    public static final Identifier SERVER_ACCOUNT = TraderyApi.id("server");
-    private static final LevelResource TRADERY_DIR = new LevelResource("tradery");
+    public static final ResourceLocation SERVER_ACCOUNT = TraderyApi.id("server");
+    /** {@code <world>/tradery}: the world folder's own directory for Tradery files (logs). */
+    private static final String TRADERY_DIR = "tradery";
 
     private @Nullable MinecraftServer server;
     private @Nullable AccountsData accounts;
@@ -62,9 +65,9 @@ public final class EconomyService implements TraderyEconomy {
     /** Binds to a server that finished loading its levels. */
     public void start(MinecraftServer server) {
         this.server = server;
-        this.accounts = server.getDataStorage().computeIfAbsent(AccountsData.TYPE);
-        this.history = server.getDataStorage().computeIfAbsent(HistoryData.TYPE);
-        this.stats = server.getDataStorage().computeIfAbsent(StatsData.TYPE);
+        this.accounts = CodecSavedData.get(server, AccountsData.FACTORY, AccountsData.NAME);
+        this.history = CodecSavedData.get(server, HistoryData.FACTORY, HistoryData.NAME);
+        this.stats = CodecSavedData.get(server, StatsData.FACTORY, StatsData.NAME);
         applyConfig(TraderyConfig.loadServer());
         Ledger ledger = accounts.ledger();
         if (ledger.get(AccountId.system(SERVER_ACCOUNT)).isEmpty()) {
@@ -115,7 +118,8 @@ public final class EconomyService implements TraderyEconomy {
                 log = null;
             }
             if (config.log().enabled()) {
-                log = new TransactionLog(server.getWorldPath(TRADERY_DIR).resolve("logs"), config.log().retentionDays());
+                log = new TransactionLog(server.getWorldPath(LevelResource.ROOT).resolve(TRADERY_DIR).resolve("logs").normalize(),
+                    config.log().retentionDays());
             }
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 sendCurrency(player);
@@ -170,7 +174,7 @@ public final class EconomyService implements TraderyEconomy {
     }
 
     @Override
-    public Optional<Currency> currency(Identifier id) {
+    public Optional<Currency> currency(ResourceLocation id) {
         SimpleCurrency current = currency;
         return current.id().equals(id) ? Optional.of(current) : Optional.empty();
     }
@@ -187,7 +191,8 @@ public final class EconomyService implements TraderyEconomy {
         if (existing.isPresent()) {
             return existing.get();
         }
-        String name = server.services().nameToIdCache().get(player).map(NameAndId::name).orElse("");
+        GameProfileCache profiles = server.getProfileCache();
+        String name = profiles == null ? "" : profiles.get(player).map(GameProfile::getName).orElse("");
         return createAccount(AccountId.player(player), name, false, startingBalance);
     }
 
@@ -198,7 +203,7 @@ public final class EconomyService implements TraderyEconomy {
     }
 
     @Override
-    public LedgerAccount systemAccount(Identifier id) {
+    public LedgerAccount systemAccount(ResourceLocation id) {
         checkReady();
         AccountId accountId = AccountId.system(id);
         return accounts.ledger().get(accountId).orElseGet(() -> createAccount(accountId, "", false, 0));
@@ -236,7 +241,7 @@ public final class EconomyService implements TraderyEconomy {
         checkReady();
         Ledger ledger = accounts.ledger();
         UUID uuid = player.getUUID();
-        String name = player.nameAndId().name();
+        String name = player.getGameProfile().getName();
         if (ledger.get(AccountId.player(uuid)).isEmpty()) {
             createAccount(AccountId.player(uuid), name, false, startingBalance);
         } else {
@@ -278,7 +283,7 @@ public final class EconomyService implements TraderyEconomy {
     /** Richest finite player accounts, highest first. */
     public List<LedgerAccount> top(int limit) {
         checkReady();
-        Identifier id = currency.id();
+        ResourceLocation id = currency.id();
         return accounts.ledger().all().stream()
             .filter(a -> a.id() instanceof AccountId.Player && !a.isInfinite() && a.balance(id) > 0)
             .sorted(Comparator.comparingLong((LedgerAccount a) -> a.balance(id)).reversed().thenComparing(LedgerAccount::displayName))

@@ -12,7 +12,7 @@ import dev.eliasnvx.tradery.platform.Platform;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -91,10 +91,10 @@ public final class Rewards {
         if (!(source.getEntity() instanceof ServerPlayer killer) || victim instanceof Player || tables == null || tables.kill().isEmpty()) {
             return;
         }
-        if (config.rules().ignoreSpawnerMobs() && victim.entityTags().contains(SPAWNER_TAG)) {
+        if (config.rules().ignoreSpawnerMobs() && victim.getTags().contains(SPAWNER_TAG)) {
             return;
         }
-        Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(victim.getType());
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(victim.getType());
         RewardsConfig.Reward reward = tables.kill().find(id, BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(victim.getType()));
         grant(killer, RewardGrantedEvent.Type.KILL, id, reward);
     }
@@ -109,7 +109,7 @@ public final class Rewards {
         if (placed) {
             return;
         }
-        Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         grant(serverPlayer, RewardGrantedEvent.Type.MINE, id, tables.mine().find(id, BuiltInRegistries.BLOCK.wrapAsHolder(state.getBlock())));
     }
 
@@ -118,7 +118,7 @@ public final class Rewards {
         if (tables == null || tables.mine().isEmpty()) {
             return;
         }
-        Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (tables.mine().find(id, BuiltInRegistries.BLOCK.wrapAsHolder(state.getBlock())) != null) {
             PlacedBlocks.mark(level, pos);
         }
@@ -129,7 +129,7 @@ public final class Rewards {
         if (!(player instanceof ServerPlayer serverPlayer) || count <= 0 || tables == null || tables.craft().isEmpty()) {
             return;
         }
-        Identifier id = BuiltInRegistries.ITEM.getKey(result.getItem());
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(result.getItem());
         RewardsConfig.Reward reward = tables.craft().find(id, BuiltInRegistries.ITEM.wrapAsHolder(result.getItem()));
         // One reward per crafted item: shift-clicking a stack pays like crafting one by one
         int crafts = Math.max(1, count / Math.max(1, result.getCount()));
@@ -144,7 +144,7 @@ public final class Rewards {
             return;
         }
         for (ItemStack stack : catches) {
-            Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
             RewardsConfig.Reward reward = tables.fish().find(id, BuiltInRegistries.ITEM.wrapAsHolder(stack.getItem()));
             if (reward != null) {
                 grant(serverPlayer, RewardGrantedEvent.Type.FISH, id, reward);
@@ -154,7 +154,7 @@ public final class Rewards {
     }
 
     /** An advancement was completed for the first time. */
-    public static void onAdvancement(ServerPlayer player, Identifier advancement) {
+    public static void onAdvancement(ServerPlayer player, ResourceLocation advancement) {
         if (tables == null || tables.advancement().isEmpty()) {
             return;
         }
@@ -167,7 +167,7 @@ public final class Rewards {
 
     // ------------------------------------------------------------------ payout
 
-    static void grant(ServerPlayer player, RewardGrantedEvent.Type type, Identifier source, @Nullable RewardsConfig.Reward reward) {
+    static void grant(ServerPlayer player, RewardGrantedEvent.Type type, ResourceLocation source, @Nullable RewardsConfig.Reward reward) {
         EconomyService economy = EconomyService.INSTANCE;
         if (reward == null || !economy.isReady()) {
             return;
@@ -196,7 +196,7 @@ public final class Rewards {
         if (event.isCancelled() || event.amount() <= 0) {
             return;
         }
-        Identifier reason = switch (type) {
+        ResourceLocation reason = switch (type) {
             case KILL -> Reasons.REWARD_KILL;
             case MINE -> Reasons.REWARD_MINE;
             case CRAFT -> Reasons.REWARD_CRAFT;

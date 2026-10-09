@@ -2,11 +2,11 @@ package dev.eliasnvx.tradery.economy;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.eliasnvx.tradery.api.TraderyApi;
+import dev.eliasnvx.tradery.util.CodecSavedData;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -94,8 +94,8 @@ public final class StatsData extends SavedData {
         Earnings.CODEC.optionalFieldOf("earnings").forGetter(d -> java.util.Optional.of(new Earnings(d.earningsDay, d.earnings)))
     ).apply(i, StatsData::new));
 
-    public static final SavedDataType<StatsData> TYPE = new SavedDataType<>(
-        TraderyApi.id("stats"), StatsData::new, CODEC, DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
+    public static final String NAME = "tradery_stats";
+    public static final SavedData.Factory<StatsData> FACTORY = CodecSavedData.factory(NAME, CODEC, StatsData::new);
 
     private final TreeMap<String, Day> days = new TreeMap<>();
     private long cashOutstanding;
@@ -112,6 +112,11 @@ public final class StatsData extends SavedData {
             earningsDay = e.day();
             e.byPlayer().forEach((uuid, map) -> this.earnings.put(uuid, new HashMap<>(map)));
         });
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        return CodecSavedData.save(CODEC, this, tag, registries);
     }
 
     public static String today() {

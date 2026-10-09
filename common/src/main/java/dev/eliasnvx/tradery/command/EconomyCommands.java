@@ -22,7 +22,9 @@ import dev.eliasnvx.tradery.util.Money;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -125,12 +127,12 @@ public final class EconomyCommands {
             .withStyle(ChatFormatting.YELLOW), false);
         for (dev.eliasnvx.tradery.vending.VendorsData.Entry entry : entries.subList(0, Math.min(entries.size(), 50))) {
             net.minecraft.core.BlockPos pos = entry.pos().pos();
-            String dimension = entry.pos().dimension().identifier().toString();
+            String dimension = entry.pos().dimension().location().toString();
             String tp = "/execute in " + dimension + " run tp @s " + pos.getX() + " " + (pos.getY() + 1) + " " + pos.getZ();
             MutableComponent line = Component.literal(pos.getX() + " " + pos.getY() + " " + pos.getZ()).withStyle(style -> style
                 .withColor(ChatFormatting.AQUA)
-                .withClickEvent(new net.minecraft.network.chat.ClickEvent.SuggestCommand(tp))
-                .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal(tp))));
+                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tp))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tp))));
             source.sendSuccess(() -> Component.literal("  ").append(line)
                 .append(Component.literal("  " + dimension).withStyle(ChatFormatting.GRAY)), false);
         }
@@ -193,7 +195,7 @@ public final class EconomyCommands {
             ServerPlayer online = source.getServer().getPlayerList().getPlayer(player.uuid());
             if (online != null) {
                 online.sendSystemMessage(tr("tradery.command.pay_received", "Received %s from %s",
-                    Messages.money(received), Messages.name(sender.nameAndId().name())));
+                    Messages.money(received), Messages.name(sender.getGameProfile().getName())));
             }
         }
         return 1;

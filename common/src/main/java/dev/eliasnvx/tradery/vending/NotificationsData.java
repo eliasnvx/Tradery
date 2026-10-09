@@ -2,13 +2,13 @@ package dev.eliasnvx.tradery.vending;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.eliasnvx.tradery.api.TraderyApi;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
+import dev.eliasnvx.tradery.util.CodecSavedData;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -72,10 +72,12 @@ public final class NotificationsData extends SavedData {
     }
 
     static final Codec<NotificationsData> CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Pending.CODEC)
-        .xmap(NotificationsData::new, d -> d.pending);
+        .optionalFieldOf("pending", Map.of())
+        .xmap(NotificationsData::new, d -> d.pending).codec();
 
-    public static final SavedDataType<NotificationsData> TYPE = new SavedDataType<>(
-        TraderyApi.id("notifications"), NotificationsData::new, CODEC, DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
+    /** File name in the overworld's data storage ({@code data/tradery_notifications.dat}). */
+    public static final String NAME = "tradery_notifications";
+    public static final SavedData.Factory<NotificationsData> FACTORY = CodecSavedData.factory(NAME, CODEC, NotificationsData::new);
 
     private final Map<UUID, Pending> pending = new HashMap<>();
 
@@ -87,7 +89,12 @@ public final class NotificationsData extends SavedData {
     }
 
     public static NotificationsData get(MinecraftServer server) {
-        return server.getDataStorage().computeIfAbsent(TYPE);
+        return CodecSavedData.get(server, FACTORY, NAME);
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        return CodecSavedData.save(CODEC, this, tag, registries);
     }
 
     public void add(UUID owner, Line line, boolean sale, long earned) {

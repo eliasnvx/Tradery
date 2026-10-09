@@ -1,7 +1,7 @@
 package dev.eliasnvx.tradery.menu;
 
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 
 /** Click rules of {@link GhostSlot}s, shared by the menus. Runs on both sides with the same result. */
@@ -14,8 +14,8 @@ public final class GhostSlots {
      * Click with an empty cursor: clear. Everything else (shift, number keys, drop, drag) does nothing.
      * The cursor stack is never touched.
      */
-    static void click(AbstractContainerMenu menu, GhostSlot slot, int button, ContainerInput input) {
-        if (input != ContainerInput.PICKUP) {
+    static void click(AbstractContainerMenu menu, GhostSlot slot, int button, ClickType clickType) {
+        if (clickType != ClickType.PICKUP) {
             return;
         }
         ItemStack carried = menu.getCarried();

@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.Map;
 import java.util.UUID;
@@ -32,7 +31,7 @@ public final class VendingQuickTrade {
 
     /** One request from {@code VendingQuickTradePayload}, on the server thread. */
     public static void handle(ServerPlayer player, BlockPos pos, boolean sell) {
-        if (player.isSpectator() || !player.isAlive() || !player.level().isLoaded(pos) || !player.isWithinBlockInteractionRange(pos, 1.0)
+        if (player.isSpectator() || !player.isAlive() || !player.level().isLoaded(pos) || !player.canInteractWithBlock(pos, 1.0)
             || !(player.level().getBlockEntity(pos) instanceof VendingBlockEntity vendor)) {
             return;
         }
@@ -40,18 +39,17 @@ public final class VendingQuickTrade {
             return;
         }
         // Others see the arm move; the trader's own client already swung it
-        ItemStack held = player.getMainHandItem();
-        player.swing(InteractionHand.MAIN_HAND, sell ? held.getAttackAnimation() : held.getInteractAnimation(), false);
+        player.swing(InteractionHand.MAIN_HAND, false);
         VendingSettings settings = vendor.settings();
         if (settings.isConfigured() && settings.isBuyback() != sell) {
-            player.sendOverlayMessage(wrongButton(settings.isBuyback()));
+            player.displayClientMessage(wrongButton(settings.isBuyback()), true);
             refuse(player, pos);
             return;
         }
         VendingTrades.Outcome outcome = VendingTrades.execute(player, vendor, 1);
         if (!outcome.success()) {
             STREAKS.remove(player.getUUID());
-            player.sendOverlayMessage(outcome.message().copy().withStyle(ChatFormatting.RED));
+            player.displayClientMessage(outcome.message().copy().withStyle(ChatFormatting.RED), true);
             refuse(player, pos);
             return;
         }
@@ -61,7 +59,7 @@ public final class VendingQuickTrade {
             ? new Streak(pos, sell, now, previous.goods() + outcome.goods(), previous.price() + outcome.price())
             : new Streak(pos, sell, now, outcome.goods(), outcome.price());
         STREAKS.put(player.getUUID(), streak);
-        player.sendOverlayMessage(VendingTrades.describe(settings, streak.goods(), streak.price()));
+        player.displayClientMessage(VendingTrades.describe(settings, streak.goods(), streak.price()), true);
         player.level().playSound(null, pos, SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.BLOCKS, 0.4f,
             1.3f + player.getRandom().nextFloat() * 0.2f);
     }

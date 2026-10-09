@@ -36,13 +36,13 @@ public final class VendingNotifier {
             ? EconomyService.INSTANCE.defaultCurrency().formatPlain(moneyEarned)
             : priceItems + " × " + priceItem.getHoverName().getString();
         send(vendor, NotificationKind.SALE, "tradery.notify.sale",
-            List.of(String.valueOf(count), translatable(goods.getItem().getDescriptionId()), price, buyer.nameAndId().name()),
+            List.of(String.valueOf(count), translatable(goods.getItem().getDescriptionId()), price, buyer.getGameProfile().getName()),
             true, Math.max(0, moneyEarned));
     }
 
     static void boughtBack(VendingBlockEntity vendor, ServerPlayer seller, ItemStack goods, int count, long paid) {
         send(vendor, NotificationKind.SALE, "tradery.notify.buyback",
-            List.of(String.valueOf(count), translatable(goods.getItem().getDescriptionId()), seller.nameAndId().name(),
+            List.of(String.valueOf(count), translatable(goods.getItem().getDescriptionId()), seller.getGameProfile().getName(),
                 EconomyService.INSTANCE.defaultCurrency().formatPlain(paid)),
             false, 0);
     }
@@ -80,7 +80,7 @@ public final class VendingNotifier {
     /** On join: "While you were away: 12 sales, +480 ₮" and the latest few messages. */
     public static void onJoin(ServerPlayer player) {
         UUID id = player.getUUID();
-        NotificationsData.get(player.level().getServer()).take(id).ifPresent(pending -> {
+        NotificationsData.get(player.server).take(id).ifPresent(pending -> {
             List<NotificationsData.Line> lines = pending.lines();
             if (pending.sales() > 0) {
                 Platform.get().sendToPlayer(player, new TraderyPayloads.NotificationPayload(NotificationKind.OFFLINE_SUMMARY,

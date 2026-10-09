@@ -6,6 +6,8 @@ import dev.eliasnvx.tradery.api.AccountId;
 import dev.eliasnvx.tradery.api.Reason;
 import dev.eliasnvx.tradery.api.Reasons;
 import dev.eliasnvx.tradery.api.vending.PriceMode;
+import dev.eliasnvx.tradery.client.screen.VendingBuyerScreen;
+import dev.eliasnvx.tradery.client.screen.VendingOwnerScreen;
 import dev.eliasnvx.tradery.economy.EconomyService;
 import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import dev.eliasnvx.tradery.vending.DisplayAnimation;
@@ -19,7 +21,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
-import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,7 +32,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.Mod;
@@ -76,7 +77,7 @@ public final class TraderyClientTest {
             TICKS.incrementAndGet();
             // Start once loading is over, whatever screen is up (title, onboarding, loading warnings)
             Minecraft minecraft = Minecraft.getInstance();
-            if (!started && minecraft.isGameLoadFinished() && minecraft.gui.screen() != null) {
+            if (!started && minecraft.isGameLoadFinished() && minecraft.screen != null) {
                 started = true;
                 Thread thread = new Thread(this::runAndExit, "tradery-client-test");
                 thread.setDaemon(true);
@@ -137,9 +138,14 @@ public final class TraderyClientTest {
         aimAt(bread);
         screenshot("hint");
 
+        // A plain click opens the buyer screen
+        openScreen("buyer", VendingBuyerScreen.class);
+
         // Sneak + hold use with a block in hand: buys a lot every 4 ticks, never places the block
         command("item replace entity @p hotbar.0 with minecraft:cobblestone 16");
-        client(() -> minecraft.player.getInventory().setSelectedSlot(0));
+        client(() -> {
+            minecraft.player.getInventory().selected = 0;
+        });
         waitTicks(5);
         long balanceBefore = server(this::balance);
         int breadBefore = server(server -> count(server, Items.BREAD));
@@ -189,6 +195,7 @@ public final class TraderyClientTest {
         // The owner's own block: sneak + attack stays vanilla, so the owner breaks it in creative
         aimAt(own);
         screenshot("hint_owner");
+        openScreen("owner", VendingOwnerScreen.class);
         command("gamemode creative @p");
         waitTicks(5);
         client(() -> minecraft.options.keyShift.setDown(true));
@@ -220,7 +227,7 @@ public final class TraderyClientTest {
 
         ServerPlayer player = player(server);
         VendingBlockEntity ownVendor = place(level, own);
-        ownVendor.setOwner(AccountId.player(player.getUUID()), player.nameAndId().name());
+        ownVendor.setOwner(AccountId.player(player.getUUID()), player.getGameProfile().getName());
         ownVendor.setSettings(new VendingSettings(new ItemStack(Items.APPLE, 2), PriceMode.CURRENCY, 100, ItemStack.EMPTY, false,
             DisplayAnimation.SPIN));
         player.getInventory().clearContent();
@@ -239,31 +246,31 @@ public final class TraderyClientTest {
             minecraft.options.pauseOnLostFocus = false;
             minecraft.options.tutorialStep = TutorialSteps.NONE;
             minecraft.options.guiScale().set(2);
-            CreateWorldScreen.openFresh(minecraft, () -> minecraft.gui.setScreen(new TitleScreen()));
+            CreateWorldScreen.openFresh(minecraft, new TitleScreen());
         });
-        waitFor("create world screen", mc -> mc.gui.screen() instanceof CreateWorldScreen, TIMEOUT_TICKS);
+        waitFor("create world screen", mc -> mc.screen instanceof CreateWorldScreen, TIMEOUT_TICKS);
         client(() -> {
-            CreateWorldScreen screen = (CreateWorldScreen) minecraft.gui.screen();
+            CreateWorldScreen screen = (CreateWorldScreen) minecraft.screen;
             WorldCreationUiState ui = screen.getUiState();
             ui.setWorldType(new WorldCreationUiState.WorldTypeEntry(
                 ui.getSettings().worldgenLoadContext().lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT)));
             ui.setSeed("1");
             ui.setGenerateStructures(false);
-            ui.getGameRules().set(GameRules.ADVANCE_TIME, false, null);
-            ui.getGameRules().set(GameRules.ADVANCE_WEATHER, false, null);
-            ui.getGameRules().set(GameRules.SPAWN_MOBS, false, null);
+            ui.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, null);
+            ui.getGameRules().getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
+            ui.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
             String create = Component.translatable("selectWorld.create").getString();
             boolean pressed = false;
             for (var child : screen.children()) {
                 if (child instanceof Button button && create.equals(button.getMessage().getString())) {
-                    button.onPress(new MouseButtonInfo(InputConstants.MOUSE_BUTTON_LEFT, 0));
+                    button.onPress();
                     pressed = true;
                     break;
                 }
             }
             check(pressed, "found the Create World button");
         });
-        waitFor("world loaded", mc -> mc.level != null && mc.player != null && mc.gui.screen() == null
+        waitFor("world loaded", mc -> mc.level != null && mc.player != null && mc.screen == null
             && mc.getSingleplayerServer() != null && !mc.getSingleplayerServer().getPlayerList().getPlayers().isEmpty(), TIMEOUT_TICKS);
         command("time set 6000");
         waitTicks(60);
@@ -280,6 +287,17 @@ public final class TraderyClientTest {
         waitTicks(10);
         check(client(() -> minecraft.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit
             && hit.getBlockPos().equals(pos)), "the crosshair is on the block at " + pos);
+    }
+
+    /** Clicks use on the block under the crosshair, waits for the screen, takes a screenshot and closes it. */
+    private void openScreen(String name, Class<?> screen) {
+        client(() -> KeyMapping.click(InputConstants.getKey(minecraft.options.keyUse.saveString())));
+        waitFor(name + " screen", mc -> screen.isInstance(mc.screen), TIMEOUT_TICKS);
+        waitTicks(10);
+        screenshot("screen_" + name);
+        client(() -> minecraft.player.closeContainer());
+        waitFor(name + " screen closed", mc -> mc.screen == null, TIMEOUT_TICKS);
+        notes.add("plain use opened the " + name + " screen");
     }
 
     // ------------------------------------------------------------------ input
@@ -339,9 +357,8 @@ public final class TraderyClientTest {
 
     private void screenshot(String name) {
         waitTicks(2);
-        client(() -> Screenshot.grab(minecraft.gameDirectory, "tradery_" + name + ".png", minecraft.gameRenderer.mainRenderTarget(), 1,
-            message -> {
-            }));
+        client(() -> Screenshot.grab(minecraft.gameDirectory, "tradery_" + name + ".png", minecraft.getMainRenderTarget(), message -> {
+        }));
         waitTicks(3);
     }
 

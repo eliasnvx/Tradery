@@ -3,13 +3,14 @@ package dev.eliasnvx.tradery.fabric;
 import dev.eliasnvx.tradery.Tradery;
 import dev.eliasnvx.tradery.command.TraderyPermission;
 import dev.eliasnvx.tradery.platform.Platform;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.entity.FakePlayer;
-import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
-import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
-import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
@@ -18,7 +19,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -30,20 +30,9 @@ import net.minecraft.world.item.CreativeModeTab;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.function.Supplier;
 
 final class FabricPlatform implements Platform {
-    /** Fabric permission API ids: tradery:balance/others (LuckPerms shows tradery.balance.others). */
-    private static final Map<TraderyPermission, Identifier> PERMISSION_IDS = new EnumMap<>(TraderyPermission.class);
-
-    static {
-        for (TraderyPermission permission : TraderyPermission.values()) {
-            PERMISSION_IDS.put(permission, Tradery.id(permission.identifierPath()));
-        }
-    }
-
     @Override
     public String loaderName() {
         return "fabric";
@@ -64,14 +53,15 @@ final class FabricPlatform implements Platform {
         return player instanceof FakePlayer;
     }
 
+    /** lucko's fabric-permissions-api (shipped in the jar): LuckPerms & co. answer for tradery.balance.others etc. */
     @Override
     public boolean hasPermission(CommandSourceStack source, TraderyPermission permission) {
-        return source.checkPermission(PERMISSION_IDS.get(permission), permission.fallback());
+        return Permissions.check(source, permission.node(), permission.fallback());
     }
 
     @Override
     public boolean hasPermission(ServerPlayer player, TraderyPermission permission) {
-        return player.checkPermission(PERMISSION_IDS.get(permission), permission.fallback());
+        return Permissions.check(player, permission.node(), permission.fallback());
     }
 
     @Override
@@ -94,7 +84,7 @@ final class FabricPlatform implements Platform {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Supplier<T> register(ResourceKey<? extends Registry<? super T>> registry, String name, Supplier<? extends T> factory) {
-        Registry<? super T> target = (Registry<? super T>) BuiltInRegistries.REGISTRY.getValueOrThrow((ResourceKey) registry);
+        Registry<? super T> target = (Registry<? super T>) BuiltInRegistries.REGISTRY.getOrThrow((ResourceKey) registry);
         T value = Registry.register(target, Tradery.id(name), factory.get());
         return () -> value;
     }
@@ -102,12 +92,12 @@ final class FabricPlatform implements Platform {
     @Override
     public <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory,
                                                                      StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec) {
-        return new ExtendedMenuType<>(factory::create, dataCodec);
+        return new ExtendedScreenHandlerType<>(factory::create, dataCodec);
     }
 
     @Override
     public <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec, D data) {
-        player.openMenu(new ExtendedMenuProvider<D>() {
+        player.openMenu(new ExtendedScreenHandlerFactory<D>() {
             @Override
             public D getScreenOpeningData(ServerPlayer opener) {
                 return data;
@@ -146,7 +136,7 @@ final class FabricPlatform implements Platform {
 
     @Override
     public CreativeModeTab.Builder creativeTabBuilder() {
-        return FabricCreativeModeTab.builder();
+        return FabricItemGroup.builder();
     }
 
     /** Client-only classes, loaded only when these are called on the client. */

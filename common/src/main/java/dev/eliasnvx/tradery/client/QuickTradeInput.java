@@ -12,7 +12,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
@@ -62,13 +61,13 @@ public final class QuickTradeInput {
             VendingSettings settings = vendor.settings();
             if (settings.isConfigured() && settings.isBuyback() != sell) {
                 // The block trades the other way: say so here, with the same key names as the hint (the server checks too)
-                player.sendOverlayMessage(Component.translatable(settings.isBuyback()
-                    ? "tradery.vending.wrong_button_buys" : "tradery.vending.wrong_button_sells", VendingHint.keys(settings, false)));
+                player.displayClientMessage(Component.translatable(settings.isBuyback()
+                    ? "tradery.vending.wrong_button_buys" : "tradery.vending.wrong_button_sells", VendingHint.keys(settings, false)), true);
                 minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.2f, 0.5f));
             } else {
                 Platform.get().sendToServer(new TraderyPayloads.VendingQuickTradePayload(pos, sell));
-                ItemStack held = player.getMainHandItem();
-                player.swing(InteractionHand.MAIN_HAND, sell ? held.getAttackAnimation() : held.getInteractAnimation(), false);
+                // Local swing only: the server doesn't get a swing packet for a quick trade
+                player.swing(InteractionHand.MAIN_HAND, false);
             }
             lastSent = now;
             lastPos = pos.immutable();

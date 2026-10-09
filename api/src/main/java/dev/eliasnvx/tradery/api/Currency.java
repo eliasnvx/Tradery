@@ -1,7 +1,7 @@
 package dev.eliasnvx.tradery.api;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.math.BigDecimal;
 import java.util.OptionalLong;
@@ -14,7 +14,7 @@ public interface Currency {
     /**
      * @return the currency id, e.g. {@code tradery:coin}
      */
-    Identifier id();
+    ResourceLocation id();
 
     /**
      * Number of digits after the decimal point. Fixed for a world once it has been created.

@@ -19,7 +19,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -142,7 +142,7 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
         addSlot(new GhostSlot(samples, 0, GOODS_X, GOODS_Y, VendingConfigurator::isTradeable));
         addSlot(new GhostSlot(samples, 1, PRICE_X, PRICE_Y, VendingConfigurator::isTradeable, () -> priceMode() == PriceMode.ITEM));
         addSlot(new GhostSlot(samples, 2, FACADE_X, FACADE_Y, VendingConfigurator::isFacadeCandidate));
-        addStandardInventorySlots(inventory, GRID_LEFT, INVENTORY_TOP);
+        PlayerInventorySlots.add(this::addSlot, inventory, GRID_LEFT, INVENTORY_TOP);
 
         priceMode.set(settings.priceMode().ordinal());
         buyback.set(settings.buyback() ? 1 : 0);
@@ -214,12 +214,12 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
     // ------------------------------------------------------------------ clicks
 
     @Override
-    public void clicked(int slotIndex, int buttonNum, ContainerInput containerInput, Player player) {
+    public void clicked(int slotIndex, int buttonNum, ClickType clickType, Player player) {
         if (slotIndex >= 0 && slotIndex < slots.size() && slots.get(slotIndex) instanceof GhostSlot ghost) {
-            GhostSlots.click(this, ghost, buttonNum, containerInput);
+            GhostSlots.click(this, ghost, buttonNum, clickType);
             return;
         }
-        super.clicked(slotIndex, buttonNum, containerInput, player);
+        super.clicked(slotIndex, buttonNum, clickType, player);
     }
 
     @Override

@@ -12,7 +12,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -60,7 +60,7 @@ public class DisplayMenu extends AbstractContainerMenu implements VendingMenu {
         this.data = data;
         sample.getItems().set(0, data.shown().copy());
         addSlot(new GhostSlot(sample, 0, SAMPLE_X, SAMPLE_Y, VendingConfigurator::isTradeable));
-        addStandardInventorySlots(inventory, 8, INVENTORY_TOP);
+        PlayerInventorySlots.add(this::addSlot, inventory, 8, INVENTORY_TOP);
         animation.set(data.animation().ordinal());
         addDataSlot(animation);
     }
@@ -75,12 +75,12 @@ public class DisplayMenu extends AbstractContainerMenu implements VendingMenu {
     }
 
     @Override
-    public void clicked(int slotIndex, int buttonNum, ContainerInput containerInput, Player player) {
+    public void clicked(int slotIndex, int buttonNum, ClickType clickType, Player player) {
         if (slotIndex >= 0 && slotIndex < slots.size() && slots.get(slotIndex) instanceof GhostSlot ghost) {
-            GhostSlots.click(this, ghost, buttonNum, containerInput);
+            GhostSlots.click(this, ghost, buttonNum, clickType);
             return;
         }
-        super.clicked(slotIndex, buttonNum, containerInput, player);
+        super.clicked(slotIndex, buttonNum, clickType, player);
     }
 
     @Override

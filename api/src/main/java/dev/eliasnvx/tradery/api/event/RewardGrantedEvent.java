@@ -1,6 +1,6 @@
 package dev.eliasnvx.tradery.api.event;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 /** A configured reward is about to be paid. Cancel to pay nothing, or change the amount. */
@@ -14,10 +14,10 @@ public final class RewardGrantedEvent extends CancellableEvent {
 
     private final ServerPlayer player;
     private final Type type;
-    private final Identifier source;
+    private final ResourceLocation source;
     private long amount;
 
-    public RewardGrantedEvent(ServerPlayer player, Type type, Identifier source, long amount) {
+    public RewardGrantedEvent(ServerPlayer player, Type type, ResourceLocation source, long amount) {
         this.player = player;
         this.type = type;
         this.source = source;
@@ -33,7 +33,7 @@ public final class RewardGrantedEvent extends CancellableEvent {
     }
 
     /** @return what earned it: entity type, block, item or advancement id */
-    public Identifier source() {
+    public ResourceLocation source() {
         return source;
     }
 

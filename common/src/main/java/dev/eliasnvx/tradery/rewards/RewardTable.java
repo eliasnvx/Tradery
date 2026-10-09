@@ -4,7 +4,7 @@ import dev.eliasnvx.tradery.Tradery;
 import dev.eliasnvx.tradery.config.RewardsConfig;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import java.util.Map;
  */
 final class RewardTable<T> {
     private final boolean enabled;
-    private final Map<Identifier, RewardsConfig.Reward> exact = new HashMap<>();
+    private final Map<ResourceLocation, RewardsConfig.Reward> exact = new HashMap<>();
     private final List<Map.Entry<TagKey<T>, RewardsConfig.Reward>> tags = new ArrayList<>();
     private @Nullable RewardsConfig.Reward wildcard;
 
@@ -31,14 +31,14 @@ final class RewardTable<T> {
             if (key.equals("*")) {
                 wildcard = reward;
             } else if (key.startsWith("#")) {
-                Identifier id = Identifier.tryParse(key.substring(1));
+                ResourceLocation id = ResourceLocation.tryParse(key.substring(1));
                 if (id == null || registry == null) {
                     Tradery.LOGGER.warn("rewards.json5: bad tag '{}' in {}", key, name);
                 } else {
                     tags.add(Map.entry(TagKey.create(registry, id), reward));
                 }
             } else {
-                Identifier id = Identifier.tryParse(key);
+                ResourceLocation id = ResourceLocation.tryParse(key);
                 if (id == null) {
                     Tradery.LOGGER.warn("rewards.json5: bad id '{}' in {}", key, name);
                 } else {
@@ -57,7 +57,7 @@ final class RewardTable<T> {
         return !enabled || (exact.isEmpty() && tags.isEmpty() && wildcard == null);
     }
 
-    @Nullable RewardsConfig.Reward find(Identifier id, @Nullable Holder<T> holder) {
+    @Nullable RewardsConfig.Reward find(ResourceLocation id, @Nullable Holder<T> holder) {
         if (!enabled) {
             return null;
         }

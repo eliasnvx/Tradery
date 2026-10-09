@@ -100,7 +100,6 @@ public record RewardsConfig(Section kill, Section mine, Section craft, Section f
         "minecraft:shulker", Reward.of(4, 8),
         "minecraft:vex", Reward.of(1, 2),
         "minecraft:breeze", Reward.of(5, 10),
-        "minecraft:creaking", Reward.of(3, 6),
         "#minecraft:raiders", Reward.of(5, 10),
         "minecraft:warden", Reward.of(100, 150),
         "minecraft:wither", Reward.of(200, 300),

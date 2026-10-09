@@ -129,7 +129,7 @@ public final class VendingConfigurator {
                 AccountId newOwner = vendor.owner() instanceof AccountId.System
                     ? AccountId.player(player.getUUID())
                     : AccountId.system(EconomyService.SERVER_ACCOUNT);
-                vendor.setOwner(newOwner, newOwner instanceof AccountId.System ? "Server" : player.nameAndId().name());
+                vendor.setOwner(newOwner, newOwner instanceof AccountId.System ? "Server" : player.getGameProfile().getName());
                 VendorsData.get(level.getServer()).setOwner(level, vendor.getBlockPos(), newOwner);
             }
             default -> {

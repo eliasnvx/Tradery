@@ -11,18 +11,17 @@ import eu.pb4.common.economy.api.EconomyCurrency;
 import eu.pb4.common.economy.api.EconomyProvider;
 import eu.pb4.common.economy.api.EconomyTransaction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
-import java.math.BigInteger;
 import java.util.UUID;
 
 /**
  * A player's Tradery account seen through the Common Economy API. Every change is a normal Tradery transaction
- * (events, log, HUD) with reason {@code tradery:bridge/common_economy}.
+ * (events, log, HUD) with reason {@code tradery:bridge/common_economy}. Amounts are minor units, as in Tradery
+ * (Common Economy API 1.x uses {@code long}).
  */
 final class TraderyEconomyAccount implements EconomyAccount {
-    static final Identifier REASON = Identifier.fromNamespaceAndPath("tradery", "bridge/common_economy");
-    private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
+    static final ResourceLocation REASON = ResourceLocation.fromNamespaceAndPath("tradery", "bridge/common_economy");
 
     private final EconomyProvider provider;
     private final EconomyCurrency currency;
@@ -36,8 +35,8 @@ final class TraderyEconomyAccount implements EconomyAccount {
         this.ownerName = ownerName;
     }
 
-    static long clamp(BigInteger value) {
-        return value.signum() < 0 ? 0 : value.min(LONG_MAX).longValue();
+    static long clamp(long value) {
+        return Math.max(0, value);
     }
 
     private LedgerAccount account() {
@@ -55,68 +54,67 @@ final class TraderyEconomyAccount implements EconomyAccount {
     }
 
     @Override
-    public Identifier id() {
-        return Identifier.fromNamespaceAndPath(TraderyEconomyProvider.ID, TraderyEconomyProvider.MAIN_ACCOUNT);
+    public ResourceLocation id() {
+        return ResourceLocation.fromNamespaceAndPath(TraderyEconomyProvider.ID, TraderyEconomyProvider.MAIN_ACCOUNT);
     }
 
     @Override
-    public BigInteger balance() {
+    public long balance() {
         if (!EconomyService.INSTANCE.isReady()) {
-            return BigInteger.ZERO;
+            return 0;
         }
-        return BigInteger.valueOf(account().balance(EconomyService.INSTANCE.defaultCurrency()));
+        return account().balance(EconomyService.INSTANCE.defaultCurrency());
     }
 
     @Override
-    public EconomyTransaction increaseBalance(BigInteger value) {
+    public EconomyTransaction increaseBalance(long value) {
         return run(value, true, false);
     }
 
     @Override
-    public EconomyTransaction canIncreaseBalance(BigInteger value) {
+    public EconomyTransaction canIncreaseBalance(long value) {
         return run(value, true, true);
     }
 
     @Override
-    public EconomyTransaction decreaseBalance(BigInteger value) {
+    public EconomyTransaction decreaseBalance(long value) {
         return run(value, false, false);
     }
 
     @Override
-    public EconomyTransaction canDecreaseBalance(BigInteger value) {
+    public EconomyTransaction canDecreaseBalance(long value) {
         return run(value, false, true);
     }
 
     @Override
-    public void setBalance(BigInteger value) {
+    public void setBalance(long value) {
         if (EconomyService.INSTANCE.isReady()) {
             EconomyService.INSTANCE.setBalance(account(), clamp(value), Reason.of(REASON, "set"));
         }
     }
 
-    private EconomyTransaction run(BigInteger value, boolean increase, boolean dryRun) {
-        BigInteger before = balance();
+    private EconomyTransaction run(long value, boolean increase, boolean dryRun) {
+        long before = balance();
         if (!EconomyService.INSTANCE.isReady()) {
             return new EconomyTransaction.Simple(false, Component.literal("Tradery economy is not available"), before, before, value, this);
         }
-        if (value.signum() <= 0 || value.compareTo(LONG_MAX) > 0) {
+        if (value <= 0) {
             return new EconomyTransaction.Simple(false, Messages.failure(dev.eliasnvx.tradery.api.FailReason.INVALID_AMOUNT), before, before, value, this);
         }
-        long amount = value.longValue();
         EconomyService economy = EconomyService.INSTANCE;
         Account account = account();
         if (dryRun) {
             boolean ok = !account.isLocked() && (increase
-                ? amount <= Math.max(0, (economy.maxBalance() > 0 ? economy.maxBalance() : Long.MAX_VALUE) - before.longValue())
-                : account.canAfford(economy.defaultCurrency(), amount));
-            BigInteger after = increase ? before.add(value) : before.subtract(value);
+                ? value <= Math.max(0, (economy.maxBalance() > 0 ? economy.maxBalance() : Long.MAX_VALUE) - before)
+                : account.canAfford(economy.defaultCurrency(), value));
+            long after = ok ? (increase ? before + value : before - value) : before;
             return new EconomyTransaction.Simple(ok, ok ? Component.empty() : Messages.failure(increase
                 ? dev.eliasnvx.tradery.api.FailReason.LIMIT_EXCEEDED : dev.eliasnvx.tradery.api.FailReason.INSUFFICIENT_FUNDS),
-                ok ? after : before, before, value, this);
+                after, before, value, this);
         }
         TransactionResult result = increase
-            ? economy.deposit(account, amount, Reason.of(REASON))
-            : economy.withdraw(account, amount, Reason.of(REASON));
+            ? economy.deposit(account, value, Reason.of(REASON))
+            : economy.withdraw(account, value, Reason.of(REASON));
         if (result instanceof TransactionResult.Failure failure) {
             return new EconomyTransaction.Simple(false, Messages.failure(failure), before, before, value, this);
         }

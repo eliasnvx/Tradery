@@ -2,12 +2,12 @@ package dev.eliasnvx.tradery.economy;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.eliasnvx.tradery.api.TraderyApi;
+import dev.eliasnvx.tradery.util.CodecSavedData;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -28,12 +28,12 @@ public final class HistoryData extends SavedData {
      * @param reason       reason type
      * @param counterparty the other side's display name, or empty
      */
-    public record Entry(long time, long delta, long balance, Identifier reason, String counterparty) {
+    public record Entry(long time, long delta, long balance, ResourceLocation reason, String counterparty) {
         static final Codec<Entry> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.LONG.fieldOf("t").forGetter(Entry::time),
             Codec.LONG.fieldOf("d").forGetter(Entry::delta),
             Codec.LONG.fieldOf("b").forGetter(Entry::balance),
-            Identifier.CODEC.fieldOf("r").forGetter(Entry::reason),
+            ResourceLocation.CODEC.fieldOf("r").forGetter(Entry::reason),
             Codec.STRING.optionalFieldOf("c", "").forGetter(Entry::counterparty)
         ).apply(i, Entry::new));
     }
@@ -41,8 +41,8 @@ public final class HistoryData extends SavedData {
     static final Codec<HistoryData> CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Entry.CODEC.listOf())
         .xmap(HistoryData::new, HistoryData::snapshot);
 
-    public static final SavedDataType<HistoryData> TYPE = new SavedDataType<>(
-        TraderyApi.id("history"), HistoryData::new, CODEC, DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
+    public static final String NAME = "tradery_history";
+    public static final SavedData.Factory<HistoryData> FACTORY = CodecSavedData.factory(NAME, CODEC, HistoryData::new);
 
     private final Map<UUID, Deque<Entry>> entries = new HashMap<>();
 
@@ -51,6 +51,11 @@ public final class HistoryData extends SavedData {
 
     private HistoryData(Map<UUID, List<Entry>> loaded) {
         loaded.forEach((uuid, list) -> entries.put(uuid, new ArrayDeque<>(list)));
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        return CodecSavedData.save(CODEC, this, tag, registries);
     }
 
     private Map<UUID, List<Entry>> snapshot() {

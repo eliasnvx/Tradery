@@ -11,7 +11,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.permissions.LevelBasedPermissionSet;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -20,9 +19,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.payload.AdvancedOpenScreenPayload;
@@ -44,16 +42,12 @@ final class NeoForgePlatform implements Platform {
     static {
         for (TraderyPermission permission : TraderyPermission.values()) {
             NODES.put(permission, new PermissionNode<>(Tradery.MOD_ID, permission.path(), PermissionTypes.BOOLEAN,
-                (player, uuid, context) -> player != null && hasLevel(player, permission)));
+                (player, uuid, context) -> player != null && permission.fallbackAllows(player)));
         }
     }
 
     static List<PermissionNode<?>> nodes() {
         return List.copyOf(NODES.values());
-    }
-
-    private static boolean hasLevel(ServerPlayer player, TraderyPermission permission) {
-        return player.permissions() instanceof LevelBasedPermissionSet set && set.level().isEqualOrHigherThan(permission.fallback());
     }
 
     @Override
@@ -83,7 +77,7 @@ final class NeoForgePlatform implements Platform {
             return hasPermission(player, permission);
         }
         // Console, command blocks, functions: their own permission level decides
-        return source.permissions() instanceof LevelBasedPermissionSet set && set.level().isEqualOrHigherThan(permission.fallback());
+        return permission.fallbackAllows(source);
     }
 
     @Override
@@ -93,14 +87,15 @@ final class NeoForgePlatform implements Platform {
 
     @Override
     public void sendToPlayer(ServerPlayer player, CustomPacketPayload payload) {
-        if (player.connection.hasChannel(payload.type())) {
+        // Fake players (Create & co.) have no client; on 21.1 their connection has no channel and hasChannel throws
+        if (!(player instanceof FakePlayer) && player.connection.hasChannel(payload.type())) {
             PacketDistributor.sendToPlayer(player, payload);
         }
     }
 
     @Override
     public boolean canSendToServer(CustomPacketPayload.Type<?> type) {
-        return FMLLoader.getCurrent().getDist().isClient() && Client.canSend(type);
+        return FMLEnvironment.dist.isClient() && Client.canSend(type);
     }
 
     @Override
@@ -137,7 +132,8 @@ final class NeoForgePlatform implements Platform {
 
     @Override
     public <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super RegistryFriendlyByteBuf, D> dataCodec, D data) {
-        if (player.connection.hasChannel(AdvancedOpenScreenPayload.TYPE)) {
+        // FakePlayer#openMenu opens nothing; asking its channel-less connection would throw
+        if (player instanceof FakePlayer || player.connection.hasChannel(AdvancedOpenScreenPayload.TYPE)) {
             player.openMenu(provider, buf -> dataCodec.encode(buf, data));
         } else {
             // Connections without NeoForge's channel (GameTest mock players) can't take the opening data;
@@ -153,7 +149,7 @@ final class NeoForgePlatform implements Platform {
         placedType = register(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.ATTACHMENT_TYPES, "placed_blocks",
             () -> net.neoforged.neoforge.attachment.AttachmentType.<it.unimi.dsi.fastutil.longs.LongSet>builder(
                     () -> new it.unimi.dsi.fastutil.longs.LongOpenHashSet())
-                .serialize(dev.eliasnvx.tradery.rewards.PlacedBlocks.CODEC.fieldOf("positions"), set -> !set.isEmpty())
+                .serialize(dev.eliasnvx.tradery.rewards.PlacedBlocks.CODEC, set -> !set.isEmpty())
                 .build());
     }
 
@@ -165,7 +161,7 @@ final class NeoForgePlatform implements Platform {
     @Override
     public void setPlacedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk, it.unimi.dsi.fastutil.longs.LongSet positions) {
         chunk.setData(placedType.get(), positions);
-        chunk.markUnsaved();
+        chunk.setUnsaved(true);
     }
 
     @Override
@@ -181,7 +177,7 @@ final class NeoForgePlatform implements Platform {
         }
 
         static void send(CustomPacketPayload payload) {
-            ClientPacketDistributor.sendToServer(payload);
+            PacketDistributor.sendToServer(payload);
         }
     }
 }

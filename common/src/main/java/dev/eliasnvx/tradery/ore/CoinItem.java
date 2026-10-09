@@ -9,10 +9,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
@@ -34,11 +35,11 @@ public class CoinItem extends Item {
     }
 
     @Override
-    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (!(player instanceof ServerPlayer serverPlayer) || !EconomyService.INSTANCE.isReady()) {
-            return InteractionResult.SUCCESS;
+            return InteractionResultHolder.success(player.getItemInHand(hand));
         }
-        List<ItemStack> inventory = serverPlayer.getInventory().getNonEquipmentItems();
+        List<ItemStack> inventory = serverPlayer.getInventory().items;
         long amount = 0;
         if (player.isShiftKeyDown()) {
             for (ItemStack stack : inventory) {
@@ -49,13 +50,13 @@ public class CoinItem extends Item {
             amount = Coins.value(player.getItemInHand(hand));
         }
         if (amount <= 0) {
-            return InteractionResult.PASS;
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
         EconomyService economy = EconomyService.INSTANCE;
         TransactionResult result = economy.deposit(economy.account(player.getUUID()), amount, Reason.of(Reasons.COIN_DEPOSIT));
         if (result instanceof TransactionResult.Failure failure) {
-            serverPlayer.sendOverlayMessage(Messages.failure(failure));
-            return InteractionResult.FAIL;
+            serverPlayer.displayClientMessage(Messages.failure(failure), true);
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
         }
         if (player.isShiftKeyDown()) {
             for (int i = 0; i < inventory.size(); i++) {
@@ -70,7 +71,8 @@ public class CoinItem extends Item {
             player.setItemInHand(hand, ItemStack.EMPTY);
         }
         serverPlayer.getInventory().setChanged();
-        return InteractionResult.SUCCESS_SERVER;
+        // Vanilla puts the returned stack in the hand: return what is there now (the coins are gone)
+        return InteractionResultHolder.consume(player.getItemInHand(hand));
     }
 
     private static long saturatedAdd(long a, long b) {
@@ -79,8 +81,7 @@ public class CoinItem extends Item {
 
     /** "Worth 1.00 ₮" with the connected server's values (clients never read the server config). */
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display,
-                                java.util.function.Consumer<Component> builder, net.minecraft.world.item.TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         dev.eliasnvx.tradery.client.ClientEconomy.CurrencyView currency = dev.eliasnvx.tradery.client.ClientEconomy.currency();
         if (currency == null) {
             return;
@@ -90,10 +91,10 @@ public class CoinItem extends Item {
             case SILVER -> currency.silverValue();
             case GOLD -> currency.goldValue();
         };
-        builder.accept(Component.translatable("tradery.coin.worth", currency.format(each)).withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.translatable("tradery.coin.worth", currency.format(each)).withStyle(ChatFormatting.GOLD));
         if (stack.getCount() > 1) {
-            builder.accept(Component.translatable("tradery.coin.worth_stack", currency.format(each * stack.getCount())).withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("tradery.coin.worth_stack", currency.format(each * stack.getCount())).withStyle(ChatFormatting.GRAY));
         }
-        builder.accept(Component.translatable("tradery.coin.use").withStyle(ChatFormatting.DARK_GRAY));
+        tooltip.add(Component.translatable("tradery.coin.use").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

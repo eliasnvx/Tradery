@@ -43,7 +43,6 @@ public final class TraderyNeoForgeClient {
             event.registerBlockEntityRenderer(TraderyBlocks.DISPLAY_BLOCK_ENTITY.get(), DisplayRenderer::new);
         });
         modBus.addListener((RegisterKeyMappingsEvent event) -> {
-            event.registerCategory(TraderyKeyMappings.CATEGORY);
             for (KeyMapping key : TraderyKeyMappings.ALL) {
                 event.register(key);
             }

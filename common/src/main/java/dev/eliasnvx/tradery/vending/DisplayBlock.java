@@ -1,5 +1,6 @@
 package dev.eliasnvx.tradery.vending;
 
+import com.mojang.serialization.MapCodec;
 import dev.eliasnvx.tradery.api.AccountId;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 /** Display block: a showcase without trading. The owner picks the item and the animation. */
 public class DisplayBlock extends BaseEntityBlock {
+    public static final MapCodec<DisplayBlock> CODEC = simpleCodec(DisplayBlock::new);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     /** Height of the base under the glass case, in pixels; the model in tools/assets.py uses the same value. */
     public static final int BASE_HEIGHT = 2;
@@ -42,6 +45,16 @@ public class DisplayBlock extends BaseEntityBlock {
     public DisplayBlock(BlockBehaviour.Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
     @Override
@@ -77,7 +90,7 @@ public class DisplayBlock extends BaseEntityBlock {
                 return InteractionResult.PASS;
             }
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override
@@ -100,6 +113,6 @@ public class DisplayBlock extends BaseEntityBlock {
 
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        return rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 }

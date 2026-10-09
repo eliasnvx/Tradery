@@ -25,13 +25,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.Vec3;
@@ -68,7 +69,9 @@ public final class VendingGameTests {
 
     private static VendingBlockEntity vendor(GameTestHelper helper, AccountId owner, VendingSettings settings) {
         helper.setBlock(VENDOR, TraderyBlocks.VENDING_BLOCK.get().defaultBlockState().setValue(VendingBlock.FACING, Direction.NORTH));
-        VendingBlockEntity vendor = helper.getBlockEntity(VENDOR, VendingBlockEntity.class);
+        BlockEntity blockEntity = helper.getBlockEntity(VENDOR);
+        helper.assertTrue(blockEntity instanceof VendingBlockEntity, "a vending block entity at " + VENDOR);
+        VendingBlockEntity vendor = (VendingBlockEntity) blockEntity;
         vendor.setOwner(owner, "owner");
         vendor.setSettings(settings);
         return vendor;
@@ -159,15 +162,15 @@ public final class VendingGameTests {
         vendor.stock().setChanged();
         ServerPlayer buyer = playerAtVendor(helper);
         setBalance(buyer.getUUID(), 1_000);
-        for (int i = 0; i < buyer.getInventory().getNonEquipmentItems().size(); i++) {
-            buyer.getInventory().getNonEquipmentItems().set(i, new ItemStack(Items.DIRT, 64));
+        for (int i = 0; i < buyer.getInventory().items.size(); i++) {
+            buyer.getInventory().items.set(i, new ItemStack(Items.DIRT, 64));
         }
         helper.assertFalse(VendingTrades.execute(buyer, vendor, 1).success(), "no room: refused");
         helper.assertValueEqual(balance(buyer.getUUID()), 1_000L, "no money taken");
         helper.assertValueEqual(count(vendor.stock(), Items.BREAD), 16, "no goods taken");
 
         setBalance(buyer.getUUID(), 150);
-        buyer.getInventory().getNonEquipmentItems().set(0, ItemStack.EMPTY);
+        buyer.getInventory().items.set(0, ItemStack.EMPTY);
         VendingTrades.Outcome outcome = VendingTrades.execute(buyer, vendor, 8);
         helper.assertValueEqual(outcome.trades(), 1, "money for one trade only");
         helper.assertValueEqual(balance(buyer.getUUID()), 50L, "paid for one trade");
@@ -227,23 +230,23 @@ public final class VendingGameTests {
 
         // Sample slots copy, never take
         menu.setCarried(new ItemStack(Items.DIAMOND, 5));
-        menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ContainerInput.PICKUP, owner);
+        menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ClickType.PICKUP, owner);
         helper.assertValueEqual(menu.getCarried().getCount(), 5, "cursor keeps all 5 diamonds");
         helper.assertTrue(menu.goodsSample().is(Items.DIAMOND) && menu.goodsSample().getCount() == 5, "sample is a copy of 5");
-        menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ContainerInput.QUICK_MOVE, owner);
-        menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ContainerInput.THROW, owner);
+        menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ClickType.QUICK_MOVE, owner);
+        menu.clicked(VendingOwnerMenu.GOODS_SLOT, 0, ClickType.THROW, owner);
         helper.assertTrue(menu.goodsSample().is(Items.DIAMOND), "shift-click and drop do nothing on a sample");
         helper.assertFalse(menu.getSlot(VendingOwnerMenu.GOODS_SLOT).mayPickup(owner), "a sample can't be picked up");
         helper.assertTrue(menu.getSlot(VendingOwnerMenu.GOODS_SLOT) instanceof GhostSlot, "goods slot is a sample");
         menu.setCarried(ItemStack.EMPTY);
 
         // Stock takes only the goods; revenue takes nothing by hand
-        owner.getInventory().getNonEquipmentItems().set(0, new ItemStack(Items.DIRT, 10));
+        owner.getInventory().items.set(0, new ItemStack(Items.DIRT, 10));
         int dirtSlot = VendingOwnerMenu.INVENTORY_START + 27; // first hotbar slot
         menu.quickMoveStack(owner, dirtSlot);
         helper.assertValueEqual(count(vendor.stock(), Items.DIRT), 0, "dirt can't go into a diamond vendor");
         helper.assertValueEqual(count(owner, Items.DIRT), 10, "dirt stays with the owner");
-        owner.getInventory().getNonEquipmentItems().set(1, new ItemStack(Items.DIAMOND, 3));
+        owner.getInventory().items.set(1, new ItemStack(Items.DIAMOND, 3));
         menu.quickMoveStack(owner, dirtSlot + 1);
         helper.assertValueEqual(count(vendor.stock(), Items.DIAMOND), 3, "diamonds go into the stock");
         helper.assertFalse(menu.getSlot(VendingOwnerMenu.REVENUE_START).mayPlace(new ItemStack(Items.DIAMOND)), "revenue is take-only");
@@ -279,7 +282,7 @@ public final class VendingGameTests {
         int bread = 0;
         int emeralds = 0;
         int blocks = 0;
-        for (ItemEntity item : helper.getEntities(EntityTypes.ITEM, VENDOR, 3)) {
+        for (ItemEntity item : helper.getEntities(EntityType.ITEM, VENDOR, 3)) {
             ItemStack stack = item.getItem();
             if (stack.is(Items.BREAD)) {
                 bread += stack.getCount();
@@ -305,7 +308,7 @@ public final class VendingGameTests {
         helper.assertTrue(VendingProtection.mayBreak(owner, level, pos), "the owner may break it");
         helper.assertFalse(VendingProtection.mayBreak(stranger, level, pos), "a stranger may not");
         helper.assertValueEqual(level.getBlockState(pos).getDestroyProgress(stranger, level, pos), 0.0f, "no progress for strangers");
-        helper.assertValueEqual(level.getBlockState(pos).getPistonPushReaction(), PushReaction.IMMOVEABLE, "pistons can't move it");
+        helper.assertValueEqual(level.getBlockState(pos).getPistonPushReaction(), PushReaction.BLOCK, "pistons can't move it");
         helper.assertFalse(level.getBlockEntity(pos) instanceof Container, "not a container");
         helper.assertTrue(HopperBlockEntity.getContainerAt(level, pos) == null, "hoppers see no container");
 

@@ -1,7 +1,7 @@
 package dev.eliasnvx.tradery.client.screen;
 
 import dev.eliasnvx.tradery.menu.DisplayMenu;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -12,7 +12,9 @@ public class DisplayScreen extends AbstractContainerScreen<DisplayMenu> implemen
     private Button animationButton;
 
     public DisplayScreen(DisplayMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 176, 152);
+        super(menu, inventory, title);
+        imageWidth = 176;
+        imageHeight = 152;
         inventoryLabelY = DisplayMenu.INVENTORY_TOP - 11;
     }
 
@@ -36,18 +38,23 @@ public class DisplayScreen extends AbstractContainerScreen<DisplayMenu> implemen
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        super.extractBackground(graphics, mouseX, mouseY, a);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        super.render(graphics, mouseX, mouseY, partialTick);
+        renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         Panels.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
         Panels.ghostSlot(graphics, leftPos + DisplayMenu.SAMPLE_X, topPos + DisplayMenu.SAMPLE_Y);
         Panels.inventory(graphics, leftPos + 8, topPos + DisplayMenu.INVENTORY_TOP);
     }
 
     @Override
-    protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        super.extractTooltip(graphics, mouseX, mouseY);
+    protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        super.renderTooltip(graphics, mouseX, mouseY);
         if (hoveredSlot != null && hoveredSlot.isFake() && !hoveredSlot.hasItem()) {
-            graphics.setTooltipForNextFrame(font, Component.translatable("tradery.screen.display_tip"), mouseX, mouseY);
+            graphics.renderTooltip(font, Component.translatable("tradery.screen.display_tip"), mouseX, mouseY);
         }
     }
 
