@@ -140,6 +140,9 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 - `-Pcompat=true` client tests on both loaders: JEI, REI, Jade (and Placeholder API on Fabric) load their Tradery plugins without errors and the scenario passes. Dev runs take the JEI mod jar without its POM dependencies (they name dev-only modules that aren't published) plus `mezz_config` (nested in the JEI jar, but not unpacked from a dev classpath); the NeoForge client test extends the main runtime dependencies for this.
 - The NeoForge client test's unfocused-window fallback lost its first sneak + attack click (the player sneaks a tick after the key goes down); it now waits two ticks first.
 
+## 2026-10-09: Lowest Fabric Loader
+- `fabric.mod.json` asks for Fabric Loader >= 0.15.11 (`fabric_loader_min_version`), what the Fabric API we build against needs itself, instead of the 0.19.5 we develop with: modpacks on this Minecraft version often pin an older loader. Checked: GameTests and the Fabric client test pass on Loader 0.15.11 (`-Pfabric_loader_version=0.15.11`).
+
 ## API notes (1.21.1)
 - `ResourceLocation.fromNamespaceAndPath`; `ResourceKey#location()`.
 - `SavedData.Factory(Supplier, BiFunction<CompoundTag, HolderLookup.Provider, T>, DataFixTypes)`, `server.overworld().getDataStorage().computeIfAbsent(factory, name)`; `util/CodecSavedData` wraps a `Codec` into that.
