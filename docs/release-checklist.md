@@ -19,7 +19,7 @@ The network and performance client GameTests (`NetworkClientTest`, `PerformanceC
 Last measured on 26.3 (2026-10-06, Apple Silicon): server tick ~1 ms with or without 50 stocked vending blocks (they
 never tick); client render cost of the 50 blocks within noise (< 1 ms per frame).
 
-Before tagging `v<version>`:
+Before tagging `v<version>+1.21.1` (one tag per Minecraft version branch):
 
 1. `./gradlew clean build` is green.
 2. Run the commands above; look at the screenshots.
@@ -30,4 +30,4 @@ Before tagging `v<version>`:
    GameTest `coin_ore_not_processable` guards the tags and furnace recipes they rely on).
 5. Update `CHANGELOG.md` (move "Unreleased" to the date), set `modrinth_project_id` / `curseforge_project_id` in
    `gradle.properties`, add `MODRINTH_TOKEN` / `CURSEFORGE_TOKEN` to the `release` environment, then tag
-   `v<version>` and push the tag.
+   `v<version>+1.21.1` on this branch and push the tag. Repeat on the other version branches.
