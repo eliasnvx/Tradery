@@ -1,6 +1,7 @@
 name: release
 
-# Tag v<version> (e.g. v1.0.0) after the manual checks in docs/release-checklist.md.
+# Tag v<version>+<minecraft> (here v1.0.0+26.3) on this branch after the manual checks in docs/release-checklist.md.
+# Every Minecraft version has its own branch and tag, so one mod version is released once per branch.
 on:
   push:
     tags: ["v*"]
@@ -25,8 +26,9 @@ jobs:
       - name: Check tag matches the version
         run: |
           version=$(grep '^version=' gradle.properties | cut -d= -f2)
-          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} does not match version=${version}"
+          minecraft=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)
+          if [ "${GITHUB_REF_NAME}" != "v${version}+${minecraft}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match v${version}+${minecraft}"
             exit 1
           fi
 
