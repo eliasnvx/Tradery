@@ -4,7 +4,13 @@ All notable changes. Mod versions follow SemVer; the Economy API has its own ver
 
 ## [1.0.0] - Unreleased
 
-First release for Minecraft 1.20.1 (Fabric and Forge), the same as the 26.3 release. Economy API 1.0.0.
+First release for Minecraft 1.20.1 (Fabric and Forge), with the same features as Tradery 1.0.0 for 26.3. Economy API 1.0.0.
+
+### On 1.20.1
+- Java 17; Fabric Loader 0.16.10+ with Fabric API, or Forge 47.
+- The vending block's lamp glows on Forge only.
+- There are no trial spawners in 1.20.1: the spawner rule covers monster spawners. No rewards for mobs 1.20.1 doesn't have (creaking, bogged, breeze).
+- On Forge, fishing pays only for catches no other mod cancelled.
 
 ### Economy
 - One configurable currency (name, symbol, decimals, thousands separator), starting balance, balance ceiling.
