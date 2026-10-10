@@ -4,7 +4,12 @@ All notable changes. Mod versions follow SemVer; the Economy API has its own ver
 
 ## [1.0.0] - Unreleased
 
-First release for Minecraft 1.21.1 (Fabric and NeoForge), the same as the 26.3 release. Economy API 1.0.0.
+First release for Minecraft 1.21.1 (Fabric and NeoForge), with the same features as Tradery 1.0.0 for 26.3. Economy API 1.0.0.
+
+### On 1.21.1
+- Java 21; Fabric Loader 0.15.11+ with Fabric API, or NeoForge 21.1.
+- The vending block's lamp glows on NeoForge only.
+- No reward for the creaking: it isn't in 1.21.1.
 
 ### Economy
 - One configurable currency (name, symbol, decimals, thousands separator), starting balance, balance ceiling.
