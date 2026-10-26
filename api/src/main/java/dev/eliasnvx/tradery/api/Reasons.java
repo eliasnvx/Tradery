@@ -10,6 +10,52 @@ public final class Reasons {
     public static final Identifier VENDING_SALE = TraderyApi.id("vending/sale");
     /** A vending block buying from a player: owner to seller. */
     public static final Identifier VENDING_BUYBACK = TraderyApi.id("vending/buyback");
+    /**
+     * A villager bought from a player's vending block. The villager pays from its own wallet, which lives outside
+     * the ledger, so the money is created: server account to the owner, minus the vending fee.
+     */
+    public static final Identifier VILLAGER_PURCHASE = TraderyApi.id("villager/purchase");
+    /**
+     * A trade in a villager's trade window, where emeralds are replaced by money: the player pays the villager
+     * (withdrawn to the server account) or the villager pays the player from its wallet (deposited from the server
+     * account). The amount's direction tells which.
+     */
+    public static final Identifier VILLAGER_TRADE = TraderyApi.id("villager/trade");
+    /**
+     * A villager sold its produce to a player's buyback vending block. The villager's wallet lives outside the
+     * ledger, so the money leaves it: the owner pays the server account; the villager's wallet gets the price minus
+     * the vending fee.
+     */
+    public static final Identifier VILLAGER_SUPPLY = TraderyApi.id("villager/supply");
+    /**
+     * A player delivered items to an order on a village board. The reward was reserved from the village's treasury,
+     * a counter outside the ledger, when the order was posted, so the money is created: server account to the player.
+     */
+    public static final Identifier VILLAGE_ORDER = TraderyApi.id("village/order");
+    /**
+     * A player funded a project of a village from its board. The cost is burned: withdrawn to the server account,
+     * nobody receives it.
+     */
+    public static final Identifier VILLAGE_PROJECT = TraderyApi.id("village/project");
+    /**
+     * A player gave money to a village's treasury from its board. The treasury is a counter outside the ledger, so
+     * the money leaves the ledger: player to the server account. The village posts orders paid from it.
+     *
+     * @since 1.1.0
+     */
+    public static final Identifier VILLAGE_DONATION = TraderyApi.id("village/donation");
+    /**
+     * A player rented a trading place (market licence) in a village. The rent goes into the village's treasury, a
+     * counter outside the ledger, so the money leaves the ledger: player to the server account.
+     */
+    public static final Identifier VILLAGE_RENT = TraderyApi.id("village/rent");
+    /**
+     * A trade with a caravan from another village in its trade window, emeralds replaced by money: the player pays
+     * the caravan (withdrawn to the server account) or the caravan pays the player from its purse (deposited from the
+     * server account). The purse, taken from the origin village's treasury, is a counter outside the ledger. The
+     * amount's direction tells which.
+     */
+    public static final Identifier VILLAGE_CARAVAN = TraderyApi.id("village/caravan");
     /** Coin ore mined straight to the balance. */
     public static final Identifier ORE_MINED = TraderyApi.id("ore/mined");
     /** Coin items turned into balance (pickup or use). */
