@@ -1,0 +1,9 @@
+{
+  "cost": 150,
+  "level": 1,
+  "icon": "minecraft:lantern",
+  "effects": {
+    "visit_chance": 0.1
+  },
+  "action": "street_lamps"
+}

@@ -52,7 +52,14 @@ public final class VendingHint {
     private static final int DETAIL = 1;
 
     /** A text row: centered, or left-aligned with an indent (item details). */
-    private record Row(int kind, Component text, int color, int indent) {
+    private record Row(int kind, Component text, int color, int indent, int width) {
+        Row(int kind, Component text, int color, int indent) {
+            this(kind, text, color, indent, 0);
+        }
+
+        Row measured(Font font) {
+            return new Row(kind, text, color, indent, font.width(text));
+        }
     }
 
     private static final List<Row> top = new ArrayList<>();
@@ -64,6 +71,8 @@ public final class VendingHint {
     private static ItemStack offerPriceItem = ItemStack.EMPTY;
     private static @Nullable Component offerMoney;
     private static int offerWidth;
+    private static int offerLabelWidth;
+    private static int offerForWidth;
 
     private static @Nullable Boolean jadeLoaded;
     private static @Nullable BlockPos shownPos;
@@ -137,7 +146,7 @@ public final class VendingHint {
     private static int drawRows(GuiGraphics graphics, Font font, List<Row> rows, int x, int y) {
         for (int i = 0; i < rows.size(); i++) {
             Row row = rows.get(i);
-            int rowX = row.kind() == CENTERED ? x + (width - font.width(row.text())) / 2 : x + row.indent();
+            int rowX = row.kind() == CENTERED ? x + (width - row.width()) / 2 : x + row.indent();
             graphics.drawString(font, row.text(), rowX, y, row.color(), true);
             y += TEXT_ROW;
         }
@@ -148,12 +157,12 @@ public final class VendingHint {
     private static void drawOffer(GuiGraphics graphics, Font font, int x, int y) {
         int textY = y + 5;
         graphics.drawString(font, offerLabel, x, textY, LABEL, true);
-        x += font.width(offerLabel) + GAP;
+        x += offerLabelWidth + GAP;
         graphics.renderItem(offerGoods, x, y + 1);
         graphics.renderItemDecorations(font, offerGoods, x, y + 1);
         x += ICON + GAP;
         graphics.drawString(font, offerFor, x, textY, LABEL, true);
-        x += font.width(offerFor) + GAP;
+        x += offerForWidth + GAP;
         if (offerMoney != null) {
             graphics.drawString(font, offerMoney, x, textY, GOLD, true);
         } else {
@@ -249,13 +258,17 @@ public final class VendingHint {
         width = 0;
         height = -2;
         for (List<Row> rows : List.of(top, bottom)) {
-            for (Row row : rows) {
-                width = Math.max(width, row.indent() + font.width(row.text()));
+            for (int i = 0; i < rows.size(); i++) {
+                Row row = rows.get(i).measured(font);
+                rows.set(i, row);
+                width = Math.max(width, row.indent() + row.width());
                 height += TEXT_ROW;
             }
         }
         if (hasOffer) {
-            offerWidth = font.width(offerLabel) + GAP + ICON + GAP + font.width(offerFor) + GAP
+            offerLabelWidth = font.width(offerLabel);
+            offerForWidth = font.width(offerFor);
+            offerWidth = offerLabelWidth + GAP + ICON + GAP + offerForWidth + GAP
                 + (offerMoney != null ? font.width(offerMoney) : ICON);
             width = Math.max(width, offerWidth);
             height += OFFER_ROW;

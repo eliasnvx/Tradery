@@ -12,7 +12,11 @@
     "PlayerAdvancementsMixin",
     "PlayerListAccessor",
     "ResultSlotMixin",
-    "TrialSpawnerMixin"
+    "SinglePoolElementAccessor",
+    "TrialSpawnerMixin",
+    "StructureTemplatePoolAccessor",
+    "VillagerMixin",
+    "WanderingTraderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,0 +1,76 @@
+{
+  "prices": [
+    {
+      "item": "minecraft:wheat",
+      "price": 0.15
+    },
+    {
+      "item": "minecraft:potato",
+      "price": 0.12
+    },
+    {
+      "item": "minecraft:beetroot",
+      "price": 0.2
+    },
+    {
+      "item": "minecraft:pumpkin",
+      "price": 0.5
+    },
+    {
+      "item": "minecraft:melon_slice",
+      "price": 0.1
+    },
+    {
+      "item": "minecraft:cod",
+      "price": 0.2
+    },
+    {
+      "item": "minecraft:salmon",
+      "price": 0.25
+    },
+    {
+      "item": "minecraft:beef",
+      "price": 0.3
+    },
+    {
+      "item": "minecraft:porkchop",
+      "price": 0.4
+    },
+    {
+      "item": "minecraft:chicken",
+      "price": 0.2
+    },
+    {
+      "item": "minecraft:mutton",
+      "price": 0.4
+    },
+    {
+      "item": "minecraft:rabbit",
+      "price": 0.75
+    },
+    {
+      "item": "minecraft:cobblestone",
+      "price": 0.08
+    },
+    {
+      "item": "minecraft:brick",
+      "price": 0.25
+    },
+    {
+      "item": "minecraft:lapis_lazuli",
+      "price": 1
+    },
+    {
+      "item": "minecraft:glowstone_dust",
+      "price": 0.5
+    },
+    {
+      "item": "minecraft:arrow",
+      "price": 0.2
+    },
+    {
+      "tag": "minecraft:wool",
+      "price": 0.2
+    }
+  ]
+}

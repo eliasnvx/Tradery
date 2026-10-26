@@ -116,6 +116,7 @@ public class VendingBlock extends BaseEntityBlock {
             vendor.setOwner(owner, player.getGameProfile().getName());
             vendor.setSettings(VendingSettings.EMPTY.withAnimation(TraderyConfig.server().vending().defaultAnimation()));
             VendorsData.get(serverLevel.getServer()).add(serverLevel, pos, owner, true);
+            vendor.refreshIndex();
         }
     }
 

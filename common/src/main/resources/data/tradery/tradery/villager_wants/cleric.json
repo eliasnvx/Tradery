@@ -1,0 +1,19 @@
+{
+  "profession": "minecraft:cleric",
+  "wants": [
+    {
+      "item": "minecraft:glass_bottle",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:nether_wart",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:gold_ingot"
+    }
+  ]
+}

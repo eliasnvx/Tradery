@@ -31,6 +31,7 @@ public final class TraderyJeiPlugin implements IModPlugin {
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
         registration.addGhostIngredientHandler(VendingOwnerScreen.class, new SampleHandler<>());
         registration.addGhostIngredientHandler(DisplayScreen.class, new SampleHandler<>());
+        registration.addGhostIngredientHandler(dev.eliasnvx.tradery.client.screen.CounterOwnerScreen.class, new SampleHandler<>());
     }
 
     @Override

@@ -80,6 +80,7 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity,
         this.settings = settings;
         changedAndSync();
         updateStockedState();
+        refreshIndex();
     }
 
     public AdminFlags admin() {
@@ -90,6 +91,7 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity,
         this.admin = admin;
         changedAndSync();
         updateStockedState();
+        refreshIndex();
     }
 
     public @Nullable BlockState facade() {
@@ -140,11 +142,20 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity,
     private void onStockChanged() {
         setChanged();
         updateStockedState();
+        refreshIndex();
     }
 
     private void onRevenueChanged() {
         setChanged();
         fullNotified = false;
+        refreshIndex();
+    }
+
+    /** Keeps this block's snapshot in the vending index current: the shop ledger shows it while the chunk is unloaded. */
+    public void refreshIndex() {
+        if (level instanceof ServerLevel serverLevel && owner != null && !isRemoved()) {
+            VendorsData.get(serverLevel.getServer()).updateSnapshot(serverLevel, worldPosition, ShopSnapshot.of(this));
+        }
     }
 
     /** Keeps the block's STOCKED property (the green light) in line with the stock. */
@@ -177,6 +188,7 @@ public class VendingBlockEntity extends BlockEntity implements OwnedBlockEntity,
         if (level instanceof ServerLevel serverLevel && owner != null) {
             // Self-heal the index: a block loaded from disk that the index doesn't know yet
             VendorsData.get(serverLevel.getServer()).add(serverLevel, worldPosition, owner, false);
+            refreshIndex();
         }
     }
 

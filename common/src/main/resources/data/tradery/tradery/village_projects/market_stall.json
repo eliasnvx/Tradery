@@ -1,0 +1,6 @@
+{
+  "cost": 400,
+  "level": 2,
+  "icon": "tradery:vending_block",
+  "action": "market_stall"
+}

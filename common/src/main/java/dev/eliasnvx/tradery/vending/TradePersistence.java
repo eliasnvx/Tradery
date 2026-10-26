@@ -25,6 +25,11 @@ import java.util.UUID;
  */
 public final class TradePersistence {
     private static final Map<ResourceKey<Level>, Map<Long, Set<UUID>>> PENDING = new HashMap<>();
+    /** Players who traded with a villager since their data was last saved with the economy data. */
+    private static final Set<UUID> VILLAGER_TRADERS = new HashSet<>();
+    /** Traders to save at the end of this tick, for the chunks written in it. */
+    private static final Set<UUID> SAVE_PLAYERS = new HashSet<>();
+    private static boolean saveDue;
 
     private TradePersistence() {
     }
@@ -36,6 +41,28 @@ public final class TradePersistence {
             .add(player.getUUID());
     }
 
+    /** A trade without a player (a villager bought): the stock changed, and so did the money. */
+    public static void traded(ServerLevel level, BlockPos pos) {
+        PENDING.computeIfAbsent(level.dimension(), key -> new HashMap<>())
+            .computeIfAbsent(ChunkPos.asLong(pos), key -> new HashSet<>());
+    }
+
+    /**
+     * A villager trade changed this player's inventory and the money (balance, the villager's wallet), with no chunk
+     * of its own: the player is saved whenever a chunk save here saves the economy data, and the economy data is
+     * saved when the player leaves (vanilla saves the player then). The autosave writes both anyway.
+     */
+    public static void tradedWithVillager(ServerPlayer player) {
+        VILLAGER_TRADERS.add(player.getUUID());
+    }
+
+    /** The player is leaving; vanilla saves their data in this tick. */
+    public static void onPlayerLeave(ServerPlayer player) {
+        if (VILLAGER_TRADERS.remove(player.getUUID())) {
+            player.server.overworld().getDataStorage().save();
+        }
+    }
+
     /** Minecraft wrote a chunk (eagerly, on unload or at the autosave); called by {@code ChunkMapMixin}. */
     public static void chunkSaved(ServerLevel level, ChunkPos pos) {
         Map<Long, Set<UUID>> chunks = PENDING.get(level.dimension());
@@ -43,15 +70,33 @@ public final class TradePersistence {
         if (traders == null) {
             return;
         }
-        MinecraftServer server = level.getServer();
-        // Tradery's saved data (balances included) lives in the overworld's storage: write what changed now
+        // Coalesced: several chunks written in one tick (eager saves do up to 20) mean one server data save and one
+        // save per trader, at the end of the tick, still before the next trade can happen
+        saveDue = true;
+        SAVE_PLAYERS.addAll(traders);
+        SAVE_PLAYERS.addAll(VILLAGER_TRADERS);
+        VILLAGER_TRADERS.clear();
+    }
+
+    /** End of a level tick: the saves {@link #chunkSaved} asked for, once each. */
+    public static void flush(MinecraftServer server) {
+        if (!saveDue) {
+            return;
+        }
+        saveDue = false;
         server.overworld().getDataStorage().save();
-        for (UUID trader : traders) {
+        for (UUID trader : SAVE_PLAYERS) {
             ServerPlayer player = server.getPlayerList().getPlayer(trader);
             if (player != null) {
                 ((PlayerListAccessor) server.getPlayerList()).tradery$save(player);
             }
         }
+        SAVE_PLAYERS.clear();
+    }
+
+    /** The player traded with a villager since the economy data was last saved with them (for tests). */
+    public static boolean villagerTradePending(ServerPlayer player) {
+        return VILLAGER_TRADERS.contains(player.getUUID());
     }
 
     /** Traders whose save waits for the chunk at {@code pos} (for tests). */
@@ -61,7 +106,16 @@ public final class TradePersistence {
         return traders == null ? Set.of() : Set.copyOf(traders);
     }
 
+    /** The chunk at {@code pos} had a trade since its last save (for tests). */
+    public static boolean waitsForSave(ServerLevel level, BlockPos pos) {
+        Map<Long, Set<UUID>> chunks = PENDING.get(level.dimension());
+        return chunks != null && chunks.containsKey(ChunkPos.asLong(pos));
+    }
+
     public static void clear() {
         PENDING.clear();
+        VILLAGER_TRADERS.clear();
+        SAVE_PLAYERS.clear();
+        saveDue = false;
     }
 }

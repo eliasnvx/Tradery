@@ -55,6 +55,7 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
     public static final int TOGGLE_MODE = 8;
     public static final int TOGGLE_BUYBACK = 9;
     public static final int CYCLE_ANIMATION = 10;
+    public static final int TOGGLE_VILLAGERS = 11;
     public static final int ADMIN_INFINITE = 20;
     public static final int ADMIN_BURN = 21;
     public static final int ADMIN_NO_FEE = 22;
@@ -104,10 +105,11 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
     private final @Nullable VendingBlockEntity vendor;
     private final Data data;
     private final SimpleContainer samples = new SimpleContainer(3);
-    /** Draft state shown by the screen: price mode, buyback, animation, admin flags, server owner. */
+    /** Draft state shown by the screen: price mode, buyback, animation, villagers, admin flags, server owner. */
     private final DataSlot priceMode = DataSlot.standalone();
     private final DataSlot buyback = DataSlot.standalone();
     private final DataSlot animation = DataSlot.standalone();
+    private final DataSlot villagers = DataSlot.standalone();
     private final DataSlot adminFlags = DataSlot.standalone();
 
     /** Client side, from the opening data. */
@@ -147,10 +149,12 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
         priceMode.set(settings.priceMode().ordinal());
         buyback.set(settings.buyback() ? 1 : 0);
         animation.set(settings.animation().ordinal());
+        villagers.set(settings.villagers() ? 1 : 0);
         adminFlags.set(encodeAdmin(data.admin(), data.serverOwned()));
         addDataSlot(priceMode);
         addDataSlot(buyback);
         addDataSlot(animation);
+        addDataSlot(villagers);
         addDataSlot(adminFlags);
     }
 
@@ -193,6 +197,11 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
         return VendingSettings.enumAt(DisplayAnimation.values(), Math.floorMod(animation.get(), DisplayAnimation.values().length));
     }
 
+    /** "Villagers can buy" in the draft. */
+    public boolean villagers() {
+        return villagers.get() != 0;
+    }
+
     public AdminFlags adminFlags() {
         int bits = adminFlags.get();
         return new AdminFlags((bits & 1) != 0, (bits & 2) != 0, (bits & 4) != 0);
@@ -208,7 +217,7 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
 
     /** The draft as settings, with the given money price. */
     public VendingSettings draft(long price) {
-        return new VendingSettings(goodsSample(), priceMode(), price, priceSample(), buyback(), animation());
+        return new VendingSettings(goodsSample(), priceMode(), price, priceSample(), buyback(), animation(), villagers());
     }
 
     // ------------------------------------------------------------------ clicks
@@ -216,7 +225,7 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
     @Override
     public void clicked(int slotIndex, int buttonNum, ClickType clickType, Player player) {
         if (slotIndex >= 0 && slotIndex < slots.size() && slots.get(slotIndex) instanceof GhostSlot ghost) {
-            GhostSlots.click(this, ghost, buttonNum, clickType);
+            GhostSlots.click(this, ghost, buttonNum, clickType, player.level().registryAccess());
             return;
         }
         super.clicked(slotIndex, buttonNum, clickType, player);
@@ -239,6 +248,7 @@ public class VendingOwnerMenu extends AbstractContainerMenu implements VendingMe
             case TOGGLE_MODE -> priceMode.set((priceMode.get() + 1) % PriceMode.values().length);
             case TOGGLE_BUYBACK -> buyback.set(buyback.get() == 0 ? 1 : 0);
             case CYCLE_ANIMATION -> animation.set((animation.get() + 1) % DisplayAnimation.values().length);
+            case TOGGLE_VILLAGERS -> villagers.set(villagers.get() == 0 ? 1 : 0);
             case ADMIN_INFINITE, ADMIN_BURN, ADMIN_NO_FEE, ADMIN_SERVER_OWNER -> {
                 if (!data.adminMode() || !VendingConfigurator.applyAdminToggle(serverPlayer, vendor, buttonId)) {
                     return false;

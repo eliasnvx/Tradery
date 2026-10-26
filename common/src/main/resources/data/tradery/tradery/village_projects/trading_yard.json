@@ -1,0 +1,11 @@
+{
+  "cost": 1000,
+  "level": 3,
+  "icon": "minecraft:bell",
+  "effects": {
+    "caravan_days_less": 1,
+    "market_day_earlier": 1
+  },
+  "action": "structure",
+  "structure": "trading_yard"
+}

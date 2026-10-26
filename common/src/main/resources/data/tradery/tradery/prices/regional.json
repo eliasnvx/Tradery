@@ -1,0 +1,72 @@
+{
+  "prices": [
+    {
+      "item": "minecraft:sand",
+      "price": 0.05
+    },
+    {
+      "item": "minecraft:red_sand",
+      "price": 0.05
+    },
+    {
+      "item": "minecraft:sandstone",
+      "price": 0.15
+    },
+    {
+      "item": "minecraft:cactus",
+      "price": 0.2
+    },
+    {
+      "tag": "minecraft:terracotta",
+      "price": 0.3
+    },
+    {
+      "tag": "minecraft:logs",
+      "price": 0.25
+    },
+    {
+      "item": "minecraft:hay_block",
+      "price": 1.2
+    },
+    {
+      "item": "minecraft:ice",
+      "price": 0.15
+    },
+    {
+      "item": "minecraft:packed_ice",
+      "price": 1.2
+    },
+    {
+      "item": "minecraft:snow_block",
+      "price": 0.1
+    },
+    {
+      "item": "minecraft:cocoa_beans",
+      "price": 0.3
+    },
+    {
+      "item": "minecraft:bamboo",
+      "price": 0.05
+    },
+    {
+      "item": "minecraft:lily_pad",
+      "price": 0.2
+    },
+    {
+      "item": "minecraft:slime_ball",
+      "price": 1
+    },
+    {
+      "item": "minecraft:sugar_cane",
+      "price": 0.1
+    },
+    {
+      "item": "minecraft:kelp",
+      "price": 0.05
+    },
+    {
+      "item": "minecraft:glow_berries",
+      "price": 0.3
+    }
+  ]
+}

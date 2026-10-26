@@ -135,6 +135,32 @@ final class FabricPlatform implements Platform {
     }
 
     @Override
+    public void registerServerReloadListener(net.minecraft.resources.ResourceLocation id, net.minecraft.server.packs.resources.PreparableReloadListener listener) {
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.server.packs.PackType.SERVER_DATA)
+            .registerReloadListener(new net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener() {
+                @Override
+                public net.minecraft.resources.ResourceLocation getFabricId() {
+                    return id;
+                }
+
+                @Override
+                public java.util.concurrent.CompletableFuture<Void> reload(PreparationBarrier barrier,
+                                                                          net.minecraft.server.packs.resources.ResourceManager manager,
+                                                                          net.minecraft.util.profiling.ProfilerFiller preparationsProfiler,
+                                                                          net.minecraft.util.profiling.ProfilerFiller reloadProfiler,
+                                                                          java.util.concurrent.Executor backgroundExecutor,
+                                                                          java.util.concurrent.Executor gameExecutor) {
+                    return listener.reload(barrier, manager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor);
+                }
+
+                @Override
+                public String getName() {
+                    return listener.getName();
+                }
+            });
+    }
+
+    @Override
     public CreativeModeTab.Builder creativeTabBuilder() {
         return FabricItemGroup.builder();
     }

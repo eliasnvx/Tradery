@@ -1,0 +1,11 @@
+{
+  "cost": 300,
+  "level": 1,
+  "icon": "minecraft:hay_block",
+  "effects": {
+    "treasury_cap": 0.5,
+    "wallet_days": 1
+  },
+  "action": "structure",
+  "structure": "granary"
+}

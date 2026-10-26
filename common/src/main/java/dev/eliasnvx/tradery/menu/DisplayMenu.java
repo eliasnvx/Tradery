@@ -77,7 +77,7 @@ public class DisplayMenu extends AbstractContainerMenu implements VendingMenu {
     @Override
     public void clicked(int slotIndex, int buttonNum, ClickType clickType, Player player) {
         if (slotIndex >= 0 && slotIndex < slots.size() && slots.get(slotIndex) instanceof GhostSlot ghost) {
-            GhostSlots.click(this, ghost, buttonNum, clickType);
+            GhostSlots.click(this, ghost, buttonNum, clickType, player.level().registryAccess());
             return;
         }
         super.clicked(slotIndex, buttonNum, clickType, player);

@@ -1,0 +1,142 @@
+{
+  "offers": [
+    {
+      "weight": 6,
+      "item": "minecraft:book",
+      "modifier": {
+        "function": "minecraft:enchant_randomly",
+        "options": "#minecraft:in_enchanting_table"
+      },
+      "price": {
+        "min": 30,
+        "max": 75
+      }
+    },
+    {
+      "weight": 4,
+      "item": "minecraft:name_tag",
+      "price": {
+        "min": 25,
+        "max": 40
+      }
+    },
+    {
+      "weight": 3,
+      "item": "minecraft:saddle",
+      "price": {
+        "min": 15,
+        "max": 25
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:map",
+      "price": {
+        "min": 8,
+        "max": 12
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:compass",
+      "price": {
+        "min": 10,
+        "max": 15
+      }
+    },
+    {
+      "weight": 3,
+      "item": "minecraft:ender_pearl",
+      "count": 4,
+      "price": {
+        "min": 12,
+        "max": 20
+      }
+    },
+    {
+      "weight": 3,
+      "item": "minecraft:golden_carrot",
+      "count": 8,
+      "price": {
+        "min": 10,
+        "max": 16
+      }
+    },
+    {
+      "weight": 3,
+      "item": "minecraft:experience_bottle",
+      "count": 8,
+      "price": {
+        "min": 20,
+        "max": 30
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:lead",
+      "count": 2,
+      "price": {
+        "min": 6,
+        "max": 10
+      }
+    },
+    {
+      "weight": 1,
+      "item": {
+        "id": "minecraft:enchanted_book",
+        "components": {
+          "minecraft:stored_enchantments": {
+            "minecraft:unbreaking": 3
+          }
+        }
+      },
+      "price": {
+        "min": 45,
+        "max": 60
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:spyglass",
+      "price": {
+        "min": 12,
+        "max": 18
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:glow_berries",
+      "count": 4,
+      "price": {
+        "min": 8,
+        "max": 12
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:honeycomb",
+      "count": 3,
+      "price": {
+        "min": 8,
+        "max": 12
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:torchflower_seeds",
+      "count": 2,
+      "price": {
+        "min": 12,
+        "max": 18
+      }
+    },
+    {
+      "weight": 1,
+      "item": "minecraft:music_disc_far",
+      "price": {
+        "min": 30,
+        "max": 45
+      }
+    }
+  ]
+}

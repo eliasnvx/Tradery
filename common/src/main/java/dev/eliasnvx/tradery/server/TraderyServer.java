@@ -35,6 +35,15 @@ public final class TraderyServer {
     public static void onServerStopped(MinecraftServer server) {
         EconomyService.INSTANCE.stop();
         dev.eliasnvx.tradery.vending.TradePersistence.clear();
+        dev.eliasnvx.tradery.village.VillagerCustomers.onServerStopped();
+        dev.eliasnvx.tradery.village.VillageCommerce.onServerStopped();
+        dev.eliasnvx.tradery.vending.VendingTrades.clear();
+        dev.eliasnvx.tradery.vending.VendingQuickTrade.clear();
+        dev.eliasnvx.tradery.rewards.Rewards.clear();
+        dev.eliasnvx.tradery.village.VillageBoard.clear();
+        dev.eliasnvx.tradery.village.VillagePresence.clear();
+        dev.eliasnvx.tradery.village.VillageStreets.clear();
+        dev.eliasnvx.tradery.village.VillageLamps.clear();
     }
 
     public static void onPlayerJoin(ServerPlayer player) {
@@ -46,11 +55,31 @@ public final class TraderyServer {
         VendingTrades.forget(player);
         VendingQuickTrade.forget(player);
         dev.eliasnvx.tradery.rewards.Rewards.forget(player);
+        dev.eliasnvx.tradery.vending.TradePersistence.onPlayerLeave(player);
+        dev.eliasnvx.tradery.village.VillageBoard.forget(player);
+        dev.eliasnvx.tradery.village.VillagePresence.forget(player);
     }
 
-    /** A living entity died (not cancelled): kill rewards. */
+    /** A living entity died (not cancelled): kill rewards; a villager's wallet goes with it. */
     public static void onLivingDeath(net.minecraft.world.entity.LivingEntity entity, net.minecraft.world.damagesource.DamageSource source) {
         dev.eliasnvx.tradery.rewards.Rewards.onDeath(entity, source);
+        if (entity instanceof net.minecraft.world.entity.npc.Villager villager) {
+            dev.eliasnvx.tradery.village.VillagerCustomers.onVillagerDeath(villager);
+            dev.eliasnvx.tradery.village.Villages.onVillagerDeath(villager, source.getEntity());
+        }
+    }
+
+    /** End of a server level's tick: villagers walking to vending blocks (Living Market). */
+    public static void onLevelTick(net.minecraft.server.level.ServerLevel level) {
+        dev.eliasnvx.tradery.village.VillagerCustomers.onLevelTick(level);
+        dev.eliasnvx.tradery.village.Villages.onLevelTick(level);
+        dev.eliasnvx.tradery.village.VillageCommerce.onLevelTick(level);
+        dev.eliasnvx.tradery.village.VillagePresence.onLevelTick(level);
+        dev.eliasnvx.tradery.village.VillageBuildings.onLevelTick(level);
+        dev.eliasnvx.tradery.village.VillageFestivals.onLevelTick(level);
+        dev.eliasnvx.tradery.village.VillageStreets.onLevelTick(level);
+        dev.eliasnvx.tradery.village.VillageLamps.onLevelTick(level);
+        dev.eliasnvx.tradery.vending.TradePersistence.flush(level.getServer());
     }
 
     /** A player broke a block (not cancelled): mine rewards. */
@@ -69,11 +98,22 @@ public final class TraderyServer {
             dev.eliasnvx.tradery.menu.GhostSlots.setFromViewer(player, player.containerMenu, ghost.slot(), ghost.stack());
         } else if (payload instanceof TraderyPayloads.VendingQuickTradePayload quick) {
             VendingQuickTrade.handle(player, quick.pos(), quick.sell());
+        } else if (payload instanceof TraderyPayloads.BellInfoRequestPayload bell) {
+            dev.eliasnvx.tradery.village.VillageBoard.onBellRequest(player, bell.pos());
+        } else if (payload instanceof TraderyPayloads.CounterSavePayload save
+            && player.containerMenu instanceof dev.eliasnvx.tradery.menu.CounterOwnerMenu menu && menu.containerId == save.containerId()) {
+            dev.eliasnvx.tradery.vending.CounterConfigurator.save(player, menu, save.prices());
+        } else if (payload instanceof TraderyPayloads.VillageDonatePayload donate
+            && player.containerMenu instanceof dev.eliasnvx.tradery.menu.VillageBoardMenu menu && menu.containerId == donate.containerId()) {
+            menu.donate(player, donate.amount());
         }
     }
 
     /** Break events of the loaders: false cancels (non-owners, including creative mode's instant break). */
     public static boolean mayBreak(Player player, Level level, BlockPos pos) {
+        if (!dev.eliasnvx.tradery.village.VillageBoardBlock.mayBreak(player, level, pos)) {
+            return false;
+        }
         return VendingProtection.mayBreak(player, level, pos);
     }
 

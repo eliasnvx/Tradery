@@ -1,0 +1,47 @@
+{
+  "caravan_trades": 8,
+  "cheap": [
+    {
+      "item": "minecraft:clay_ball",
+      "factor": 0.6,
+      "lot": 16
+    },
+    {
+      "item": "minecraft:lily_pad",
+      "factor": 0.6,
+      "lot": 8
+    },
+    {
+      "item": "minecraft:slime_ball",
+      "factor": 0.75,
+      "lot": 4
+    },
+    {
+      "item": "minecraft:mangrove_log",
+      "factor": 0.7,
+      "lot": 16
+    }
+  ],
+  "dear": [
+    {
+      "item": "minecraft:sand",
+      "factor": 1.3,
+      "lot": 32
+    },
+    {
+      "item": "minecraft:bread",
+      "factor": 1.3,
+      "lot": 8
+    },
+    {
+      "tag": "minecraft:wool",
+      "factor": 1.25,
+      "lot": 8
+    },
+    {
+      "item": "minecraft:coal",
+      "factor": 1.3,
+      "lot": 16
+    }
+  ]
+}

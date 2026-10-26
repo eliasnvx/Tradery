@@ -1,0 +1,15 @@
+{
+  "profession": "minecraft:mason",
+  "wants": [
+    {
+      "item": "minecraft:clay_ball",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:stone"
+    },
+    {
+      "item": "minecraft:quartz"
+    }
+  ]
+}

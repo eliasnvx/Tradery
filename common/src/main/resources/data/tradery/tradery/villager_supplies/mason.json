@@ -1,0 +1,17 @@
+{
+  "profession": "minecraft:mason",
+  "supplies": [
+    {
+      "item": "minecraft:cobblestone",
+      "per_day": 32
+    },
+    {
+      "item": "minecraft:stone",
+      "per_day": 16
+    },
+    {
+      "item": "minecraft:brick",
+      "per_day": 8
+    }
+  ]
+}

@@ -67,6 +67,12 @@ public interface Platform {
     /** Replaces the marks of a chunk (and marks it for saving). */
     void setPlacedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk, it.unimi.dsi.fastutil.longs.LongSet positions);
 
+    /**
+     * Registers a server data reload listener: it runs when data packs load (server start, {@code /reload}).
+     * Call during mod initialization.
+     */
+    void registerServerReloadListener(net.minecraft.resources.ResourceLocation id, net.minecraft.server.packs.resources.PreparableReloadListener listener);
+
     /** A creative tab builder the loader accepts (Fabric needs its own). */
     CreativeModeTab.Builder creativeTabBuilder();
 

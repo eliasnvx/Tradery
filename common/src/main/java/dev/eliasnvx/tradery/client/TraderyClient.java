@@ -29,6 +29,12 @@ public final class TraderyClient {
             case TraderyPayloads.NotificationPayload p -> showNotification(p);
             case TraderyPayloads.HudTogglePayload ignored -> toggleHud();
             case TraderyPayloads.VendingResultPayload p -> showVendingResult(p);
+            case TraderyPayloads.VillagerTradeSyncPayload p -> syncVillagerTrade(p);
+            case TraderyPayloads.VillageBoardSyncPayload p -> dev.eliasnvx.tradery.client.screen.VillageBoardScreen.onSync(p);
+            case TraderyPayloads.BellInfoPayload p -> BellHint.onInfo(p);
+            case TraderyPayloads.ShopLedgerSyncPayload p -> dev.eliasnvx.tradery.client.screen.ShopLedgerScreen.onSync(p);
+            case TraderyPayloads.ShopBeamPayload p -> ShopBeams.onBeam(p);
+            case TraderyPayloads.VillageTitlePayload p -> VillageTitle.onTitle(p);
             default -> {
             }
         }
@@ -38,14 +44,22 @@ public final class TraderyClient {
         while (TraderyKeyMappings.TOGGLE_HUD.consumeClick()) {
             toggleHud();
         }
+        BellHint.tick(minecraft);
+        ShopBeams.tick(minecraft);
     }
 
     public static void onDisconnect() {
         ClientEconomy.reset();
+        BellHint.reset();
+        ShopBeams.reset();
+        VillageTitle.reset();
     }
 
     public static void renderHud(GuiGraphics graphics) {
         VendingHint.render(graphics);
+        BellHint.render(graphics);
+        CounterHint.render(graphics);
+        VillageTitle.render(graphics);
         BalanceHud.render(graphics);
     }
 
@@ -66,6 +80,14 @@ public final class TraderyClient {
             && screen.getMenu().containerId == payload.containerId()
             && screen instanceof VendingResultView view) {
             view.showResult(payload.success(), payload.message());
+        }
+    }
+
+    private static void syncVillagerTrade(TraderyPayloads.VillagerTradeSyncPayload payload) {
+        var player = Minecraft.getInstance().player;
+        if (player != null && player.containerMenu instanceof dev.eliasnvx.tradery.menu.VillagerTradeMenu menu
+            && menu.containerId == payload.containerId()) {
+            menu.update(payload.data());
         }
     }
 

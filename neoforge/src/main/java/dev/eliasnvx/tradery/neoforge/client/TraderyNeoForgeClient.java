@@ -9,6 +9,7 @@ import dev.eliasnvx.tradery.client.render.VendingRenderer;
 import dev.eliasnvx.tradery.client.screen.DisplayScreen;
 import dev.eliasnvx.tradery.client.screen.VendingBuyerScreen;
 import dev.eliasnvx.tradery.client.screen.VendingOwnerScreen;
+import dev.eliasnvx.tradery.client.screen.VillagerTradeScreen;
 import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import dev.eliasnvx.tradery.registry.TraderyMenus;
 import net.minecraft.client.KeyMapping;
@@ -37,10 +38,16 @@ public final class TraderyNeoForgeClient {
             event.register(TraderyMenus.VENDING_BUYER.get(), VendingBuyerScreen::new);
             event.register(TraderyMenus.VENDING_OWNER.get(), VendingOwnerScreen::new);
             event.register(TraderyMenus.DISPLAY.get(), DisplayScreen::new);
+            event.register(TraderyMenus.VILLAGER_TRADE.get(), VillagerTradeScreen::new);
+            event.register(TraderyMenus.VILLAGE_BOARD.get(), dev.eliasnvx.tradery.client.screen.VillageBoardScreen::new);
+            event.register(TraderyMenus.COUNTER_OWNER.get(), dev.eliasnvx.tradery.client.screen.CounterOwnerScreen::new);
+            event.register(TraderyMenus.COUNTER_BUYER.get(), dev.eliasnvx.tradery.client.screen.CounterBuyerScreen::new);
+            event.register(TraderyMenus.SHOP_LEDGER.get(), dev.eliasnvx.tradery.client.screen.ShopLedgerScreen::new);
         });
         modBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
             event.registerBlockEntityRenderer(TraderyBlocks.VENDING_BLOCK_ENTITY.get(), VendingRenderer::new);
             event.registerBlockEntityRenderer(TraderyBlocks.DISPLAY_BLOCK_ENTITY.get(), DisplayRenderer::new);
+            event.registerBlockEntityRenderer(TraderyBlocks.MARKET_COUNTER_BLOCK_ENTITY.get(), dev.eliasnvx.tradery.client.render.CounterRenderer::new);
         });
         modBus.addListener((RegisterKeyMappingsEvent event) -> {
             for (KeyMapping key : TraderyKeyMappings.ALL) {

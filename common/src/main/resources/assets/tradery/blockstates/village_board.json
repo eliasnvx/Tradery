@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,market=false": {
+      "model": "tradery:block/village_board"
+    },
+    "facing=north,market=true": {
+      "model": "tradery:block/village_board"
+    },
+    "facing=east,market=false": {
+      "model": "tradery:block/village_board",
+      "y": 90
+    },
+    "facing=east,market=true": {
+      "model": "tradery:block/village_board",
+      "y": 90
+    },
+    "facing=south,market=false": {
+      "model": "tradery:block/village_board",
+      "y": 180
+    },
+    "facing=south,market=true": {
+      "model": "tradery:block/village_board",
+      "y": 180
+    },
+    "facing=west,market=false": {
+      "model": "tradery:block/village_board",
+      "y": 270
+    },
+    "facing=west,market=true": {
+      "model": "tradery:block/village_board",
+      "y": 270
+    }
+  }
+}

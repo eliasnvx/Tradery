@@ -1,0 +1,13 @@
+{
+  "profession": "minecraft:fisherman",
+  "supplies": [
+    {
+      "item": "minecraft:cod",
+      "per_day": 8
+    },
+    {
+      "item": "minecraft:salmon",
+      "per_day": 4
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "profession": "minecraft:armorer",
+  "supplies": [
+    {
+      "item": "minecraft:iron_ingot",
+      "per_day": 2
+    },
+    {
+      "item": "minecraft:coal",
+      "per_day": 4
+    }
+  ]
+}

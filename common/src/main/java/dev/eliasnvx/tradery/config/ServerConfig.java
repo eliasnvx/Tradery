@@ -16,7 +16,8 @@ import static dev.eliasnvx.tradery.config.ConfigCodecs.field;
  * {@code config/tradery/server.json5}: economy rules. Money values are in major units of the currency.
  */
 public record ServerConfig(CurrencySection currency, EconomySection economy, PaySection pay, VendingSection vending,
-                           OreSection ore, HistorySection history, LogSection log) {
+                           OreSection ore, HistorySection history, LogSection log, VillagersSection villagers,
+                           MarketSection market, VillagerTradingSection villagerTrading, VillagesConfig villages) {
 
     public record CurrencySection(ResourceLocation id, String name, String symbol, int decimals, String thousandsSeparator) {
         static final CurrencySection DEFAULT = new CurrencySection(TraderyApi.id("coin"), "Coins", "₮", 2, " ");
@@ -104,8 +105,84 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         ).apply(i, LogSection::new));
     }
 
+    /** Daily wage of a villager by profession level, in major units. */
+    public record Wages(BigDecimal none, BigDecimal novice, BigDecimal apprentice, BigDecimal journeyman, BigDecimal expert,
+                        BigDecimal master) {
+        static final Wages DEFAULT = new Wages(BigDecimal.ONE, BigDecimal.valueOf(3), BigDecimal.valueOf(5), BigDecimal.valueOf(8),
+            BigDecimal.valueOf(12), BigDecimal.valueOf(18));
+        static final Codec<Wages> CODEC = RecordCodecBuilder.create(i -> i.group(
+            field(ConfigCodecs.NON_NEGATIVE, "none", DEFAULT.none).forGetter(Wages::none),
+            field(ConfigCodecs.NON_NEGATIVE, "novice", DEFAULT.novice).forGetter(Wages::novice),
+            field(ConfigCodecs.NON_NEGATIVE, "apprentice", DEFAULT.apprentice).forGetter(Wages::apprentice),
+            field(ConfigCodecs.NON_NEGATIVE, "journeyman", DEFAULT.journeyman).forGetter(Wages::journeyman),
+            field(ConfigCodecs.NON_NEGATIVE, "expert", DEFAULT.expert).forGetter(Wages::expert),
+            field(ConfigCodecs.NON_NEGATIVE, "master", DEFAULT.master).forGetter(Wages::master)
+        ).apply(i, Wages::new));
+
+        /** The wage for a villager level (1 = novice .. 5 = master); anything else counts as no profession. */
+        public BigDecimal forLevel(int level) {
+            return switch (level) {
+                case 1 -> novice;
+                case 2 -> apprentice;
+                case 3 -> journeyman;
+                case 4 -> expert;
+                case 5 -> master;
+                default -> none;
+            };
+        }
+    }
+
+    /** Living Market: villagers buying from players' vending blocks (SPEC "Живой рынок"). */
+    public record VillagersSection(boolean enabled, boolean requireHomeAndJob, int visitRadius, int checkIntervalTicks,
+                                   double visitChance, int browseTicks, int walkTimeoutTicks, int customerCooldownTicks,
+                                   int maxLotsPerVisit, Wages wages, int walletDays, BigDecimal dailyCapPerVillage,
+                                   double maxPriceRatio, double gougingRatio, double demandDropPerLot,
+                                   double demandRecoveryPerDay) {
+        static final VillagersSection DEFAULT = new VillagersSection(true, true, 32, 100, 0.25, 60, 600, 6000, 3, Wages.DEFAULT, 3,
+            BigDecimal.valueOf(200), 1.5, 1.25, 0.05, 0.25);
+        static final Codec<VillagersSection> CODEC = RecordCodecBuilder.create(i -> i.group(
+            field(Codec.BOOL, "enabled", DEFAULT.enabled).forGetter(VillagersSection::enabled),
+            field(Codec.BOOL, "requireHomeAndJob", DEFAULT.requireHomeAndJob).forGetter(VillagersSection::requireHomeAndJob),
+            field(Codec.intRange(4, 64), "visitRadius", DEFAULT.visitRadius).forGetter(VillagersSection::visitRadius),
+            field(Codec.intRange(20, 12_000), "checkIntervalTicks", DEFAULT.checkIntervalTicks).forGetter(VillagersSection::checkIntervalTicks),
+            field(Codec.doubleRange(0, 1), "visitChance", DEFAULT.visitChance).forGetter(VillagersSection::visitChance),
+            field(Codec.intRange(0, 1200), "browseTicks", DEFAULT.browseTicks).forGetter(VillagersSection::browseTicks),
+            field(Codec.intRange(100, 6000), "walkTimeoutTicks", DEFAULT.walkTimeoutTicks).forGetter(VillagersSection::walkTimeoutTicks),
+            field(Codec.intRange(0, 168_000), "customerCooldownTicks", DEFAULT.customerCooldownTicks).forGetter(VillagersSection::customerCooldownTicks),
+            field(Codec.intRange(1, 64), "maxLotsPerVisit", DEFAULT.maxLotsPerVisit).forGetter(VillagersSection::maxLotsPerVisit),
+            field(Wages.CODEC, "wages", DEFAULT.wages).forGetter(VillagersSection::wages),
+            field(Codec.intRange(1, 30), "walletDays", DEFAULT.walletDays).forGetter(VillagersSection::walletDays),
+            field(ConfigCodecs.NON_NEGATIVE, "dailyCapPerVillage", DEFAULT.dailyCapPerVillage).forGetter(VillagersSection::dailyCapPerVillage),
+            field(Codec.doubleRange(1, 10), "maxPriceRatio", DEFAULT.maxPriceRatio).forGetter(VillagersSection::maxPriceRatio),
+            field(Codec.doubleRange(1, 10), "gougingRatio", DEFAULT.gougingRatio).forGetter(VillagersSection::gougingRatio),
+            field(Codec.doubleRange(0, 1), "demandDropPerLot", DEFAULT.demandDropPerLot).forGetter(VillagersSection::demandDropPerLot),
+            field(Codec.doubleRange(0, 1), "demandRecoveryPerDay", DEFAULT.demandRecoveryPerDay).forGetter(VillagersSection::demandRecoveryPerDay)
+        ).apply(i, VillagersSection::new));
+    }
+
+    /** Village market stalls (SPEC "Рынок деревни"). */
+    public record MarketSection(boolean enabled, int weight, BigDecimal emeraldSellPrice, BigDecimal emeraldBuyPrice) {
+        static final MarketSection DEFAULT = new MarketSection(true, 2, BigDecimal.valueOf(3), BigDecimal.valueOf(2));
+        static final Codec<MarketSection> CODEC = RecordCodecBuilder.create(i -> i.group(
+            field(Codec.BOOL, "enabled", DEFAULT.enabled).forGetter(MarketSection::enabled),
+            field(Codec.intRange(0, 50), "weight", DEFAULT.weight).forGetter(MarketSection::weight),
+            field(ConfigCodecs.NON_NEGATIVE, "emeraldSellPrice", DEFAULT.emeraldSellPrice).forGetter(MarketSection::emeraldSellPrice),
+            field(ConfigCodecs.NON_NEGATIVE, "emeraldBuyPrice", DEFAULT.emeraldBuyPrice).forGetter(MarketSection::emeraldBuyPrice)
+        ).apply(i, MarketSection::new));
+    }
+
+    /** The villager trade window in money instead of emeralds (SPEC "Торговля с жителями за валюту"). */
+    public record VillagerTradingSection(boolean enabled, BigDecimal emeraldValue) {
+        static final VillagerTradingSection DEFAULT = new VillagerTradingSection(true, BigDecimal.valueOf(3));
+        static final Codec<VillagerTradingSection> CODEC = RecordCodecBuilder.create(i -> i.group(
+            field(Codec.BOOL, "enabled", DEFAULT.enabled).forGetter(VillagerTradingSection::enabled),
+            field(ConfigCodecs.NON_NEGATIVE, "emeraldValue", DEFAULT.emeraldValue).forGetter(VillagerTradingSection::emeraldValue)
+        ).apply(i, VillagerTradingSection::new));
+    }
+
     public static final ServerConfig DEFAULT = new ServerConfig(CurrencySection.DEFAULT, EconomySection.DEFAULT,
-        PaySection.DEFAULT, VendingSection.DEFAULT, OreSection.DEFAULT, HistorySection.DEFAULT, LogSection.DEFAULT);
+        PaySection.DEFAULT, VendingSection.DEFAULT, OreSection.DEFAULT, HistorySection.DEFAULT, LogSection.DEFAULT,
+        VillagersSection.DEFAULT, MarketSection.DEFAULT, VillagerTradingSection.DEFAULT, VillagesConfig.DEFAULT);
 
     public static final Codec<ServerConfig> CODEC = RecordCodecBuilder.create(i -> i.group(
         field(CurrencySection.CODEC, "currency", DEFAULT.currency).forGetter(ServerConfig::currency),
@@ -114,7 +191,11 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         field(VendingSection.CODEC, "vending", DEFAULT.vending).forGetter(ServerConfig::vending),
         field(OreSection.CODEC, "ore", DEFAULT.ore).forGetter(ServerConfig::ore),
         field(HistorySection.CODEC, "history", DEFAULT.history).forGetter(ServerConfig::history),
-        field(LogSection.CODEC, "log", DEFAULT.log).forGetter(ServerConfig::log)
+        field(LogSection.CODEC, "log", DEFAULT.log).forGetter(ServerConfig::log),
+        field(VillagersSection.CODEC, "villagers", DEFAULT.villagers).forGetter(ServerConfig::villagers),
+        field(MarketSection.CODEC, "market", DEFAULT.market).forGetter(ServerConfig::market),
+        field(VillagerTradingSection.CODEC, "villagerTrading", DEFAULT.villagerTrading).forGetter(ServerConfig::villagerTrading),
+        field(VillagesConfig.CODEC, "villages", DEFAULT.villages).forGetter(ServerConfig::villages)
     ).apply(i, ServerConfig::new));
 
     public static final String HEADER = """
@@ -122,7 +203,7 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         Money values are in major units of the currency (100 = one hundred coins, 0.5 = half a coin).
         Apply changes with /tradery reload (currency.decimals is fixed per world once it exists).""";
 
-    public static final Map<String, String> COMMENTS = Map.ofEntries(
+    public static final Map<String, String> COMMENTS = withVillages(Map.ofEntries(
         Map.entry("currency", "The one currency of this server"),
         Map.entry("currency.id", "Currency id seen by other mods through the API"),
         Map.entry("currency.decimals", "Digits after the decimal point, 0..6. Fixed for a world after its first start"),
@@ -145,6 +226,34 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         Map.entry("ore.inflationDamping", "Fewer coins while the money supply is above targetSupply: factor = clamp(target / supply, minFactor, 1)"),
         Map.entry("history.perPlayer", "Transactions kept per player for /tradery history"),
         Map.entry("log", "Transaction log: <world>/tradery/logs/YYYY-MM-DD.log (JSON lines)"),
-        Map.entry("log.retentionDays", "Older log files are deleted; 0 = keep forever")
-    );
+        Map.entry("log.retentionDays", "Older log files are deleted; 0 = keep forever"),
+        Map.entry("villagers", "Living Market: villagers walk to players' vending blocks and buy with their own money"),
+        Map.entry("villagers.requireHomeAndJob", "Only villagers with a bed and a job site shop (keeps caged trading-hall villagers out)"),
+        Map.entry("villagers.visitRadius", "How far (blocks) a villager walks to a vending block"),
+        Map.entry("villagers.checkIntervalTicks", "How often each loaded vending block may call a customer"),
+        Map.entry("villagers.visitChance", "Chance per check that a customer comes (reputation scales it x0.5..x2)"),
+        Map.entry("villagers.browseTicks", "How long a villager looks at the goods before buying"),
+        Map.entry("villagers.walkTimeoutTicks", "A villager that hasn't arrived by then gives up"),
+        Map.entry("villagers.customerCooldownTicks", "Pause between two visits of the same villager"),
+        Map.entry("villagers.maxLotsPerVisit", "Most lots a villager buys in one visit"),
+        Map.entry("villagers.wages", "Money a villager gets per in-game day by profession level; none = no profession or nitwit"),
+        Map.entry("villagers.walletDays", "A wallet holds at most this many days of wages"),
+        Map.entry("villagers.dailyCapPerVillage", "Most money the villagers of one village spend per in-game day; 0 = no limit"),
+        Map.entry("villagers.maxPriceRatio", "Villagers never pay more than this times the fair price (data pack tradery/prices)"),
+        Map.entry("villagers.gougingRatio", "From this price ratio on, a sale lowers the owner's reputation in the village"),
+        Map.entry("villagers.demandDropPerLot", "Each lot sold lowers the village's demand for that item (0..1)"),
+        Map.entry("villagers.demandRecoveryPerDay", "Demand recovered per in-game day"),
+        Map.entry("market", "Village market stalls (server-owned vending blocks) in newly generated villages"),
+        Map.entry("market.weight", "Weight of the stall among village houses; 0 = no stalls"),
+        Map.entry("market.emeraldSellPrice", "The market changer sells one emerald for this much"),
+        Map.entry("market.emeraldBuyPrice", "The market changer buys one emerald for this much (keep it below the sell price)"),
+        Map.entry("villagerTrading", "The villager trade window takes and pays money instead of emeralds; false = vanilla window"),
+        Map.entry("villagerTrading.emeraldValue", "Money for each emerald in a villager's trades (paid from the balance, or from the villager's wallet)")
+    ));
+
+    private static Map<String, String> withVillages(Map<String, String> comments) {
+        Map<String, String> all = new java.util.HashMap<>(comments);
+        all.putAll(VillagesConfig.COMMENTS);
+        return Map.copyOf(all);
+    }
 }

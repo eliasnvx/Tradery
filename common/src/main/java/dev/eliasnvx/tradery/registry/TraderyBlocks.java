@@ -39,12 +39,26 @@ public final class TraderyBlocks {
     public static final Supplier<BlockItem> DISPLAY_BLOCK_ITEM = blockItem("display_block", DISPLAY_BLOCK);
     public static final Supplier<VendorKeyItem> VENDOR_KEY = item("vendor_key",
         properties -> new VendorKeyItem(properties.stacksTo(1).rarity(Rarity.EPIC)));
+    public static final Supplier<dev.eliasnvx.tradery.village.VillageBoardBlock> VILLAGE_BOARD = block("village_board",
+        dev.eliasnvx.tradery.village.VillageBoardBlock::new,
+        BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.0f).sound(SoundType.WOOD).noOcclusion().ignitedByLava());
+    public static final Supplier<BlockItem> VILLAGE_BOARD_ITEM = blockItem("village_board", VILLAGE_BOARD);
+    public static final Supplier<dev.eliasnvx.tradery.vending.MarketCounterBlock> MARKET_COUNTER = block("market_counter",
+        dev.eliasnvx.tradery.vending.MarketCounterBlock::new,
+        BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f, BLAST_PROOF).sound(SoundType.WOOD)
+            .noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final Supplier<BlockItem> MARKET_COUNTER_ITEM = blockItem("market_counter", MARKET_COUNTER);
+    public static final Supplier<dev.eliasnvx.tradery.vending.ShopLedgerItem> SHOP_LEDGER = item("shop_ledger",
+        properties -> new dev.eliasnvx.tradery.vending.ShopLedgerItem(properties.stacksTo(1)));
 
     // No data fixer type: mod block entities have no vanilla fixes
     public static final Supplier<BlockEntityType<VendingBlockEntity>> VENDING_BLOCK_ENTITY = Platform.get().register(
         Registries.BLOCK_ENTITY_TYPE, "vending_block", () -> BlockEntityType.Builder.of(VendingBlockEntity::new, VENDING_BLOCK.get()).build(null));
     public static final Supplier<BlockEntityType<DisplayBlockEntity>> DISPLAY_BLOCK_ENTITY = Platform.get().register(
         Registries.BLOCK_ENTITY_TYPE, "display_block", () -> BlockEntityType.Builder.of(DisplayBlockEntity::new, DISPLAY_BLOCK.get()).build(null));
+    public static final Supplier<BlockEntityType<dev.eliasnvx.tradery.vending.MarketCounterBlockEntity>> MARKET_COUNTER_BLOCK_ENTITY =
+        Platform.get().register(Registries.BLOCK_ENTITY_TYPE, "market_counter",
+            () -> BlockEntityType.Builder.of(dev.eliasnvx.tradery.vending.MarketCounterBlockEntity::new, MARKET_COUNTER.get()).build(null));
 
     public static final Supplier<CreativeModeTab> TAB = Platform.get().register(Registries.CREATIVE_MODE_TAB, "main",
         () -> Platform.get().creativeTabBuilder()
@@ -53,6 +67,9 @@ public final class TraderyBlocks {
             .displayItems((parameters, output) -> {
                 output.accept(VENDING_BLOCK_ITEM.get());
                 output.accept(DISPLAY_BLOCK_ITEM.get());
+                output.accept(VILLAGE_BOARD_ITEM.get());
+                output.accept(MARKET_COUNTER_ITEM.get());
+                output.accept(SHOP_LEDGER.get());
                 output.accept(VENDOR_KEY.get());
                 TraderyItems.tabItems().forEach(item -> output.accept(item.get()));
             })

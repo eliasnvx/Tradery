@@ -20,7 +20,8 @@ public enum TraderyPermission {
     ADMIN_ECO("admin.eco", Commands.LEVEL_GAMEMASTERS),
     ADMIN_STATS("admin.stats", Commands.LEVEL_GAMEMASTERS),
     ADMIN_RELOAD("admin.reload", Commands.LEVEL_ADMINS),
-    ADMIN_VENDORS("admin.vendors", Commands.LEVEL_GAMEMASTERS);
+    ADMIN_VENDORS("admin.vendors", Commands.LEVEL_GAMEMASTERS),
+    SHOPS("shops", Commands.LEVEL_ALL);
 
     private final String path;
     private final int fallback;

@@ -1,0 +1,9 @@
+{
+  "cost": 250,
+  "level": 2,
+  "icon": "minecraft:stone_bricks",
+  "effects": {
+    "visit_chance": 0.05
+  },
+  "action": "pave_streets"
+}

@@ -28,6 +28,11 @@ public final class TraderyNeoForge {
         Platform.install(platform);
         Tradery.init();
         dev.eliasnvx.tradery.registry.TraderyBlocks.init();
+        dev.eliasnvx.tradery.village.VillagerMarket.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageProjects.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageBuildings.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillagerSupplies.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageTypes.registerReloadListeners();
         platform.registerAttachments();
         platform.attach(modBus);
 
@@ -38,6 +43,9 @@ public final class TraderyNeoForge {
         // The economy is up before other mods' ServerStartedEvent listeners and still up in their ServerStoppedEvent ones
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (ServerStartedEvent event) -> TraderyServer.onServerStarted(event.getServer()));
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ServerStoppedEvent event) -> TraderyServer.onServerStopped(event.getServer()));
+        // Village market stalls join the village house pools before the levels load
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerAboutToStartEvent event) ->
+            dev.eliasnvx.tradery.market.MarketPools.onServerStarting(event.getServer()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
             if (event.getEntity() instanceof ServerPlayer player) {
                 TraderyServer.onPlayerJoin(player);
@@ -65,6 +73,11 @@ public final class TraderyNeoForge {
                     TraderyServer.onLivingDeath(event.getEntity(), event.getSource());
                 }
             });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.LevelTickEvent.Post event) -> {
+            if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+                TraderyServer.onLevelTick(level);
+            }
+        });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent event) -> {
             if (event.getEntity() instanceof ServerPlayer player) {
                 TraderyServer.onPlayerRespawnOrTravel(player);

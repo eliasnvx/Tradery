@@ -1,0 +1,16 @@
+{
+  "profession": "minecraft:butcher",
+  "wants": [
+    {
+      "item": "minecraft:coal",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:dried_kelp_block",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:charcoal"
+    }
+  ]
+}

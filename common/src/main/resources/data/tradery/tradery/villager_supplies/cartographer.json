@@ -1,0 +1,13 @@
+{
+  "profession": "minecraft:cartographer",
+  "supplies": [
+    {
+      "item": "minecraft:paper",
+      "per_day": 8
+    },
+    {
+      "item": "minecraft:glass_pane",
+      "per_day": 4
+    }
+  ]
+}
