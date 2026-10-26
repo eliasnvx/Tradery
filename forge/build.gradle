@@ -101,6 +101,19 @@ jar {
 
 // `build` -> `check` -> GameTests on Forge too (Fabric wires runGameTest into build itself)
 tasks.named('check') { dependsOn 'runGameTestServer' }
+// Forge runs the GameTests on a dedicated server with server.properties' world, not vanilla's flat test world, and keeps
+// it between runs. A fresh flat world every run: village tests need the open sky (as on Fabric), and village state is
+// keyed by bell positions, so a leftover world would hand one run's village to the next run's test at the same spot.
+tasks.named('runGameTestServer') {
+    doFirst {
+        def dir = file('build/run/gameTest')
+        delete new File(dir, 'world')
+        dir.mkdirs()
+        def props = new File(dir, 'server.properties')
+        def lines = props.exists() ? props.readLines().findAll { !it.startsWith('level-type=') && !it.startsWith('generate-structures=') } : []
+        props.text = (lines + ['level-type=minecraft\\:flat', 'generate-structures=false']).join('\n') + '\n'
+    }
+}
 
 def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
 ['apiElements', 'runtimeElements', 'sourcesElements'].each { variant ->

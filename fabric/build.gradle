@@ -105,6 +105,10 @@ fabricApi {
     }
 }
 
+// The 1.20.1 GameTest server keeps its world between runs (later versions start a fresh one). Village state is keyed by
+// the bell's position, so a leftover world would hand one run's village to the next run's test at the same spot.
+tasks.named('runGameTest') { doFirst { delete file('build/run/gameTest/world') } }
+
 def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
 ['apiElements', 'runtimeElements', 'sourcesElements', 'includeInternal', 'modCompileClasspath'].each { variant ->
     configurations.named(variant) {
