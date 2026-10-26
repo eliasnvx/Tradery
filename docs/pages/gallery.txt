@@ -37,3 +37,47 @@ Description: Any full block as the base — spruce, birch, cobblestone, polished
 09_ore_wall.jpg
 Title:       Coin Ore
 Description: Copper, silver and gold coin ore in stone and deepslate. Mining it puts money straight on your balance.
+
+10_villager_customer.jpg
+Title:       Villagers Come Shopping
+Description: A farmer walks up to a player's bread stall and buys with its own wallet. Villagers buy what their profession needs at a fair price.
+
+11_villager_trade.jpg
+Title:       Trading for Money
+Description: The villager trade window with coins instead of emeralds: same offers, levels and discounts, paid from your balance into the villager's wallet.
+
+12_village_board.jpg
+Title:       The Village Board
+Description: Level and prosperity, the treasury and its last week, what the village is saving for, your reputation, projects and donations.
+
+13_board_orders.jpg
+Title:       Orders
+Description: Every morning the village posts orders for what its professions need and pays for them from its treasury.
+
+14_street_lights.jpg
+Title:       Street Lights
+Description: The Street Lamps project hangs lanterns over every dark street of the village, in the village's own materials.
+
+15_village_above.jpg
+Title:       Paved Streets
+Description: Every dirt path of the village turned into stone, gaps and dips filled.
+
+16_village_well.jpg
+Title:       The Village Builds for Itself
+Description: Once it reaches the next level, a village saves part of its income and builds a well with its name on a sign, then a watchtower and a trade hall.
+
+17_festival.jpg
+Title:       Festival
+Description: Market day in a Town ends with a festival: the bell rings, villagers get a day's pay on top, fireworks until night.
+
+18_caravan.jpg
+Title:       A Caravan Arrives
+Description: Prosperous villages send caravans to villages of another type: a trader with llamas selling the cheap goods of its home for money.
+
+19_market_counter.jpg
+Title:       Market Counter
+Description: Up to six offers in one block, sharing one stock.
+
+20_shop_ledger.jpg
+Title:       Shop Ledger
+Description: All your shops in one window, wherever they are, with what needs attention and a beam of light to find each one.

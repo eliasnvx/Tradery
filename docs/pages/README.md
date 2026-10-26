@@ -15,17 +15,23 @@
 
 ## Images
 
+The image scripts live in `tools/`, which is local and not in the repository (`.gitignore`); only their output is.
+
 ```bash
-TRADERY_DOCS_SHOTS=1 ./gradlew :fabric:runClientGameTest   # in-game docs_* screenshots (DocsShotsClientTest)
-python3 tools/docs/make_page_images.py                       # banner, section headers, page/ and gallery/
+TRADERY_DOCS_SHOTS=1 ./gradlew :fabric:runClientGameTest     # in-game docs_* screenshots (DocsShotsClientTest)
+TRADERY_MARKET_SHOTS=village ./gradlew :fabric:runClientGameTest  # village board, street lights, well, festival, caravan
+python3 tools/docs/make_page_images.py                         # banner, section headers, page/ and gallery/
 ```
 
-- Banner background: `art/page/banner_bg.png`, picked from `tools/docs/gen_banner_art.py` drafts (OpenAI image model,
-  needs `OPENAI_API_KEY` and the `openai` package).
-- Mod icon: `art/icon/icon_1024.png` / `icon_512.png` (upload the 512 one to Modrinth and CurseForge); the game's
-  `assets/tradery/icon.png` is the same picture at 128 px. AI draft (`mod_icon` in `tools/texgen/prompts.yaml`, 4 drafts,
-  #4 picked), the rounded white corners filled with the background so the platforms can round it themselves.
-- Section icons: `art/page/icons/*.png`, AI drafts from `tools/texgen/prompts.yaml` (the texgen tool from Femboy Mod:
-  `texgen --root <Tradery> batch --tag header`), pixelized to 32x32.
-- Text, chips and frames are drawn by `make_page_images.py`; screenshots are real. Keep the AI note in "Credits & Notes"
-  in sync if AI art changes.
+- 1.1 images: `docs/images/village/` (README and pages, windows cropped to their frame) and `docs/images/gallery/10_…20_`
+  (full 1920x1080 frames). Section headers `header_villagers.png` (a villager's head) and `header_villages.png` (the bell)
+  come from the glyphs in `make_icon.py`.
+
+- Banner: `art/page/banner_shot.png`, a real in-game screenshot (1.21.1 NeoForge with Complementary Reimagined, from the
+  `:neoforge:runShots` harness on the `1.21.1-dev` branch); `make_page_images.py` crops it, draws the title and the chips.
+- Mod icon: `python3 tools/docs/make_icon.py stall` draws it pixel by pixel (32x32, scaled with nearest-neighbour) and
+  installs `assets/tradery/icon.png` (128 px); `art/icon/icon_512.png` / `icon_1024.png` are the same picture for Modrinth
+  and CurseForge. The other variants (`villager`, `vending`) stay in `art/icon/` for comparison.
+- Section icons: `art/page/icons/*.png`, 16x16 glyphs drawn in `make_icon.py` from the same palette.
+- Text, chips and frames are drawn by `make_page_images.py`; screenshots are real. There are no AI-generated images: Modrinth
+  bans them on project pages (icon, gallery, description) since August 2026, and the README's "Credits and notes" says so.
