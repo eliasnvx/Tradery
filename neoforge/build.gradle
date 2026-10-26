@@ -52,6 +52,16 @@ neoForge {
             loadedMods = [mods."${mod_id}", mods.tradery_client_test]
             gameDirectory = project.file('build/run/clientTest')
         }
+        // Dev only: the release post shots (1920x1080) with Iris + Sodium + Complementary Reimagined, which go into
+        // build/run/shots/{mods,shaderpacks} by hand. ./gradlew :neoforge:runShots
+        shots {
+            client()
+            sourceSet = sourceSets.clientTest
+            loadedMods = [mods."${mod_id}", mods.tradery_client_test]
+            gameDirectory = project.file('build/run/shots')
+            systemProperty('tradery.shots', 'true')
+            programArguments.addAll('--width', '1920', '--height', '1080')
+        }
         // Dev only: two launches with a kill -9 in between, driven by tools/crash-test.sh
         crashTest {
             server()

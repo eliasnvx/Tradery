@@ -72,14 +72,35 @@ public final class TraderyClientTest {
     private Minecraft minecraft;
     private final List<String> notes = new ArrayList<>();
 
+    private static final boolean SHOTS = System.getProperty("tradery.shots") != null;
+    /** Vanilla HUD layers hidden in the shots (Tradery's overlays, the action bar and the chat stay). */
+    private static final java.util.Set<net.minecraft.resources.ResourceLocation> VANILLA_HUD = java.util.Set.of(
+        net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR,
+        net.neoforged.neoforge.client.gui.VanillaGuiLayers.JUMP_METER, net.neoforged.neoforge.client.gui.VanillaGuiLayers.EXPERIENCE_BAR,
+        net.neoforged.neoforge.client.gui.VanillaGuiLayers.PLAYER_HEALTH, net.neoforged.neoforge.client.gui.VanillaGuiLayers.ARMOR_LEVEL,
+        net.neoforged.neoforge.client.gui.VanillaGuiLayers.FOOD_LEVEL, net.neoforged.neoforge.client.gui.VanillaGuiLayers.VEHICLE_HEALTH,
+        net.neoforged.neoforge.client.gui.VanillaGuiLayers.AIR_LEVEL, net.neoforged.neoforge.client.gui.VanillaGuiLayers.SELECTED_ITEM_NAME,
+        net.neoforged.neoforge.client.gui.VanillaGuiLayers.EXPERIENCE_LEVEL, net.neoforged.neoforge.client.gui.VanillaGuiLayers.EFFECTS);
+
     public TraderyClientTest() {
+        if (SHOTS) {
+            NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre event) -> {
+                if (dev.eliasnvx.tradery.neoforge.clienttest.shots.CleanHud.hideVanillaHud && VANILLA_HUD.contains(event.getName())) {
+                    event.setCanceled(true);
+                }
+            });
+            NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RenderFrameEvent.Post event) ->
+                dev.eliasnvx.tradery.neoforge.clienttest.shots.CleanHud.onFrameRendered(Minecraft.getInstance()));
+        }
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> {
             TICKS.incrementAndGet();
             // Start once loading is over, whatever screen is up (title, onboarding, loading warnings)
             Minecraft minecraft = Minecraft.getInstance();
             if (!started && minecraft.isGameLoadFinished() && minecraft.screen != null) {
                 started = true;
-                Thread thread = new Thread(this::runAndExit, "tradery-client-test");
+                // -Dtradery.shots: the release post shots instead of the checks (./gradlew :neoforge:runShots)
+                Runnable scenario = SHOTS ? new dev.eliasnvx.tradery.neoforge.clienttest.shots.RedditShots(TICKS)::runAndExit : this::runAndExit;
+                Thread thread = new Thread(scenario, "tradery-client-test");
                 thread.setDaemon(true);
                 thread.start();
             }
