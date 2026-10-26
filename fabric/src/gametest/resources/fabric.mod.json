@@ -16,7 +16,8 @@
       "dev.eliasnvx.tradery.fabric.gametest.NetworkClientTest",
       "dev.eliasnvx.tradery.fabric.gametest.PerformanceClientTest",
       "dev.eliasnvx.tradery.fabric.gametest.DocsShotsClientTest",
-      "dev.eliasnvx.tradery.fabric.gametest.LanguageShotsClientTest"
+      "dev.eliasnvx.tradery.fabric.gametest.LanguageShotsClientTest",
+      "dev.eliasnvx.tradery.fabric.gametest.LivingMarketShotsClientTest"
     ]
   },
   "depends": {
