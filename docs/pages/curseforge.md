@@ -239,7 +239,7 @@ Amounts are typed in normal units: `/pay Steve 12.50`. Permissions work with Luc
 
 ## For developers
 
-`dev.eliasnvx:tradery-api:1.1.0+26.3` gives you accounts, atomic transactions and events, the same on every loader. On 1.21.1 and 1.20.1 the API is at 1.0.0 and ids are `ResourceLocation`s.
+`dev.eliasnvx:tradery-api:1.1.0+26.3` gives you accounts, atomic transactions and events, the same on every loader. On 1.21.1 and 1.20.1 ids are `ResourceLocation`s.
 
 ```java
 TraderyEconomy eco = TraderyEconomy.get();               // server thread only
@@ -281,7 +281,7 @@ All optional. EMI and WTHIT will follow when they're available for 26.3.
 
 Put the jar in `mods` on the client and on the server. Jade, JEI and REI are optional everywhere, Text Placeholder API on Fabric.
 
-Villagers and villages (everything from 1.1) are on 26.3 for now. The 1.21.1 and 1.20.1 versions have vending blocks, the currency, coin ore, rewards and the API, and get the villager economy in a following update.
+All versions have the same features. The one difference: on 1.21.1 and 1.20.1 the vending block's lamp glows on NeoForge and Forge only.
 
 ---
 

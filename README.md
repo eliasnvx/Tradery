@@ -34,7 +34,7 @@ Money enters the world through coin ore, mob rewards and villagers, and leaves i
 
 Install it on the server and on every client: the mod adds blocks, items and screens, so a vanilla client can't join. Nothing else is required. The optional mods it works with are listed under [Compatibility](#compatibility).
 
-The 1.21.1 and 1.20.1 versions have everything up to 1.0 (vending blocks, the currency, coin ore, rewards, the API). The villager and village economy described below is on 26.3 for now and comes to them next.
+The 1.21.1 and 1.20.1 versions have the same features. The one difference: there the vending block's lamp glows on NeoForge and Forge only.
 
 ## Your first shop
 

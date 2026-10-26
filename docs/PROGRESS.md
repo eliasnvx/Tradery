@@ -86,5 +86,5 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] Projects build visibly (lamp posts, granary, workshops, trading yard templates), village title on entering, wrapped board tooltips, SDL mouse buttons (2026-10-24; VillageBoardGameTests 16/16)
 - [x] Placement like village houses (real ground, outside houses, beside streets), villages build a well / watchtower / trade hall from a savings fund, festivals on market days, Jade on bells (2026-10-24; VillageBuildingGameTests 3/3)
 - [x] Streets: paths from new buildings to the street, "Paved Streets" project over the whole village with daily repaving; the watch post builds a lookout; street lights with arms along every dark street (2026-10-24; VillageBoardGameTests 18/18)
-- [ ] Ports to 1.21.1 and 1.20.1 (needs a day counter that only advances: `/time set day` resets the clock there)
+- [x] Ports to 1.21.1 and 1.20.1 (2026-10-26): every 1.1 feature, all GameTests and client checks with the Living Market phase on every loader; details in each branch's `docs/PROGRESS.md` and `docs/decisions.md`
 

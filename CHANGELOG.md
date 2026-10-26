@@ -4,7 +4,7 @@ All notable changes. Mod versions follow SemVer; the Economy API has its own ver
 
 ## [1.1.0] - Unreleased
 
-Living Market: villagers become customers and suppliers, villages get an economy of their own (treasury, prosperity, orders, projects, caravans, market days) and markets to spend money at. Economy API 1.1.0.
+Living Market: villagers become customers and suppliers, villages get an economy of their own (treasury, prosperity, orders, projects, caravans, market days) and markets to spend money at. Economy API 1.1.0. The same release exists for 1.21.1 (Fabric, NeoForge) and 1.20.1 (Fabric, Forge).
 
 ### Added
 - Villagers walk up to players' vending blocks and buy with their own money. Only villagers with a bed and a job site shop; their wallets refill every in-game day by profession level (novice 3 to master 18 by default) and hold up to 3 days of wages, so villagers you level up by trading become richer customers.
