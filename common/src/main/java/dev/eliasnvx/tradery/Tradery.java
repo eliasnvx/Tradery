@@ -4,6 +4,7 @@ import dev.eliasnvx.tradery.api.TraderyApi;
 import dev.eliasnvx.tradery.api.internal.TraderyEconomyHolder;
 import dev.eliasnvx.tradery.config.TraderyConfig;
 import dev.eliasnvx.tradery.economy.EconomyService;
+import dev.eliasnvx.tradery.registry.TraderyWorldgen;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ public final class Tradery {
     /** Called once by each loader, right after the platform is installed. */
     public static void init() {
         TraderyEconomyHolder.install(EconomyService.INSTANCE);
+        TraderyWorldgen.init();
         // Written now so server owners find the file before the first world starts
         TraderyConfig.loadServer();
         LOGGER.info("Tradery initialized on {} (API {})", dev.eliasnvx.tradery.platform.Platform.get().loaderName(), TraderyApi.API_VERSION);

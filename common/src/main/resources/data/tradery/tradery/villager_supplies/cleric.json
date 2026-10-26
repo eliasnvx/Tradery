@@ -1,0 +1,17 @@
+{
+  "profession": "minecraft:cleric",
+  "supplies": [
+    {
+      "item": "minecraft:redstone",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:lapis_lazuli",
+      "per_day": 2
+    },
+    {
+      "item": "minecraft:glowstone_dust",
+      "per_day": 2
+    }
+  ]
+}

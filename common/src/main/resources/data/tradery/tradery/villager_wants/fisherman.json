@@ -1,0 +1,16 @@
+{
+  "profession": "minecraft:fisherman",
+  "wants": [
+    {
+      "item": "minecraft:fishing_rod",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:string",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:bucket"
+    }
+  ]
+}

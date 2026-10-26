@@ -18,6 +18,17 @@ public final class Panels {
     }
 
     /** {@code text} if it fits {@code width}, otherwise cut with an ellipsis (labels in languages with long words). */
+    /** Tooltip lines wrapped to {@link #TOOLTIP_WIDTH}, so a long description doesn't run across the screen. */
+    public static final int TOOLTIP_WIDTH = 200;
+
+    public static void tooltip(GuiGraphicsExtractor g, net.minecraft.client.gui.Font font, java.util.List<Component> lines, int x, int y) {
+        java.util.List<net.minecraft.util.FormattedCharSequence> wrapped = new java.util.ArrayList<>(lines.size());
+        for (Component line : lines) {
+            wrapped.addAll(font.split(line, TOOLTIP_WIDTH));
+        }
+        g.setTooltipForNextFrame(font, wrapped, x, y);
+    }
+
     public static Component fit(net.minecraft.client.gui.Font font, Component text, int width) {
         if (font.width(text) <= width) {
             return text;

@@ -93,7 +93,8 @@ public final class SourcesGameTests {
     private static ServerConfig withOre(ServerConfig config, boolean direct, BigDecimal dailyCap) {
         ServerConfig.OreSection ore = config.ore();
         return new ServerConfig(config.currency(), config.economy(), config.pay(), config.vending(),
-            new ServerConfig.OreSection(ore.enabled(), direct, ore.coinValues(), dailyCap, ore.inflationDamping()), config.history(), config.log());
+            new ServerConfig.OreSection(ore.enabled(), direct, ore.coinValues(), dailyCap, ore.inflationDamping()), config.history(), config.log(),
+            config.villagers(), config.market(), config.villagerTrading(), config.villages());
     }
 
     // ------------------------------------------------------------------ tests
@@ -243,7 +244,8 @@ public final class SourcesGameTests {
             "net.minecraft.world.entity.projectile.FishingHook",
             "net.minecraft.server.PlayerAdvancements",
             "net.minecraft.world.entity.EntityType",
-            "net.minecraft.world.item.BlockItem"
+            "net.minecraft.world.item.BlockItem",
+            "net.minecraft.world.entity.npc.villager.Villager"
         };
         for (String target : targets) {
             try {

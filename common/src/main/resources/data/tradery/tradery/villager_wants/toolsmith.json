@@ -1,0 +1,16 @@
+{
+  "profession": "minecraft:toolsmith",
+  "wants": [
+    {
+      "item": "minecraft:iron_ingot",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:coal",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:stick"
+    }
+  ]
+}

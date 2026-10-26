@@ -24,6 +24,12 @@ public final class CompatInfo {
             Component.translatable("block.tradery.vending_block"), Component.translatable("tradery.info.vending_block")));
         pages.add(new Page(List.of(new ItemStack(TraderyBlocks.DISPLAY_BLOCK_ITEM.get())),
             Component.translatable("block.tradery.display_block"), Component.translatable("tradery.info.display_block")));
+        pages.add(new Page(List.of(new ItemStack(TraderyBlocks.VILLAGE_BOARD_ITEM.get())),
+            Component.translatable("block.tradery.village_board"), Component.translatable("tradery.info.village_board")));
+        pages.add(new Page(List.of(new ItemStack(TraderyBlocks.MARKET_COUNTER_ITEM.get())),
+            Component.translatable("block.tradery.market_counter"), Component.translatable("tradery.info.market_counter")));
+        pages.add(new Page(List.of(new ItemStack(TraderyBlocks.SHOP_LEDGER.get())),
+            Component.translatable("item.tradery.shop_ledger"), Component.translatable("tradery.info.shop_ledger")));
         List<ItemStack> ores = new ArrayList<>();
         List<ItemStack> coins = new ArrayList<>();
         for (CoinTier tier : CoinTier.values()) {

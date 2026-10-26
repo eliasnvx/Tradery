@@ -145,6 +145,11 @@ final class FabricPlatform implements Platform {
     }
 
     @Override
+    public void registerServerReloadListener(Identifier id, net.minecraft.server.packs.resources.PreparableReloadListener listener) {
+        net.fabricmc.fabric.api.resource.v1.ResourceLoader.get(net.minecraft.server.packs.PackType.SERVER_DATA).registerReloadListener(id, listener);
+    }
+
+    @Override
     public CreativeModeTab.Builder creativeTabBuilder() {
         return FabricCreativeModeTab.builder();
     }

@@ -19,7 +19,8 @@ public enum TraderyPermission {
     ADMIN_ECO("admin.eco", PermissionLevel.GAMEMASTERS),
     ADMIN_STATS("admin.stats", PermissionLevel.GAMEMASTERS),
     ADMIN_RELOAD("admin.reload", PermissionLevel.ADMINS),
-    ADMIN_VENDORS("admin.vendors", PermissionLevel.GAMEMASTERS);
+    ADMIN_VENDORS("admin.vendors", PermissionLevel.GAMEMASTERS),
+    SHOPS("shops", PermissionLevel.ALL);
 
     private final String path;
     private final PermissionLevel fallback;

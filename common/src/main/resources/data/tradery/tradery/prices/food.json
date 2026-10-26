@@ -1,0 +1,72 @@
+{
+  "prices": [
+    {
+      "item": "minecraft:bread",
+      "price": 0.6
+    },
+    {
+      "item": "minecraft:baked_potato",
+      "price": 0.3
+    },
+    {
+      "item": "minecraft:apple",
+      "price": 0.75
+    },
+    {
+      "item": "minecraft:cooked_beef",
+      "price": 0.6
+    },
+    {
+      "item": "minecraft:cooked_porkchop",
+      "price": 0.6
+    },
+    {
+      "item": "minecraft:cooked_chicken",
+      "price": 0.4
+    },
+    {
+      "item": "minecraft:cooked_mutton",
+      "price": 0.5
+    },
+    {
+      "item": "minecraft:cooked_cod",
+      "price": 0.4
+    },
+    {
+      "item": "minecraft:cooked_salmon",
+      "price": 0.5
+    },
+    {
+      "item": "minecraft:pumpkin_pie",
+      "price": 0.75
+    },
+    {
+      "item": "minecraft:cookie",
+      "price": 0.5
+    },
+    {
+      "item": "minecraft:cake",
+      "price": 3
+    },
+    {
+      "item": "minecraft:mushroom_stew",
+      "price": 1
+    },
+    {
+      "item": "minecraft:honey_bottle",
+      "price": 1
+    },
+    {
+      "item": "minecraft:sweet_berries",
+      "price": 0.3
+    },
+    {
+      "item": "minecraft:carrot",
+      "price": 0.15
+    },
+    {
+      "item": "minecraft:golden_carrot",
+      "price": 3
+    }
+  ]
+}

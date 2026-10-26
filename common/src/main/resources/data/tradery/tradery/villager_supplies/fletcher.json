@@ -1,0 +1,17 @@
+{
+  "profession": "minecraft:fletcher",
+  "supplies": [
+    {
+      "item": "minecraft:stick",
+      "per_day": 16
+    },
+    {
+      "item": "minecraft:arrow",
+      "per_day": 8
+    },
+    {
+      "item": "minecraft:flint",
+      "per_day": 4
+    }
+  ]
+}

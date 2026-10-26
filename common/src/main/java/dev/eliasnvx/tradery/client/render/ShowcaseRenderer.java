@@ -7,13 +7,13 @@ import dev.eliasnvx.tradery.config.TraderyConfig;
 import dev.eliasnvx.tradery.vending.DisplayAnimation;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.BlockModelResolver;
-import net.minecraft.client.renderer.block.model.BlockDisplayContext;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -24,13 +24,15 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Shared renderer of vending and display blocks: the item in the glass case (static, spinning, bobbing) and the
- * facade squeezed into the base. No allocations per frame beyond vanilla's own item state.
+ * facade cut to the height of the base ({@link FacadeSlicer}). No allocations per frame beyond vanilla's own item and
+ * block model states.
  */
 public abstract class ShowcaseRenderer<T extends BlockEntity> implements BlockEntityRenderer<T, ShowcaseRenderState> {
-    private static final BlockDisplayContext FACADE_CONTEXT = BlockDisplayContext.create();
     private static final float ITEM_SCALE = 0.45f;
+    private static final float FACADE_MARGIN = 0.001f;
     private final ItemModelResolver itemModelResolver;
     private final BlockModelResolver blockModelResolver;
+    private @Nullable FacadeSlicer facadeSlicer;
 
     protected ShowcaseRenderer(BlockEntityRendererProvider.Context context) {
         this.itemModelResolver = context.itemModelResolver();
@@ -76,30 +78,39 @@ public abstract class ShowcaseRenderer<T extends BlockEntity> implements BlockEn
         ItemStack item = item(blockEntity);
         state.hasItem = !item.isEmpty() && state.animation != DisplayAnimation.NONE;
         if (state.hasItem) {
-            itemModelResolver.updateForTopItem(state.item, item.copyWithCount(1), ItemDisplayContext.FIXED, blockEntity.getLevel(), null,
+            // The count doesn't change the model, so the live stack goes in as it is: no copy per frame
+            itemModelResolver.updateForTopItem(state.item, item, ItemDisplayContext.FIXED, blockEntity.getLevel(), null,
                 (int) blockEntity.getBlockPos().asLong());
         }
         BlockState facade = facade(blockEntity);
-        state.hasFacade = facade != null;
-        if (facade != null) {
-            blockModelResolver.update(state.facade, facade, FACADE_CONTEXT);
+        state.facade = facade == null || baseHeight() <= 0 ? null : facadeSlicer().get(facade);
+    }
+
+    private FacadeSlicer facadeSlicer() {
+        if (facadeSlicer == null) {
+            // A hair above the base, so the facade covers it (the base model isn't drawn under a facade anyway)
+            facadeSlicer = new FacadeSlicer(baseHeight() + FACADE_MARGIN * 2, blockModelResolver);
         }
+        return facadeSlicer;
     }
 
     /** The player's own choice wins over the block's (client config). */
     private static DisplayAnimation effectiveAnimation(DisplayAnimation fromBlock) {
         ClientConfig.AnimationOverride override = TraderyConfig.client().vending().animationOverride();
-        return override == ClientConfig.AnimationOverride.SERVER ? fromBlock : DisplayAnimation.valueOf(override.name());
+        DisplayAnimation forced = override.animation();
+        return forced == null ? fromBlock : forced;
     }
 
     @Override
     public void submit(ShowcaseRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
-        if (state.hasFacade && state.baseHeight > 0) {
+        FacadeSlicer.Facade facade = state.facade;
+        if (facade != null) {
             poseStack.pushPose();
-            // Slightly larger than the base so it covers it; squeezed to the base height
-            poseStack.translate(-0.001f, -0.001f, -0.001f);
-            poseStack.scale(1.002f, state.baseHeight + 0.002f, 1.002f);
-            state.facade.submit(poseStack, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+            // Slightly wider than the base so it covers it; already cut to the base height
+            poseStack.translate(-FACADE_MARGIN, -FACADE_MARGIN, -FACADE_MARGIN);
+            poseStack.scale(1 + FACADE_MARGIN * 2, 1, 1 + FACADE_MARGIN * 2);
+            collector.submitBlockModel(poseStack, facade.renderType(), facade.parts(), facade.tints(),
+                LightCoordsUtil.max(state.lightCoords, facade.blockLight()), OverlayTexture.NO_OVERLAY, 0);
             poseStack.popPose();
         }
         if (!state.hasItem) {

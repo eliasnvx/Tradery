@@ -1,0 +1,16 @@
+{
+  "profession": "minecraft:shepherd",
+  "wants": [
+    {
+      "item": "minecraft:shears",
+      "weight": 3
+    },
+    {
+      "tag": "minecraft:dyes",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:string"
+    }
+  ]
+}

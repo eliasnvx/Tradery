@@ -23,6 +23,11 @@ public final class TraderyFabric implements ModInitializer {
         Platform.install(new FabricPlatform());
         Tradery.init();
         dev.eliasnvx.tradery.registry.TraderyBlocks.init();
+        dev.eliasnvx.tradery.village.VillagerMarket.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageProjects.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageBuildings.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillagerSupplies.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageTypes.registerReloadListeners();
         // Common Economy API is inside our jar: always register; Placeholder API only when installed
         dev.eliasnvx.tradery.fabric.compat.commoneconomy.TraderyEconomyProvider.register();
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("placeholder-api")) {
@@ -44,11 +49,14 @@ public final class TraderyFabric implements ModInitializer {
         ServerLifecycleEvents.SERVER_STARTED.register(economyPhase, TraderyServer::onServerStarted);
         ServerLifecycleEvents.SERVER_STOPPED.addPhaseOrdering(Event.DEFAULT_PHASE, economyPhase);
         ServerLifecycleEvents.SERVER_STOPPED.register(economyPhase, TraderyServer::onServerStopped);
+        // Village market stalls join the village house pools before the levels generate
+        ServerLifecycleEvents.SERVER_STARTING.register(dev.eliasnvx.tradery.market.MarketPools::onServerStarting);
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> TraderyServer.onPlayerJoin(handler.getPlayer()));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> TraderyServer.onPlayerLeave(handler.getPlayer()));
         PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> TraderyServer.mayBreak(player, level, pos));
         PlayerBlockBreakEvents.AFTER.register((level, player, pos, state, blockEntity) -> TraderyServer.onBlockBroken(player, level, pos, state));
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register(TraderyServer::onLivingDeath);
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_LEVEL_TICK.register(TraderyServer::onLevelTick);
         for (var feature : dev.eliasnvx.tradery.ore.CoinOreGeneration.ALL) {
             net.fabricmc.fabric.api.biome.v1.BiomeModifications.addFeature(
                 net.fabricmc.fabric.api.biome.v1.BiomeSelectors.tag(dev.eliasnvx.tradery.ore.CoinOreGeneration.BIOMES),

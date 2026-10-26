@@ -35,7 +35,7 @@ public final class VendingTrades {
     /** Cap for "unlimited" counts (infinite stock, free price); also fits in a menu data slot. */
     public static final int UNLIMITED = 9999;
     /** Trade requests per player per second (spec: 10). */
-    static final int RATE_LIMIT = 10;
+    public static final int RATE_LIMIT = 10;
     private static final Map<UUID, Deque<Long>> RECENT = new ConcurrentHashMap<>();
 
     private VendingTrades() {
@@ -73,6 +73,11 @@ public final class VendingTrades {
             times.addLast(now);
             return true;
         }
+    }
+
+    /** The server stopped. */
+    public static void clear() {
+        RECENT.clear();
     }
 
     public static void forget(ServerPlayer player) {
@@ -183,7 +188,7 @@ public final class VendingTrades {
         VendingPurchaseEvent.Post.EVENT.post(new VendingPurchaseEvent.Post(player, (ServerLevel) vendor.getLevel(), vendor.getBlockPos(),
             vendor.owner(), TradeDirection.SALE, goods, settings.priceMode(), settings.priceItem(), price, trades, fee));
         VendingNotifier.sold(vendor, player, goods, goodsCount, settings.priceMode() == PriceMode.CURRENCY ? moneyPaid - fee : -1,
-            settings.priceItem(), (int) price * trades);
+            settings.priceItem(), (int) Math.min(Integer.MAX_VALUE, price * trades));
         if (!admin.infiniteStock() && vendor.tradesInStock() == 0) {
             VendingNotifier.empty(vendor);
         }
@@ -262,6 +267,143 @@ public final class VendingTrades {
             vendor.owner(), TradeDirection.BUYBACK, goods, PriceMode.CURRENCY, ItemStack.EMPTY, price, trades, fee));
         VendingNotifier.boughtBack(vendor, player, goods, goodsCount, total);
         return new Outcome(trades, goodsCount, total - fee, describe(settings, goodsCount, total - fee));
+    }
+
+    // ------------------------------------------------------------------ villager purchase (Living Market)
+
+    /**
+     * Villagers buy only here: a player's money sale (not buyback) with "Villagers can buy" on, a price above zero,
+     * no admin infinite stock or burnt payment. Server-owned vendors (village markets) don't serve villagers.
+     */
+    public static boolean servesVillagers(VendingBlockEntity vendor) {
+        VendingSettings settings = vendor.settings();
+        AdminFlags admin = vendor.admin();
+        return !vendor.isRemoved() && vendor.getLevel() instanceof ServerLevel && vendor.owner() instanceof AccountId.Player
+            && settings.isConfigured() && settings.sellsToVillagers() && settings.price() > 0
+            && !admin.infiniteStock() && !admin.burnPayment();
+    }
+
+    /**
+     * A villager buys up to {@code lots} trades. Same order as a player's sale: the limits first, then the one
+     * fallible step (the money), then the stock move that was proven to fit. The goods vanish (the villager takes
+     * them). The villager's wallet lives outside the ledger, so the payment is created: the server account pays the
+     * owner the price minus the vending fee. The caller checked the wallet and the village's daily cap for
+     * {@code lots}; it debits them with {@link Outcome#price()} on success.
+     *
+     * @param customer the villager's profession for the owner's notification ({@link VendingNotifier#translatable} key or text)
+     */
+    public static Outcome sellToVillager(VendingBlockEntity vendor, String customer, int lots) {
+        if (!servesVillagers(vendor)) {
+            return Outcome.fail(Messages.tr("tradery.vending.not_for_villagers", "This vending block doesn't sell to villagers"));
+        }
+        if (lots <= 0) {
+            return Outcome.fail(Messages.failure(dev.eliasnvx.tradery.api.FailReason.INVALID_AMOUNT));
+        }
+        VendingSettings settings = vendor.settings();
+        ItemStack goods = settings.goods();
+        int perTrade = settings.perTrade();
+        int trades = Math.min(lots, vendor.tradesInStock());
+        if (trades <= 0) {
+            return Outcome.fail(Messages.tr("tradery.vending.empty", "Out of stock"));
+        }
+        long total;
+        try {
+            total = Math.multiplyExact(settings.price(), trades);
+        } catch (ArithmeticException e) {
+            return Outcome.fail(Messages.failure(dev.eliasnvx.tradery.api.FailReason.LIMIT_EXCEEDED));
+        }
+        EconomyService economy = EconomyService.INSTANCE;
+        long fee = vendor.admin().noFee() ? 0 : Money.percentOf(total, TraderyConfig.server().vending().feePercent());
+        TransactionResult result = economy.transfer(economy.serverAccount(), ownerAccount(vendor), total, fee,
+            Reason.of(Reasons.VILLAGER_PURCHASE, note(goods, perTrade * trades)));
+        if (result instanceof TransactionResult.Failure failure) {
+            return Outcome.fail(Messages.failure(failure));
+        }
+        TransactionResult.Success success = (TransactionResult.Success) result;
+
+        int goodsCount = perTrade * trades;
+        int taken = StackMath.take(vendor.stock().getItems(), goods, goodsCount);
+        warnIfShort("villager stock", taken, goodsCount);
+        vendor.stock().setChanged();
+
+        TradePersistence.traded((ServerLevel) vendor.getLevel(), vendor.getBlockPos());
+        VendingNotifier.villagerBought(vendor, customer, goods, goodsCount, success.amount() - success.fee());
+        if (vendor.tradesInStock() == 0) {
+            VendingNotifier.empty(vendor);
+        }
+        return new Outcome(trades, goodsCount, success.amount(), describe(settings, goodsCount, success.amount()));
+    }
+
+    // ------------------------------------------------------------------ villager supply (village economy)
+
+    /**
+     * Villagers sell only here: a player's buyback for money with "Villagers can sell" on, a price above zero, no
+     * admin infinite stock, and suppliers enabled ({@code villages.suppliers.enabled}). Server-owned vendors (village
+     * markets) don't buy from villagers.
+     */
+    public static boolean buysFromVillagers(VendingBlockEntity vendor) {
+        VendingSettings settings = vendor.settings();
+        return !vendor.isRemoved() && vendor.getLevel() instanceof ServerLevel && vendor.owner() instanceof AccountId.Player
+            && settings.isConfigured() && settings.buysFromVillagers() && settings.price() > 0 && !vendor.admin().infiniteStock()
+            && TraderyConfig.server().villages().suppliers().enabled();
+    }
+
+    /**
+     * A villager sells up to {@code lots} trades of its produce. Same order as a player selling: the limits first
+     * (room in the stock, the owner's money), then the one fallible step (the money), then the stock move that was
+     * proven to fit. The goods are created: the caller checked the villager's produce for {@code lots} and takes
+     * {@link Outcome#goods()} from it on success. The villager's wallet lives outside the ledger, so the owner's
+     * money leaves it (owner to the server account, the vending fee burnt); the caller credits the wallet with
+     * {@link Outcome#price()}: the price minus the fee, what a player seller would get.
+     *
+     * @param supplier the villager's profession for the owner's notification ({@link VendingNotifier#translatable} key or text)
+     */
+    public static Outcome buyFromVillager(VendingBlockEntity vendor, String supplier, int lots) {
+        if (!buysFromVillagers(vendor)) {
+            return Outcome.fail(Messages.tr("tradery.vending.not_from_villagers", "This vending block doesn't buy from villagers"));
+        }
+        if (lots <= 0) {
+            return Outcome.fail(Messages.failure(dev.eliasnvx.tradery.api.FailReason.INVALID_AMOUNT));
+        }
+        VendingSettings settings = vendor.settings();
+        ItemStack goods = settings.goods();
+        int perTrade = settings.perTrade();
+        int trades = (int) Math.min(lots, StackMath.space(vendor.stock().getItems(), goods) / perTrade);
+        if (trades <= 0) {
+            return Outcome.fail(Messages.tr("tradery.vending.vendor_full", "The vending block is full"));
+        }
+        EconomyService economy = EconomyService.INSTANCE;
+        Account owner = ownerAccount(vendor);
+        long price = settings.price();
+        if (!owner.isInfinite()) {
+            trades = (int) Math.min(trades, owner.balance(economy.defaultCurrency()) / price);
+            if (trades <= 0) {
+                return Outcome.fail(Messages.tr("tradery.vending.owner_broke", "The owner can't afford to buy more"));
+            }
+        }
+        long total;
+        try {
+            total = Math.multiplyExact(price, trades);
+        } catch (ArithmeticException e) {
+            return Outcome.fail(Messages.failure(dev.eliasnvx.tradery.api.FailReason.LIMIT_EXCEEDED));
+        }
+        long fee = vendor.admin().noFee() ? 0 : Money.percentOf(total, TraderyConfig.server().vending().feePercent());
+        TransactionResult result = economy.transfer(owner, economy.serverAccount(), total, fee,
+            Reason.of(Reasons.VILLAGER_SUPPLY, note(goods, perTrade * trades)));
+        if (result instanceof TransactionResult.Failure failure) {
+            return Outcome.fail(Messages.failure(failure));
+        }
+        TransactionResult.Success success = (TransactionResult.Success) result;
+
+        int goodsCount = perTrade * trades;
+        int stored = StackMath.insert(vendor.stock().getItems(), goods, goodsCount);
+        warnIfShort("villager supply", stored, goodsCount);
+        vendor.stock().setChanged();
+
+        long earned = success.amount() - success.fee();
+        TradePersistence.traded((ServerLevel) vendor.getLevel(), vendor.getBlockPos());
+        VendingNotifier.villagerSold(vendor, supplier, goods, goodsCount, success.amount());
+        return new Outcome(trades, goodsCount, earned, describe(settings, goodsCount, earned));
     }
 
     // ------------------------------------------------------------------ helpers

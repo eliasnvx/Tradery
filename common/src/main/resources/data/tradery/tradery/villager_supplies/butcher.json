@@ -1,0 +1,25 @@
+{
+  "profession": "minecraft:butcher",
+  "supplies": [
+    {
+      "item": "minecraft:beef",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:porkchop",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:chicken",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:mutton",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:rabbit",
+      "per_day": 2
+    }
+  ]
+}

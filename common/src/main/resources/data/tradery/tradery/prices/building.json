@@ -1,0 +1,16 @@
+{
+  "prices": [
+    {
+      "tag": "minecraft:planks",
+      "price": 0.07
+    },
+    {
+      "item": "minecraft:glass",
+      "price": 0.5
+    },
+    {
+      "item": "minecraft:torch",
+      "price": 0.08
+    }
+  ]
+}

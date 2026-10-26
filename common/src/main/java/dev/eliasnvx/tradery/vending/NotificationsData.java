@@ -20,8 +20,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Notifications for owners who were offline: a running summary (sales, money earned) that never overflows, and
- * the latest messages (at most {@link #MAX_LINES}).
+ * Notifications for owners who were offline: a running summary (sales, money earned; villagers' supplies, money
+ * spent on them) that never overflows, and the latest messages (at most {@link #MAX_LINES}).
  */
 public final class NotificationsData extends SavedData {
     public static final int MAX_LINES = 100;
@@ -39,30 +39,55 @@ public final class NotificationsData extends SavedData {
     public static final class Pending {
         static final Codec<Pending> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.optionalFieldOf("sales", 0).forGetter(p -> p.sales),
+            Codec.INT.optionalFieldOf("villager_sales", 0).forGetter(p -> p.villagerSales),
             Codec.LONG.optionalFieldOf("earned", 0L).forGetter(p -> p.earned),
-            Line.CODEC.listOf().optionalFieldOf("lines", List.of()).forGetter(p -> new ArrayList<>(p.lines))
+            Line.CODEC.listOf().optionalFieldOf("lines", List.of()).forGetter(p -> new ArrayList<>(p.lines)),
+            Codec.INT.optionalFieldOf("supplies", 0).forGetter(p -> p.supplies),
+            Codec.LONG.optionalFieldOf("supply_spent", 0L).forGetter(p -> p.supplySpent)
         ).apply(i, Pending::new));
 
         int sales;
+        int villagerSales;
         long earned;
         final Deque<Line> lines;
+        int supplies;
+        long supplySpent;
 
         Pending() {
-            this(0, 0, List.of());
+            this(0, 0, 0, List.of(), 0, 0);
         }
 
-        private Pending(int sales, long earned, List<Line> lines) {
+        private Pending(int sales, int villagerSales, long earned, List<Line> lines, int supplies, long supplySpent) {
             this.sales = sales;
+            this.villagerSales = villagerSales;
             this.earned = earned;
             this.lines = new ArrayDeque<>(lines);
+            this.supplies = supplies;
+            this.supplySpent = supplySpent;
         }
 
+        /** All sales, villagers' included. */
         public int sales() {
             return sales;
         }
 
+        /** Of {@link #sales()}, those to villagers. */
+        public int villagerSales() {
+            return villagerSales;
+        }
+
         public long earned() {
             return earned;
+        }
+
+        /** Villagers' sales to the owner's buyback blocks. */
+        public int supplies() {
+            return supplies;
+        }
+
+        /** Money the owner paid for {@link #supplies()}. */
+        public long supplySpent() {
+            return supplySpent;
         }
 
         /** Newest last. */
@@ -91,16 +116,45 @@ public final class NotificationsData extends SavedData {
     }
 
     public void add(UUID owner, Line line, boolean sale, long earned) {
+        add(owner, line, sale, earned, false);
+    }
+
+    /** @param villager the sale was to a villager (counted in the summary separately too) */
+    public void add(UUID owner, Line line, boolean sale, long earned, boolean villager) {
         Pending p = pending.computeIfAbsent(owner, k -> new Pending());
         if (sale) {
-            p.sales++;
-            p.earned += Math.max(0, earned);
+            p.sales = saturatedIncrement(p.sales);
+            if (villager) {
+                p.villagerSales = saturatedIncrement(p.villagerSales);
+            }
+            p.earned = saturatedAdd(p.earned, Math.max(0, earned));
         }
         p.lines.addLast(line);
         while (p.lines.size() > MAX_LINES) {
             p.lines.pollFirst();
         }
         setDirty();
+    }
+
+    /** A villager sold to the owner's buyback block for {@code spent}; counted in the summary's supplies. */
+    public void addSupply(UUID owner, Line line, long spent) {
+        Pending p = pending.computeIfAbsent(owner, k -> new Pending());
+        p.supplies = saturatedIncrement(p.supplies);
+        p.supplySpent = saturatedAdd(p.supplySpent, Math.max(0, spent));
+        p.lines.addLast(line);
+        while (p.lines.size() > MAX_LINES) {
+            p.lines.pollFirst();
+        }
+        setDirty();
+    }
+
+    private static int saturatedIncrement(int value) {
+        return value == Integer.MAX_VALUE ? value : value + 1;
+    }
+
+    private static long saturatedAdd(long a, long b) {
+        long sum = a + b;
+        return sum < a ? Long.MAX_VALUE : sum;
     }
 
     /** Removes and returns what waited for this owner. */

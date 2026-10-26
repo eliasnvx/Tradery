@@ -34,7 +34,8 @@ public final class BalanceHud {
     private static final int GAIN = 0x55FF55;
     private static final int LOSS = 0xFF5555;
 
-    private record Popup(long delta, long start) {
+    /** A gain/loss popup, its text formatted and measured once when it's added: the render path allocates nothing. */
+    private record Popup(long delta, long start, String text, int width) {
     }
 
     private static final Popup[] popups = new Popup[MAX_POPUPS];
@@ -43,6 +44,7 @@ public final class BalanceHud {
     private static long animStart;
     private static long lastShown = Long.MIN_VALUE;
     private static String text = "";
+    private static int textWidth;
     private static boolean textDirty = true;
     /** Format the cached text was built with; a config change (file, key, command) rebuilds it. */
     private static ClientConfig.Format textFormat = ClientConfig.Format.FULL;
@@ -63,8 +65,14 @@ public final class BalanceHud {
         if (delta == 0 || !TraderyConfig.client().hud().popups()) {
             return;
         }
+        ClientEconomy.CurrencyView currency = ClientEconomy.currency();
+        if (currency == null) {
+            return;
+        }
+        boolean shortFormat = TraderyConfig.client().hud().format() == ClientConfig.Format.SHORT;
+        String line = (delta > 0 ? "+" : "-") + (shortFormat ? currency.formatShortNumber(Math.abs(delta)) : currency.formatNumber(Math.abs(delta)));
         System.arraycopy(popups, 0, popups, 1, MAX_POPUPS - 1);
-        popups[0] = new Popup(delta, Util.getMillis());
+        popups[0] = new Popup(delta, Util.getMillis(), line, Minecraft.getInstance().font.width(line));
     }
 
     static void invalidateText() {
@@ -102,6 +110,7 @@ public final class BalanceHud {
         if (textDirty || shown != lastShown || config.format() != textFormat) {
             // No symbol: the coin icon already says what the number is
             text = config.format() == ClientConfig.Format.SHORT ? currency.formatShortNumber(shown) : currency.formatNumber(shown);
+            textWidth = minecraft.font.width(text);
             lastShown = shown;
             textFormat = config.format();
             textDirty = false;
@@ -109,7 +118,7 @@ public final class BalanceHud {
 
         Font font = minecraft.font;
         float scale = (float) config.scale();
-        int width = PAD + ICON + GAP + font.width(text) + PAD;
+        int width = PAD + ICON + GAP + textWidth + PAD;
         int height = PAD + ICON + PAD - 1;
         int screenWidth = graphics.guiWidth();
         int screenHeight = graphics.guiHeight();
@@ -145,10 +154,9 @@ public final class BalanceHud {
             }
             float progress = age / (float) POPUP_MS;
             int alpha = Mth.clamp((int) (255 * (1 - progress * progress)), 8, 255);
-            String line = (popup.delta() > 0 ? "+" : "-")
-                + (config.format() == ClientConfig.Format.SHORT ? currency.formatShortNumber(Math.abs(popup.delta())) : currency.formatNumber(Math.abs(popup.delta())));
+            String line = popup.text();
             int color = (alpha << 24) | (popup.delta() > 0 ? GAIN : LOSS);
-            int lineX = corner.right() ? width - font.width(line) : 0;
+            int lineX = corner.right() ? width - popup.width() : 0;
             int lineY = baseY + direction * (i * (font.lineHeight + 1) + Math.round(progress * POPUP_RISE));
             graphics.text(font, line, lineX, lineY, color, true);
         }

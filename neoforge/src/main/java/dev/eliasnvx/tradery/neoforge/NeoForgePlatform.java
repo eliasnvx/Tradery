@@ -169,6 +169,12 @@ final class NeoForgePlatform implements Platform {
     }
 
     @Override
+    public void registerServerReloadListener(net.minecraft.resources.Identifier id, net.minecraft.server.packs.resources.PreparableReloadListener listener) {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+            (net.neoforged.neoforge.event.AddServerReloadListenersEvent event) -> event.addListener(id, listener));
+    }
+
+    @Override
     public CreativeModeTab.Builder creativeTabBuilder() {
         return CreativeModeTab.builder();
     }

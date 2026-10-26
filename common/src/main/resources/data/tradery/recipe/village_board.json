@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "W": "#minecraft:planks",
+    "P": "minecraft:paper",
+    "S": "#minecraft:signs"
+  },
+  "pattern": [
+    "WWW",
+    "PSP"
+  ],
+  "result": {
+    "id": "tradery:village_board"
+  }
+}

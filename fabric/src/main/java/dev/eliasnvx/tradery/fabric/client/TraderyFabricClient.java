@@ -19,6 +19,7 @@ import dev.eliasnvx.tradery.client.render.VendingRenderer;
 import dev.eliasnvx.tradery.client.screen.DisplayScreen;
 import dev.eliasnvx.tradery.client.screen.VendingBuyerScreen;
 import dev.eliasnvx.tradery.client.screen.VendingOwnerScreen;
+import dev.eliasnvx.tradery.client.screen.VillagerTradeScreen;
 import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import dev.eliasnvx.tradery.registry.TraderyMenus;
 import net.minecraft.client.KeyMapping;
@@ -36,8 +37,14 @@ public final class TraderyFabricClient implements ClientModInitializer {
         MenuScreens.register(TraderyMenus.VENDING_BUYER.get(), VendingBuyerScreen::new);
         MenuScreens.register(TraderyMenus.VENDING_OWNER.get(), VendingOwnerScreen::new);
         MenuScreens.register(TraderyMenus.DISPLAY.get(), DisplayScreen::new);
+        MenuScreens.register(TraderyMenus.VILLAGER_TRADE.get(), VillagerTradeScreen::new);
+        MenuScreens.register(TraderyMenus.VILLAGE_BOARD.get(), dev.eliasnvx.tradery.client.screen.VillageBoardScreen::new);
+        MenuScreens.register(TraderyMenus.COUNTER_OWNER.get(), dev.eliasnvx.tradery.client.screen.CounterOwnerScreen::new);
+        MenuScreens.register(TraderyMenus.COUNTER_BUYER.get(), dev.eliasnvx.tradery.client.screen.CounterBuyerScreen::new);
+        MenuScreens.register(TraderyMenus.SHOP_LEDGER.get(), dev.eliasnvx.tradery.client.screen.ShopLedgerScreen::new);
         BlockEntityRenderers.register(TraderyBlocks.VENDING_BLOCK_ENTITY.get(), VendingRenderer::new);
         BlockEntityRenderers.register(TraderyBlocks.DISPLAY_BLOCK_ENTITY.get(), DisplayRenderer::new);
+        BlockEntityRenderers.register(TraderyBlocks.MARKET_COUNTER_BLOCK_ENTITY.get(), dev.eliasnvx.tradery.client.render.CounterRenderer::new);
         for (TraderyPayloads.Entry<?> entry : TraderyPayloads.CLIENTBOUND) {
             registerReceiver(entry.type());
         }

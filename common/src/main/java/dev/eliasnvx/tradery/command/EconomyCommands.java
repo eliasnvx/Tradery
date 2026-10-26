@@ -102,7 +102,16 @@ public final class EconomyCommands {
             .then(Commands.literal("vendors").requires(allowed(TraderyPermission.ADMIN_VENDORS))
                 .executes(context -> vendors(context, null))
                 .then(CommandArgs.player("player")
-                    .executes(context -> vendors(context, CommandArgs.account(context, "player")))));
+                    .executes(context -> vendors(context, CommandArgs.account(context, "player")))))
+            .then(Commands.literal("shops").requires(allowed(TraderyPermission.SHOPS))
+                .executes(EconomyCommands::shops));
+    }
+
+    /** The shop ledger window: the caller's own vending blocks and market counters. */
+    private static int shops(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        dev.eliasnvx.tradery.vending.ShopLedger.open(player);
+        return 1;
     }
 
     /** Vending blocks of a player (or of the caller), with clickable coordinates. */

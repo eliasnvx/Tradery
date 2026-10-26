@@ -11,22 +11,33 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
- * Where every vending block is and who owns it: for {@code /tradery vendors} and the per-player limit. Blocks
- * add themselves when placed and when loaded (self-healing), and remove themselves when broken.
+ * Where every shop (vending block or market counter) is and who owns it: for {@code /tradery vendors}, the per-player
+ * limit and the shop ledger. Blocks add themselves when placed and when loaded (self-healing), and remove themselves
+ * when broken. Each entry keeps a small {@link ShopSnapshot} of the shop, so the ledger can show shops in unloaded
+ * chunks as they last were.
  */
 public final class VendorsData extends SavedData {
-    public record Entry(GlobalPos pos, AccountId owner) {
+    /** @param snapshot the shop as it last was; null until the block saves one (entries from before 1.1) */
+    public record Entry(GlobalPos pos, AccountId owner, @Nullable ShopSnapshot snapshot) {
         static final Codec<Entry> CODEC = RecordCodecBuilder.create(i -> i.group(
             GlobalPos.CODEC.fieldOf("pos").forGetter(Entry::pos),
-            AccountId.CODEC.fieldOf("owner").forGetter(Entry::owner)
-        ).apply(i, Entry::new));
+            AccountId.CODEC.fieldOf("owner").forGetter(Entry::owner),
+            // Lenient: a snapshot naming an item that no longer exists is dropped, not the entry
+            ShopSnapshot.CODEC.lenientOptionalFieldOf("snapshot").forGetter(e -> Optional.ofNullable(e.snapshot()))
+        ).apply(i, (pos, owner, snapshot) -> new Entry(pos, owner, snapshot.orElse(null))));
+
+        public Entry(GlobalPos pos, AccountId owner) {
+            this(pos, owner, null);
+        }
     }
 
     static final Codec<VendorsData> CODEC = Entry.CODEC.listOf().xmap(VendorsData::new, d -> new ArrayList<>(d.vendors.values()));
@@ -52,9 +63,23 @@ public final class VendorsData extends SavedData {
         GlobalPos key = GlobalPos.of(level.dimension(), pos.immutable());
         Entry current = vendors.get(key);
         if (current == null || (overwrite && !current.owner().equals(owner))) {
-            vendors.put(key, new Entry(key, owner));
+            vendors.put(key, new Entry(key, owner, current == null ? null : current.snapshot()));
             setDirty();
         }
+    }
+
+    /** The shop at {@code pos} changed its offer or stock; dirty only when the snapshot differs. Unknown positions are ignored. */
+    public void updateSnapshot(ServerLevel level, BlockPos pos, ShopSnapshot snapshot) {
+        GlobalPos key = GlobalPos.of(level.dimension(), pos);
+        Entry current = vendors.get(key);
+        if (current != null && !snapshot.equals(current.snapshot())) {
+            vendors.put(key, new Entry(current.pos(), current.owner(), snapshot));
+            setDirty();
+        }
+    }
+
+    public @Nullable Entry get(GlobalPos pos) {
+        return vendors.get(pos);
     }
 
     public void setOwner(ServerLevel level, BlockPos pos, AccountId owner) {

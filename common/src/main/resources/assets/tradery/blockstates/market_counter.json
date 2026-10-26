@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "tradery:block/market_counter"
+    },
+    "facing=east": {
+      "model": "tradery:block/market_counter",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "tradery:block/market_counter",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "tradery:block/market_counter",
+      "y": 270
+    }
+  }
+}

@@ -1,6 +1,7 @@
 package dev.eliasnvx.tradery.network;
 
 import dev.eliasnvx.tradery.Tradery;
+import dev.eliasnvx.tradery.menu.VillagerTradeMenu;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -209,7 +210,7 @@ public final class TraderyPayloads {
         public static final StreamCodec<RegistryFriendlyByteBuf, GhostSamplePayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, GhostSamplePayload::containerId,
             ByteBufCodecs.VAR_INT, GhostSamplePayload::slot,
-            ItemStack.OPTIONAL_STREAM_CODEC, GhostSamplePayload::stack,
+            ItemStack.OPTIONAL_UNTRUSTED_STREAM_CODEC, GhostSamplePayload::stack,
             GhostSamplePayload::new);
 
         @Override
@@ -235,6 +236,150 @@ public final class TraderyPayloads {
         }
     }
 
+    /** Fresh offers, experience and wallet for the open villager trade window, after a trade. */
+    public record VillagerTradeSyncPayload(int containerId, VillagerTradeMenu.Data data) implements CustomPacketPayload {
+        public static final Type<VillagerTradeSyncPayload> TYPE = payloadType("villager_trade_sync");
+        public static final StreamCodec<RegistryFriendlyByteBuf, VillagerTradeSyncPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, VillagerTradeSyncPayload::containerId,
+            VillagerTradeMenu.Data.STREAM_CODEC, VillagerTradeSyncPayload::data,
+            VillagerTradeSyncPayload::new);
+
+        @Override
+        public Type<VillagerTradeSyncPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** Fresh data for the open village board window, after an action. */
+    public record VillageBoardSyncPayload(int containerId, dev.eliasnvx.tradery.menu.VillageBoardMenu.Data data) implements CustomPacketPayload {
+        public static final Type<VillageBoardSyncPayload> TYPE = payloadType("village_board_sync");
+        public static final StreamCodec<RegistryFriendlyByteBuf, VillageBoardSyncPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, VillageBoardSyncPayload::containerId,
+            dev.eliasnvx.tradery.menu.VillageBoardMenu.Data.STREAM_CODEC, VillageBoardSyncPayload::data,
+            VillageBoardSyncPayload::new);
+
+        @Override
+        public Type<VillageBoardSyncPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The client looks at a bell and asks about its village, at most every two seconds per bell. The server checks
+     * the rate, reach and that a bell is there.
+     */
+    public record BellInfoRequestPayload(BlockPos pos) implements CustomPacketPayload {
+        public static final Type<BellInfoRequestPayload> TYPE = payloadType("bell_info_request");
+        public static final StreamCodec<ByteBuf, BellInfoRequestPayload> STREAM_CODEC = StreamCodec.composite(
+            BlockPos.STREAM_CODEC, BellInfoRequestPayload::pos,
+            BellInfoRequestPayload::new);
+
+        @Override
+        public Type<BellInfoRequestPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The village of a bell, for the look-at hint; {@code known} false for a bell Tradery knows no village of.
+     * {@code nextThreshold} -1 at the top level, {@code marketDayIn} 0 today and -1 without market days.
+     */
+    public record BellInfoPayload(BlockPos pos, boolean known, Component name, int level, int prosperity, int nextThreshold,
+                                  int marketDayIn) implements CustomPacketPayload {
+        public static final Type<BellInfoPayload> TYPE = payloadType("bell_info");
+        public static final StreamCodec<RegistryFriendlyByteBuf, BellInfoPayload> STREAM_CODEC = StreamCodec.composite(
+            BlockPos.STREAM_CODEC, BellInfoPayload::pos,
+            ByteBufCodecs.BOOL, BellInfoPayload::known,
+            ComponentSerialization.TRUSTED_STREAM_CODEC, BellInfoPayload::name,
+            ByteBufCodecs.VAR_INT, BellInfoPayload::level,
+            ByteBufCodecs.VAR_INT, BellInfoPayload::prosperity,
+            ByteBufCodecs.VAR_INT, BellInfoPayload::nextThreshold,
+            ByteBufCodecs.VAR_INT, BellInfoPayload::marketDayIn,
+            BellInfoPayload::new);
+
+        @Override
+        public Type<BellInfoPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The owner saves the draft of the open market counter menu: one money price per offer (exactly
+     * {@code CounterSettings.MAX_OFFERS}). The goods are the server's own copies of the menu's sample slots.
+     */
+    public record CounterSavePayload(int containerId, List<Long> prices) implements CustomPacketPayload {
+        public static final Type<CounterSavePayload> TYPE = payloadType("counter_save");
+        public static final StreamCodec<ByteBuf, CounterSavePayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, CounterSavePayload::containerId,
+            ByteBufCodecs.VAR_LONG.apply(ByteBufCodecs.list(dev.eliasnvx.tradery.vending.CounterSettings.MAX_OFFERS)), CounterSavePayload::prices,
+            CounterSavePayload::new);
+
+        @Override
+        public Type<CounterSavePayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The player entered a village (or its level changed while there): its name and level for the title on screen;
+     * {@code known} false when the player left villages behind; {@code festival} when a festival just started there.
+     */
+    public record VillageTitlePayload(Component name, int level, boolean known, boolean festival) implements CustomPacketPayload {
+        public static final Type<VillageTitlePayload> TYPE = payloadType("village_title");
+        public static final StreamCodec<RegistryFriendlyByteBuf, VillageTitlePayload> STREAM_CODEC = StreamCodec.composite(
+            ComponentSerialization.TRUSTED_STREAM_CODEC, VillageTitlePayload::name,
+            ByteBufCodecs.VAR_INT, VillageTitlePayload::level,
+            ByteBufCodecs.BOOL, VillageTitlePayload::known,
+            ByteBufCodecs.BOOL, VillageTitlePayload::festival,
+            VillageTitlePayload::new);
+
+        @Override
+        public Type<VillageTitlePayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** "Donate" on the village board: {@code amount} (minor units, positive) from the viewer to the village's treasury. */
+    public record VillageDonatePayload(int containerId, long amount) implements CustomPacketPayload {
+        public static final Type<VillageDonatePayload> TYPE = payloadType("village_donate");
+        public static final StreamCodec<ByteBuf, VillageDonatePayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, VillageDonatePayload::containerId,
+            ByteBufCodecs.VAR_LONG, VillageDonatePayload::amount,
+            VillageDonatePayload::new);
+
+        @Override
+        public Type<VillageDonatePayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** Another page (or a fresh copy after an action) for the open shop ledger window. */
+    public record ShopLedgerSyncPayload(int containerId, dev.eliasnvx.tradery.menu.ShopLedgerMenu.Data data) implements CustomPacketPayload {
+        public static final Type<ShopLedgerSyncPayload> TYPE = payloadType("shop_ledger_sync");
+        public static final StreamCodec<RegistryFriendlyByteBuf, ShopLedgerSyncPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, ShopLedgerSyncPayload::containerId,
+            dev.eliasnvx.tradery.menu.ShopLedgerMenu.Data.STREAM_CODEC, ShopLedgerSyncPayload::data,
+            ShopLedgerSyncPayload::new);
+
+        @Override
+        public Type<ShopLedgerSyncPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** "Show" in the shop ledger: the client draws a particle beam over this shop for a while (client-side only). */
+    public record ShopBeamPayload(net.minecraft.core.GlobalPos pos) implements CustomPacketPayload {
+        public static final Type<ShopBeamPayload> TYPE = payloadType("shop_beam");
+        public static final StreamCodec<ByteBuf, ShopBeamPayload> STREAM_CODEC = StreamCodec.composite(
+            net.minecraft.core.GlobalPos.STREAM_CODEC, ShopBeamPayload::pos,
+            ShopBeamPayload::new);
+
+        @Override
+        public Type<ShopBeamPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Server → client payloads. */
     public static final List<Entry<?>> CLIENTBOUND = List.of(
         new Entry<>(CurrencyInfoPayload.TYPE, CurrencyInfoPayload.STREAM_CODEC),
@@ -242,14 +387,23 @@ public final class TraderyPayloads {
         new Entry<>(BalanceDeltaPayload.TYPE, BalanceDeltaPayload.STREAM_CODEC),
         new Entry<>(NotificationPayload.TYPE, NotificationPayload.STREAM_CODEC),
         new Entry<>(HudTogglePayload.TYPE, HudTogglePayload.STREAM_CODEC),
-        new Entry<>(VendingResultPayload.TYPE, VendingResultPayload.STREAM_CODEC)
+        new Entry<>(VendingResultPayload.TYPE, VendingResultPayload.STREAM_CODEC),
+        new Entry<>(VillagerTradeSyncPayload.TYPE, VillagerTradeSyncPayload.STREAM_CODEC),
+        new Entry<>(VillageBoardSyncPayload.TYPE, VillageBoardSyncPayload.STREAM_CODEC),
+        new Entry<>(BellInfoPayload.TYPE, BellInfoPayload.STREAM_CODEC),
+        new Entry<>(ShopLedgerSyncPayload.TYPE, ShopLedgerSyncPayload.STREAM_CODEC),
+        new Entry<>(ShopBeamPayload.TYPE, ShopBeamPayload.STREAM_CODEC),
+        new Entry<>(VillageTitlePayload.TYPE, VillageTitlePayload.STREAM_CODEC)
     );
 
     /** Client → server payloads. */
     public static final List<Entry<?>> SERVERBOUND = List.of(
         new Entry<>(VendingSavePayload.TYPE, VendingSavePayload.STREAM_CODEC),
         new Entry<>(GhostSamplePayload.TYPE, GhostSamplePayload.STREAM_CODEC),
-        new Entry<>(VendingQuickTradePayload.TYPE, VendingQuickTradePayload.STREAM_CODEC)
+        new Entry<>(VendingQuickTradePayload.TYPE, VendingQuickTradePayload.STREAM_CODEC),
+        new Entry<>(BellInfoRequestPayload.TYPE, BellInfoRequestPayload.STREAM_CODEC),
+        new Entry<>(CounterSavePayload.TYPE, CounterSavePayload.STREAM_CODEC),
+        new Entry<>(VillageDonatePayload.TYPE, VillageDonatePayload.STREAM_CODEC)
     );
 
     private TraderyPayloads() {

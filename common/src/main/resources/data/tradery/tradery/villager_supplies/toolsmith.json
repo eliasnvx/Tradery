@@ -1,0 +1,13 @@
+{
+  "profession": "minecraft:toolsmith",
+  "supplies": [
+    {
+      "item": "minecraft:coal",
+      "per_day": 6
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "per_day": 1
+    }
+  ]
+}

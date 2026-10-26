@@ -20,6 +20,8 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.List;
 import java.util.Locale;
@@ -41,11 +43,18 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
     private static final int OK = 0xFF207020;
     private static final int ERROR = 0xFFA02020;
     private static final int GOLD_LINE = 0xFFB88A1B;
+    /** Full width of the toggle rows; the buyback button shares its row with the villagers toggle for money. */
+    private static final int ROW_WIDTH = 112;
+    private static final int ICON_BUTTON = 16;
+    /** Over the villager icon while villagers may not come (buy, or sell to a buyback). */
+    private static final int ICON_OFF_SHADE = 0xB0505050;
+    private static final ItemStack VILLAGER_ICON = new ItemStack(Items.VILLAGER_SPAWN_EGG);
 
     private EditBox priceBox;
     private Button modeButton;
     private Button buybackButton;
     private Button animationButton;
+    private Button villagersButton;
     private Button[] priceCountButtons = new Button[2];
     private Button[] adminButtons = new Button[4];
     private Component resultMessage = Component.empty();
@@ -84,7 +93,9 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
             leftPos + VendingOwnerMenu.PRICE_X + 38, topPos + VendingOwnerMenu.PRICE_Y + 1));
 
         buybackButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(VendingOwnerMenu.TOGGLE_BUYBACK))
-            .bounds(x, topPos + 96, 112, 16).tooltip(Tooltip.create(Component.translatable("tradery.screen.buyback_tip"))).build());
+            .bounds(x, topPos + 96, ROW_WIDTH, 16).tooltip(Tooltip.create(Component.translatable("tradery.screen.buyback_tip"))).build());
+        villagersButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(VendingOwnerMenu.TOGGLE_VILLAGERS))
+            .bounds(x + ROW_WIDTH - ICON_BUTTON, topPos + 96, ICON_BUTTON, 16).build());
         animationButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(VendingOwnerMenu.CYCLE_ANIMATION))
             .bounds(x, topPos + 148, 112, 16).build());
         addRenderableWidget(Button.builder(Component.translatable("tradery.screen.save"), b -> save())
@@ -151,6 +162,16 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
         }
         buybackButton.visible = currency;
         buybackButton.setMessage(Component.translatable(menu.buyback() ? "tradery.screen.buyback_on" : "tradery.screen.buyback_off"));
+        // Money: "Villagers can buy" (selling) or "Villagers can sell" (buyback) sits at the end of the buyback row
+        boolean villagerToggle = currency;
+        villagersButton.visible = villagerToggle;
+        buybackButton.setWidth(villagerToggle ? ROW_WIDTH - ICON_BUTTON - 2 : ROW_WIDTH);
+        String villagersState = menu.buyback()
+            ? (menu.villagers() ? "tradery.screen.villagers_sell_on" : "tradery.screen.villagers_sell_off")
+            : (menu.villagers() ? "tradery.screen.villagers_on" : "tradery.screen.villagers_off");
+        String villagersTip = menu.buyback() ? "tradery.screen.villagers_sell_tip" : "tradery.screen.villagers_tip";
+        villagersButton.setTooltip(Tooltip.create(Component.translatable(villagersState)
+            .append("\n").append(Component.translatable(villagersTip).withStyle(ChatFormatting.GRAY))));
         // "Show: spin & bob"; just "spin & bob" (full text as the tooltip) where the language makes it too long
         Component animation = Component.translatable("tradery.animation." + menu.animation().name().toLowerCase(Locale.ROOT));
         Component full = Component.translatable("tradery.screen.animation", animation);
@@ -215,6 +236,14 @@ public class VendingOwnerScreen extends AbstractContainerScreen<VendingOwnerMenu
         } else {
             graphics.text(font, Panels.fit(font, Component.translatable("tradery.screen.per_trade_short"), PER_TRADE_WIDTH), VendingOwnerMenu.PRICE_X + 56,
                 VendingOwnerMenu.PRICE_Y + 4, GRAY, false);
+        }
+        if (villagersButton.visible) {
+            int iconX = villagersButton.getX() - leftPos;
+            int iconY = villagersButton.getY() - topPos;
+            graphics.item(VILLAGER_ICON, iconX, iconY);
+            if (!menu.villagers()) {
+                graphics.fill(iconX, iconY, iconX + ICON_BUTTON, iconY + ICON_BUTTON, ICON_OFF_SHADE);
+            }
         }
         graphics.text(font, Component.translatable("tradery.screen.facade"), PANEL_INNER, VendingOwnerMenu.FACADE_Y - 11, Panels.LABEL, false);
         List<FormattedCharSequence> hint = font.split(Component.translatable("tradery.screen.facade_hint"), 90);
