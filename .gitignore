@@ -33,3 +33,6 @@ AGENTS.md
 
 # texgen drafts (mod page art), never shipped
 art/generated/
+
+# Local scripts (textures, models, structures, page images, crash test), never in the repo
+tools/
