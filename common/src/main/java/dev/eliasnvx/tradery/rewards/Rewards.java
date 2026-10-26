@@ -131,11 +131,9 @@ public final class Rewards {
         }
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(result.getItem());
         RewardsConfig.Reward reward = tables.craft().find(id, BuiltInRegistries.ITEM.wrapAsHolder(result.getItem()));
-        // One reward per crafted item: shift-clicking a stack pays like crafting one by one
+        // One reward per crafted item, paid together: shift-clicking a stack pays like crafting one by one, in one transaction
         int crafts = Math.max(1, count / Math.max(1, result.getCount()));
-        for (int i = 0; i < crafts && reward != null; i++) {
-            grant(serverPlayer, RewardGrantedEvent.Type.CRAFT, id, reward);
-        }
+        grant(serverPlayer, RewardGrantedEvent.Type.CRAFT, id, reward, crafts);
     }
 
     /** A fishing rod brought up items. */
@@ -161,6 +159,11 @@ public final class Rewards {
         grant(player, RewardGrantedEvent.Type.ADVANCEMENT, advancement, tables.advancement().find(advancement, null));
     }
 
+    /** The server stopped. */
+    public static void clear() {
+        RECENT.clear();
+    }
+
     public static void forget(ServerPlayer player) {
         RECENT.remove(player.getUUID());
     }
@@ -168,31 +171,45 @@ public final class Rewards {
     // ------------------------------------------------------------------ payout
 
     static void grant(ServerPlayer player, RewardGrantedEvent.Type type, ResourceLocation source, @Nullable RewardsConfig.Reward reward) {
+        grant(player, type, source, reward, 1);
+    }
+
+    /**
+     * {@code times} rewards of one kind at once (a stack crafted): each is rolled on its own (chance, amount,
+     * diminishing returns, the daily cap), the sum is paid as one transaction and one event.
+     */
+    static void grant(ServerPlayer player, RewardGrantedEvent.Type type, ResourceLocation source, @Nullable RewardsConfig.Reward reward, int times) {
         EconomyService economy = EconomyService.INSTANCE;
-        if (reward == null || !economy.isReady()) {
+        if (reward == null || times <= 0 || !economy.isReady()) {
             return;
         }
         RewardsConfig.Rules rules = config.rules();
         if (rules.ignoreFakePlayers() && Platform.get().isFakePlayer(player)) {
             return;
         }
-        if (reward.chance() < 1.0 && player.getRandom().nextDouble() >= reward.chance()) {
-            return;
-        }
         long min = economy.toMinorOrMax(reward.min(), "rewards min");
         long max = Math.max(min, economy.toMinorOrMax(reward.max(), "rewards max"));
-        long amount = max > min ? min + (long) Math.floor(player.getRandom().nextDouble() * (max - min + 1)) : min;
-        amount = diminish(player.getUUID(), type, amount, rules.diminishing());
-
         StatsData stats = economy.stats();
         long cap = economy.toMinorOrMax(rules.dailyCap(), "rules.dailyCap");
-        if (cap > 0) {
-            amount = Math.min(amount, Math.max(0, cap - stats.earnedToday(player.getUUID(), StatsData.Earning.REWARD)));
+        long earned = cap > 0 ? stats.earnedToday(player.getUUID(), StatsData.Earning.REWARD) : 0;
+        long total = 0;
+        for (int i = 0; i < times; i++) {
+            if (reward.chance() < 1.0 && player.getRandom().nextDouble() >= reward.chance()) {
+                continue;
+            }
+            long amount = max > min ? min + (long) Math.floor(player.getRandom().nextDouble() * (max - min + 1)) : min;
+            amount = diminish(player.getUUID(), type, amount, rules.diminishing());
+            if (cap > 0) {
+                amount = Math.min(amount, Math.max(0, cap - earned - total));
+            }
+            if (amount > 0) {
+                total = total > Long.MAX_VALUE - amount ? Long.MAX_VALUE : total + amount;
+            }
         }
-        if (amount <= 0) {
+        if (total <= 0) {
             return;
         }
-        RewardGrantedEvent event = RewardGrantedEvent.EVENT.post(new RewardGrantedEvent(player, type, source, amount));
+        RewardGrantedEvent event = RewardGrantedEvent.EVENT.post(new RewardGrantedEvent(player, type, source, total));
         if (event.isCancelled() || event.amount() <= 0) {
             return;
         }

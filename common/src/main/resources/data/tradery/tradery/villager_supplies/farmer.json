@@ -1,0 +1,29 @@
+{
+  "profession": "minecraft:farmer",
+  "supplies": [
+    {
+      "item": "minecraft:wheat",
+      "per_day": 16
+    },
+    {
+      "item": "minecraft:potato",
+      "per_day": 12
+    },
+    {
+      "item": "minecraft:carrot",
+      "per_day": 12
+    },
+    {
+      "item": "minecraft:beetroot",
+      "per_day": 8
+    },
+    {
+      "item": "minecraft:pumpkin",
+      "per_day": 2
+    },
+    {
+      "item": "minecraft:melon_slice",
+      "per_day": 8
+    }
+  ]
+}

@@ -39,10 +39,16 @@ public final class TraderyForgeClient {
             MenuScreens.register(TraderyMenus.VENDING_BUYER.get(), VendingBuyerScreen::new);
             MenuScreens.register(TraderyMenus.VENDING_OWNER.get(), VendingOwnerScreen::new);
             MenuScreens.register(TraderyMenus.DISPLAY.get(), DisplayScreen::new);
+            MenuScreens.register(TraderyMenus.VILLAGER_TRADE.get(), dev.eliasnvx.tradery.client.screen.VillagerTradeScreen::new);
+            MenuScreens.register(TraderyMenus.VILLAGE_BOARD.get(), dev.eliasnvx.tradery.client.screen.VillageBoardScreen::new);
+            MenuScreens.register(TraderyMenus.COUNTER_OWNER.get(), dev.eliasnvx.tradery.client.screen.CounterOwnerScreen::new);
+            MenuScreens.register(TraderyMenus.COUNTER_BUYER.get(), dev.eliasnvx.tradery.client.screen.CounterBuyerScreen::new);
+            MenuScreens.register(TraderyMenus.SHOP_LEDGER.get(), dev.eliasnvx.tradery.client.screen.ShopLedgerScreen::new);
         }));
         modBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
             event.registerBlockEntityRenderer(TraderyBlocks.VENDING_BLOCK_ENTITY.get(), VendingRenderer::new);
             event.registerBlockEntityRenderer(TraderyBlocks.DISPLAY_BLOCK_ENTITY.get(), DisplayRenderer::new);
+            event.registerBlockEntityRenderer(TraderyBlocks.MARKET_COUNTER_BLOCK_ENTITY.get(), dev.eliasnvx.tradery.client.render.CounterRenderer::new);
         });
         modBus.addListener((RegisterKeyMappingsEvent event) -> {
             for (KeyMapping key : TraderyKeyMappings.ALL) {

@@ -34,6 +34,18 @@ public final class TraderyClient {
             toggleHud();
         } else if (payload instanceof TraderyPayloads.VendingResultPayload p) {
             showVendingResult(p);
+        } else if (payload instanceof TraderyPayloads.VillagerTradeSyncPayload p) {
+            syncVillagerTrade(p);
+        } else if (payload instanceof TraderyPayloads.VillageBoardSyncPayload p) {
+            dev.eliasnvx.tradery.client.screen.VillageBoardScreen.onSync(p);
+        } else if (payload instanceof TraderyPayloads.BellInfoPayload p) {
+            BellHint.onInfo(p);
+        } else if (payload instanceof TraderyPayloads.ShopLedgerSyncPayload p) {
+            dev.eliasnvx.tradery.client.screen.ShopLedgerScreen.onSync(p);
+        } else if (payload instanceof TraderyPayloads.ShopBeamPayload p) {
+            ShopBeams.onBeam(p);
+        } else if (payload instanceof TraderyPayloads.VillageTitlePayload p) {
+            VillageTitle.onTitle(p);
         }
     }
 
@@ -41,14 +53,22 @@ public final class TraderyClient {
         while (TraderyKeyMappings.TOGGLE_HUD.consumeClick()) {
             toggleHud();
         }
+        BellHint.tick(minecraft);
+        ShopBeams.tick(minecraft);
     }
 
     public static void onDisconnect() {
         ClientEconomy.reset();
+        BellHint.reset();
+        ShopBeams.reset();
+        VillageTitle.reset();
     }
 
     public static void renderHud(GuiGraphics graphics) {
         VendingHint.render(graphics);
+        BellHint.render(graphics);
+        CounterHint.render(graphics);
+        VillageTitle.render(graphics);
         BalanceHud.render(graphics);
     }
 
@@ -69,6 +89,14 @@ public final class TraderyClient {
             && screen.getMenu().containerId == payload.containerId()
             && screen instanceof VendingResultView view) {
             view.showResult(payload.success(), payload.message());
+        }
+    }
+
+    private static void syncVillagerTrade(TraderyPayloads.VillagerTradeSyncPayload payload) {
+        var player = Minecraft.getInstance().player;
+        if (player != null && player.containerMenu instanceof dev.eliasnvx.tradery.menu.VillagerTradeMenu menu
+            && menu.containerId == payload.containerId()) {
+            menu.update(payload.data());
         }
     }
 

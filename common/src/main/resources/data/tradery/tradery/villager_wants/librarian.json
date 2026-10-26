@@ -1,0 +1,20 @@
+{
+  "profession": "minecraft:librarian",
+  "wants": [
+    {
+      "item": "minecraft:paper",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:book",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:ink_sac",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:feather"
+    }
+  ]
+}

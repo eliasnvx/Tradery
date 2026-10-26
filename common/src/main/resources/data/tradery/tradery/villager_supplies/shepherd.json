@@ -1,0 +1,9 @@
+{
+  "profession": "minecraft:shepherd",
+  "supplies": [
+    {
+      "tag": "minecraft:wool",
+      "per_day": 8
+    }
+  ]
+}

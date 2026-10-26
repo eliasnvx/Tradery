@@ -14,7 +14,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -56,14 +55,6 @@ public final class EconomyGameTests {
         });
     }
 
-    /**
-     * {@code GameTestHelper#assertValueEqual} of later versions (1.20.1 has none); same message. Both values must be
-     * of the same boxed type ({@code 5L} vs {@code 5} differ).
-     */
-    static <N> void assertValueEqual(GameTestHelper helper, N actual, N expected, String name) {
-        helper.assertTrue(Objects.equals(actual, expected), "Expected " + name + " to be " + expected + ", but was " + actual);
-    }
-
     private static LedgerAccount freshAccount(GameTestHelper helper) {
         ServerPlayer player = MockPlayers.create(helper);
         return EconomyService.INSTANCE.account(player.getUUID());
@@ -80,22 +71,22 @@ public final class EconomyGameTests {
         helper.assertTrue(eco.deposit(alice, 5_000, Reason.of(TAXED.withPath("deposit"))).isSuccess(), "deposit");
         TransactionResult result = eco.transfer(alice, bob, 1_234, 34, Reason.of(TAXED.withPath("plain")));
         helper.assertTrue(result instanceof TransactionResult.Success, "transfer succeeds: " + result);
-        assertValueEqual(helper, alice.balance(eco.defaultCurrency()), aliceStart + 5_000 - 1_234, "payer balance");
-        assertValueEqual(helper, bob.balance(eco.defaultCurrency()), bobStart + 1_200, "payee gets amount minus fee");
-        assertValueEqual(helper, eco.ledger().total(eco.defaultCurrency().id()), supplyStart + 5_000 - 34, "fee destroyed");
+        GameTestAsserts.assertValueEqual(helper, alice.balance(eco.defaultCurrency()), aliceStart + 5_000 - 1_234, "payer balance");
+        GameTestAsserts.assertValueEqual(helper, bob.balance(eco.defaultCurrency()), bobStart + 1_200, "payee gets amount minus fee");
+        GameTestAsserts.assertValueEqual(helper, eco.ledger().total(eco.defaultCurrency().id()), supplyStart + 5_000 - 34, "fee destroyed");
 
         long bobNow = bob.balance(eco.defaultCurrency());
         long aliceNow = alice.balance(eco.defaultCurrency());
         TransactionResult tooMuch = eco.transfer(bob, alice, bobNow + 1, Reason.of(TAXED.withPath("plain")));
-        assertValueEqual(helper, tooMuch, TransactionResult.Failure.of(FailReason.INSUFFICIENT_FUNDS), "overdraft refused");
-        assertValueEqual(helper, bob.balance(eco.defaultCurrency()), bobNow, "payer untouched after refusal");
-        assertValueEqual(helper, alice.balance(eco.defaultCurrency()), aliceNow, "payee untouched after refusal");
+        GameTestAsserts.assertValueEqual(helper, tooMuch, TransactionResult.Failure.of(FailReason.INSUFFICIENT_FUNDS), "overdraft refused");
+        GameTestAsserts.assertValueEqual(helper, bob.balance(eco.defaultCurrency()), bobNow, "payer untouched after refusal");
+        GameTestAsserts.assertValueEqual(helper, alice.balance(eco.defaultCurrency()), aliceNow, "payee untouched after refusal");
 
-        assertValueEqual(helper, eco.transfer(alice, alice, 1, Reason.of(TAXED)), TransactionResult.Failure.of(FailReason.INVALID_AMOUNT), "self transfer");
-        assertValueEqual(helper, eco.withdraw(alice, 0, Reason.of(TAXED)), TransactionResult.Failure.of(FailReason.INVALID_AMOUNT), "zero amount");
+        GameTestAsserts.assertValueEqual(helper, eco.transfer(alice, alice, 1, Reason.of(TAXED)), TransactionResult.Failure.of(FailReason.INVALID_AMOUNT), "self transfer");
+        GameTestAsserts.assertValueEqual(helper, eco.withdraw(alice, 0, Reason.of(TAXED)), TransactionResult.Failure.of(FailReason.INVALID_AMOUNT), "zero amount");
 
         eco.setLocked(bob, true);
-        assertValueEqual(helper, eco.transfer(alice, bob, 1, Reason.of(TAXED.withPath("plain"))),
+        GameTestAsserts.assertValueEqual(helper, eco.transfer(alice, bob, 1, Reason.of(TAXED.withPath("plain"))),
             TransactionResult.Failure.of(FailReason.ACCOUNT_LOCKED), "locked payee");
         eco.setLocked(bob, false);
         helper.succeed();
@@ -113,13 +104,13 @@ public final class EconomyGameTests {
 
         TransactionResult taxed = eco.transfer(payer, payee, 1_000, Reason.of(TAXED));
         helper.assertTrue(taxed instanceof TransactionResult.Success success && success.fee() == 100, "listener set a 10% fee: " + taxed);
-        assertValueEqual(helper, payee.balance(eco.defaultCurrency()), payeeStart + 900, "payee got 90%");
-        assertValueEqual(helper, BALANCE_EVENTS.get() - eventsBefore, 2, "one BalanceChangedEvent per side");
+        GameTestAsserts.assertValueEqual(helper, payee.balance(eco.defaultCurrency()), payeeStart + 900, "payee got 90%");
+        GameTestAsserts.assertValueEqual(helper, BALANCE_EVENTS.get() - eventsBefore, 2, "one BalanceChangedEvent per side");
 
         TransactionResult blocked = eco.transfer(payer, payee, 1_000, Reason.of(BLOCKED));
         helper.assertTrue(blocked instanceof TransactionResult.Failure failure && failure.reason() == FailReason.CANCELLED
             && failure.message() != null, "listener cancelled with a message: " + blocked);
-        assertValueEqual(helper, payer.balance(eco.defaultCurrency()), payerStart - 1_000, "cancelled transfer took nothing");
+        GameTestAsserts.assertValueEqual(helper, payer.balance(eco.defaultCurrency()), payerStart - 1_000, "cancelled transfer took nothing");
         helper.succeed();
     }
 
@@ -151,13 +142,13 @@ public final class EconomyGameTests {
 
         var commands = helper.getLevel().getServer().getCommands();
         commands.performPrefixedCommand(sender.createCommandSourceStack(), "pay " + receiverName + " 12.50");
-        assertValueEqual(helper, from.balance(eco.defaultCurrency()), fromStart - 1_250, "sender paid 12.50");
-        assertValueEqual(helper, to.balance(eco.defaultCurrency()), toStart + 1_250, "receiver got 12.50 (no tax by default)");
+        GameTestAsserts.assertValueEqual(helper, from.balance(eco.defaultCurrency()), fromStart - 1_250, "sender paid 12.50");
+        GameTestAsserts.assertValueEqual(helper, to.balance(eco.defaultCurrency()), toStart + 1_250, "receiver got 12.50 (no tax by default)");
 
         commands.performPrefixedCommand(sender.createCommandSourceStack(), "pay " + receiverName + " 12.505");
         commands.performPrefixedCommand(sender.createCommandSourceStack(), "pay " + receiverName + " -5");
         commands.performPrefixedCommand(sender.createCommandSourceStack(), "pay " + receiverName + " 999999999");
-        assertValueEqual(helper, from.balance(eco.defaultCurrency()), fromStart - 1_250, "bad amounts and overdraft change nothing");
+        GameTestAsserts.assertValueEqual(helper, from.balance(eco.defaultCurrency()), fromStart - 1_250, "bad amounts and overdraft change nothing");
         helper.succeed();
     }
 }

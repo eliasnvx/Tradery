@@ -28,6 +28,11 @@ public final class TraderyForge {
         Platform.install(platform);
         Tradery.init();
         dev.eliasnvx.tradery.registry.TraderyBlocks.init();
+        dev.eliasnvx.tradery.village.VillagerMarket.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageProjects.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageBuildings.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillagerSupplies.registerReloadListeners();
+        dev.eliasnvx.tradery.village.VillageTypes.registerReloadListeners();
         platform.attach(modBus);
         platform.registerPlacedBlocks(modBus);
         ForgeNetwork.register();
@@ -42,6 +47,9 @@ public final class TraderyForge {
         // The economy is up before other mods' ServerStartedEvent listeners and still up in their ServerStoppedEvent ones
         bus.addListener(EventPriority.HIGHEST, (ServerStartedEvent event) -> TraderyServer.onServerStarted(event.getServer()));
         bus.addListener(EventPriority.LOWEST, (ServerStoppedEvent event) -> TraderyServer.onServerStopped(event.getServer()));
+        // Village market stalls join the village house pools before the levels load
+        bus.addListener((net.minecraftforge.event.server.ServerAboutToStartEvent event) ->
+            dev.eliasnvx.tradery.market.MarketPools.onServerStarting(event.getServer()));
         bus.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
             if (event.getEntity() instanceof ServerPlayer player) {
                 TraderyServer.onPlayerJoin(player);
@@ -66,6 +74,11 @@ public final class TraderyForge {
         bus.addListener(EventPriority.LOWEST, (LivingDeathEvent event) -> {
             if (!event.isCanceled()) {
                 TraderyServer.onLivingDeath(event.getEntity(), event.getSource());
+            }
+        });
+        bus.addListener((net.minecraftforge.event.TickEvent.LevelTickEvent event) -> {
+            if (event.phase == net.minecraftforge.event.TickEvent.Phase.END && event.level instanceof net.minecraft.server.level.ServerLevel level) {
+                TraderyServer.onLevelTick(level);
             }
         });
         bus.addListener((PlayerEvent.PlayerRespawnEvent event) -> {

@@ -1,0 +1,17 @@
+{
+  "profession": "minecraft:weaponsmith",
+  "supplies": [
+    {
+      "item": "minecraft:coal",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:iron_ingot",
+      "per_day": 1
+    },
+    {
+      "item": "minecraft:flint",
+      "per_day": 4
+    }
+  ]
+}

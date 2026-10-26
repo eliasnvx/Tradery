@@ -1,0 +1,19 @@
+{
+  "profession": "minecraft:armorer",
+  "wants": [
+    {
+      "item": "minecraft:iron_ingot",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:coal",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:charcoal"
+    },
+    {
+      "item": "minecraft:lava_bucket"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "profession": "minecraft:farmer",
+  "wants": [
+    {
+      "item": "minecraft:bone_meal",
+      "weight": 3
+    },
+    {
+      "tag": "minecraft:hoes",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:wheat_seeds"
+    },
+    {
+      "item": "minecraft:beetroot_seeds"
+    }
+  ]
+}

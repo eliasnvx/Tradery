@@ -1,0 +1,13 @@
+{
+  "profession": "minecraft:librarian",
+  "supplies": [
+    {
+      "item": "minecraft:paper",
+      "per_day": 8
+    },
+    {
+      "item": "minecraft:book",
+      "per_day": 2
+    }
+  ]
+}

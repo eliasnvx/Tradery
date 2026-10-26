@@ -3,6 +3,7 @@ package dev.eliasnvx.tradery.vending;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Counting, fitting, taking and inserting items of one kind in a list of slots. Items match only when item and
@@ -61,6 +62,42 @@ public final class StackMath {
                     slots.set(i, ItemStack.EMPTY);
                 }
                 left -= taken;
+            }
+        }
+        return amount - left;
+    }
+
+    /** Items passing {@code test} in the slots (for costs that match more than one exact stack, like villager costs). */
+    public static long countMatching(List<ItemStack> slots, Predicate<ItemStack> test) {
+        long total = 0;
+        for (ItemStack stack : slots) {
+            if (!stack.isEmpty() && test.test(stack)) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Takes up to {@code amount} items passing {@code test}, from the last slot backwards: plain stacks first, then
+     * those with a name, enchantments or other data, so a cost doesn't eat a special item while plain ones are there.
+     *
+     * @return items taken
+     */
+    public static int takeMatching(List<ItemStack> slots, Predicate<ItemStack> test, int amount) {
+        int left = amount;
+        for (int pass = 0; pass < 2 && left > 0; pass++) {
+            boolean plain = pass == 0;
+            for (int i = slots.size() - 1; i >= 0 && left > 0; i--) {
+                ItemStack stack = slots.get(i);
+                if (!stack.isEmpty() && !stack.hasTag() == plain && test.test(stack)) {
+                    int taken = Math.min(left, stack.getCount());
+                    stack.shrink(taken);
+                    if (stack.isEmpty()) {
+                        slots.set(i, ItemStack.EMPTY);
+                    }
+                    left -= taken;
+                }
             }
         }
         return amount - left;

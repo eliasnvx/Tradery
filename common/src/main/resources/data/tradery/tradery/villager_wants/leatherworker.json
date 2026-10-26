@@ -1,0 +1,16 @@
+{
+  "profession": "minecraft:leatherworker",
+  "wants": [
+    {
+      "item": "minecraft:leather",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:rabbit_hide",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:flint"
+    }
+  ]
+}

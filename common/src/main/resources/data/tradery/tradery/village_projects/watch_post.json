@@ -1,0 +1,10 @@
+{
+  "cost": 600,
+  "level": 2,
+  "icon": "minecraft:carved_pumpkin",
+  "effects": {
+    "raid_loss": 0.5
+  },
+  "action": "iron_golem",
+  "structure": "watch_post"
+}

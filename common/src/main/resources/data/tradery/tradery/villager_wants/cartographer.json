@@ -1,0 +1,16 @@
+{
+  "profession": "minecraft:cartographer",
+  "wants": [
+    {
+      "item": "minecraft:paper",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:compass",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:glass_pane"
+    }
+  ]
+}

@@ -77,6 +77,11 @@ public final class VendingQuickTrade {
         return streak == null ? 0 : streak.goods();
     }
 
+    /** The server stopped. */
+    public static void clear() {
+        STREAKS.clear();
+    }
+
     public static void forget(ServerPlayer player) {
         STREAKS.remove(player.getUUID());
     }

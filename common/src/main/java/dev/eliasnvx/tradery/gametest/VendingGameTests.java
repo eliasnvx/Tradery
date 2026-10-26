@@ -70,7 +70,7 @@ public final class VendingGameTests {
 
     private static VendingBlockEntity vendor(GameTestHelper helper, AccountId owner, VendingSettings settings) {
         helper.setBlock(VENDOR, TraderyBlocks.VENDING_BLOCK.get().defaultBlockState().setValue(VendingBlock.FACING, Direction.NORTH));
-        BlockEntity blockEntity = helper.getBlockEntity(VENDOR);
+        BlockEntity blockEntity = (BlockEntity) helper.getBlockEntity(VENDOR);
         helper.assertTrue(blockEntity instanceof VendingBlockEntity, "a vending block entity at " + VENDOR);
         VendingBlockEntity vendor = (VendingBlockEntity) blockEntity;
         vendor.setOwner(owner, "owner");

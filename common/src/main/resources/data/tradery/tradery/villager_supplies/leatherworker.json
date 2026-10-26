@@ -1,0 +1,13 @@
+{
+  "profession": "minecraft:leatherworker",
+  "supplies": [
+    {
+      "item": "minecraft:leather",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:rabbit_hide",
+      "per_day": 2
+    }
+  ]
+}

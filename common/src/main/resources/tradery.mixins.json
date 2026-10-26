@@ -12,7 +12,11 @@
     "ItemEntityMixin",
     "PlayerAdvancementsMixin",
     "PlayerListAccessor",
-    "ResultSlotMixin"
+    "ResultSlotMixin",
+    "SinglePoolElementAccessor",
+    "StructureTemplatePoolAccessor",
+    "VillagerMixin",
+    "WanderingTraderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

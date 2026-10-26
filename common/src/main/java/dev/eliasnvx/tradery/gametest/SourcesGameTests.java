@@ -92,7 +92,8 @@ public final class SourcesGameTests {
     private static ServerConfig withOre(ServerConfig config, boolean direct, BigDecimal dailyCap) {
         ServerConfig.OreSection ore = config.ore();
         return new ServerConfig(config.currency(), config.economy(), config.pay(), config.vending(),
-            new ServerConfig.OreSection(ore.enabled(), direct, ore.coinValues(), dailyCap, ore.inflationDamping()), config.history(), config.log());
+            new ServerConfig.OreSection(ore.enabled(), direct, ore.coinValues(), dailyCap, ore.inflationDamping()), config.history(), config.log(),
+            config.villagers(), config.market(), config.villagerTrading(), config.villages());
     }
 
     // ------------------------------------------------------------------ tests
@@ -106,7 +107,7 @@ public final class SourcesGameTests {
         long paid = balance(miner);
         long coin = CoinTier.COPPER.value();
         helper.assertTrue(paid >= coin && paid <= 3 * coin, "1-3 copper coins straight to the balance, got " + paid);
-        EconomyGameTests.assertValueEqual(helper, itemsAround(helper, TraderyItems.coin(CoinTier.COPPER)), 0, "no coin items dropped");
+        GameTestAsserts.assertValueEqual(helper, itemsAround(helper, TraderyItems.coin(CoinTier.COPPER)), 0, "no coin items dropped");
         helper.succeed();
     }
 
@@ -116,7 +117,7 @@ public final class SourcesGameTests {
         helper.getLevel().destroyBlock(helper.absolutePos(ORE), true);
         int coins = itemsAround(helper, TraderyItems.coin(CoinTier.SILVER));
         helper.assertTrue(coins >= 1 && coins <= 2, "1-2 silver coins dropped, got " + coins);
-        EconomyGameTests.assertValueEqual(helper, EconomyService.INSTANCE.stats().cashOutstanding() - cashBefore, coins * CoinTier.SILVER.value(),
+        GameTestAsserts.assertValueEqual(helper, EconomyService.INSTANCE.stats().cashOutstanding() - cashBefore, coins * CoinTier.SILVER.value(),
             "minted coins counted as cash in the world");
         helper.succeed();
     }
@@ -132,9 +133,9 @@ public final class SourcesGameTests {
                 helper.setBlock(ORE, TraderyItems.ore(CoinTier.GOLD, false));
                 miner.gameMode.destroyBlock(helper.absolutePos(ORE));
             }
-            EconomyGameTests.assertValueEqual(helper, balance(miner), EconomyService.INSTANCE.toMinorOrMax(new BigDecimal("150"), "test"),
+            GameTestAsserts.assertValueEqual(helper, balance(miner), EconomyService.INSTANCE.toMinorOrMax(new BigDecimal("150"), "test"),
                 "three gold coins mined, capped at 150");
-            EconomyGameTests.assertValueEqual(helper, itemsAround(helper, TraderyItems.coin(CoinTier.GOLD)), 0, "the cap drops nothing either");
+            GameTestAsserts.assertValueEqual(helper, itemsAround(helper, TraderyItems.coin(CoinTier.GOLD)), 0, "the cap drops nothing either");
         } finally {
             TraderyConfig.setServerForTests(original);
         }
@@ -153,7 +154,7 @@ public final class SourcesGameTests {
         helper.getLevel().addFreshEntity(coins);
         coins.playerTouch(player);
         helper.assertTrue(coins.isRemoved(), "coins picked up");
-        EconomyGameTests.assertValueEqual(helper, balance(player), 3 * CoinTier.SILVER.value(), "credited even with a full inventory");
+        GameTestAsserts.assertValueEqual(helper, balance(player), 3 * CoinTier.SILVER.value(), "credited even with a full inventory");
         helper.succeed();
     }
 
@@ -164,13 +165,13 @@ public final class SourcesGameTests {
         long copper = CoinTier.COPPER.value();
         setBalance(player, 2 * gold);
 
-        EconomyGameTests.assertValueEqual(helper, CoinWithdraw.withdraw(player, copper / 2 + gold), 0, "half a copper coin can't be paid out");
-        EconomyGameTests.assertValueEqual(helper, balance(player), 2 * gold, "nothing withdrawn");
-        EconomyGameTests.assertValueEqual(helper, CoinWithdraw.withdraw(player, gold + silver + copper), 1, "withdraw one of each");
-        EconomyGameTests.assertValueEqual(helper, balance(player), gold - silver - copper, "balance down by 111");
-        EconomyGameTests.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.GOLD)), 1, "one gold coin");
-        EconomyGameTests.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 1, "one silver coin");
-        EconomyGameTests.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.COPPER)), 1, "one copper coin");
+        GameTestAsserts.assertValueEqual(helper, CoinWithdraw.withdraw(player, copper / 2 + gold), 0, "half a copper coin can't be paid out");
+        GameTestAsserts.assertValueEqual(helper, balance(player), 2 * gold, "nothing withdrawn");
+        GameTestAsserts.assertValueEqual(helper, CoinWithdraw.withdraw(player, gold + silver + copper), 1, "withdraw one of each");
+        GameTestAsserts.assertValueEqual(helper, balance(player), gold - silver - copper, "balance down by 111");
+        GameTestAsserts.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.GOLD)), 1, "one gold coin");
+        GameTestAsserts.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 1, "one silver coin");
+        GameTestAsserts.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.COPPER)), 1, "one copper coin");
 
         // Sneak + use puts every coin back
         player.setShiftKeyDown(true);
@@ -179,14 +180,14 @@ public final class SourcesGameTests {
         player.setItemInHand(InteractionHand.MAIN_HAND, held.copy());
         held.setCount(0);
         TraderyItems.coin(CoinTier.GOLD).use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
-        EconomyGameTests.assertValueEqual(helper, balance(player), 2 * gold, "all coins deposited");
-        EconomyGameTests.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 0, "coins gone after deposit");
+        GameTestAsserts.assertValueEqual(helper, balance(player), 2 * gold, "all coins deposited");
+        GameTestAsserts.assertValueEqual(helper, player.getInventory().countItem(TraderyItems.coin(CoinTier.SILVER)), 0, "coins gone after deposit");
 
         for (int i = 0; i < player.getInventory().items.size(); i++) {
             player.getInventory().items.set(i, new ItemStack(Items.DIRT, 64));
         }
-        EconomyGameTests.assertValueEqual(helper, CoinWithdraw.withdraw(player, gold), 0, "no room: refused");
-        EconomyGameTests.assertValueEqual(helper, balance(player), 2 * gold, "no money taken without room");
+        GameTestAsserts.assertValueEqual(helper, CoinWithdraw.withdraw(player, gold), 0, "no room: refused");
+        GameTestAsserts.assertValueEqual(helper, balance(player), 2 * gold, "no money taken without room");
         helper.succeed();
     }
 
@@ -196,7 +197,7 @@ public final class SourcesGameTests {
         Zombie farmed = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, ORE.east());
         farmed.addTag(Rewards.SPAWNER_TAG);
         farmed.hurt(hunter.damageSources().playerAttack(hunter), 1000);
-        EconomyGameTests.assertValueEqual(helper, balance(hunter), 0L, "a spawner zombie pays nothing");
+        GameTestAsserts.assertValueEqual(helper, balance(hunter), 0L, "a spawner zombie pays nothing");
 
         Zombie wild = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, ORE.west());
         wild.hurt(hunter.damageSources().playerAttack(hunter), 1000);
@@ -220,11 +221,11 @@ public final class SourcesGameTests {
             helper.setBlock(ORE, Blocks.DIAMOND_ORE);
             Rewards.onBlockPlaced(helper.getLevel(), helper.absolutePos(ORE), Blocks.DIAMOND_ORE.defaultBlockState());
             miner.gameMode.destroyBlock(helper.absolutePos(ORE));
-            EconomyGameTests.assertValueEqual(helper, balance(miner), 0L, "a placed ore pays nothing");
+            GameTestAsserts.assertValueEqual(helper, balance(miner), 0L, "a placed ore pays nothing");
 
             helper.setBlock(ORE, Blocks.DIAMOND_ORE);
             miner.gameMode.destroyBlock(helper.absolutePos(ORE));
-            EconomyGameTests.assertValueEqual(helper, balance(miner), EconomyService.INSTANCE.toMinorOrMax(BigDecimal.valueOf(5), "test"), "a natural ore pays 5");
+            GameTestAsserts.assertValueEqual(helper, balance(miner), EconomyService.INSTANCE.toMinorOrMax(BigDecimal.valueOf(5), "test"), "a natural ore pays 5");
         } finally {
             Rewards.setConfigForTests(original);
         }
@@ -242,7 +243,9 @@ public final class SourcesGameTests {
             "net.minecraft.world.entity.projectile.FishingHook",
             "net.minecraft.server.PlayerAdvancements",
             "net.minecraft.world.level.BaseSpawner",
-            "net.minecraft.world.item.BlockItem"
+            "net.minecraft.world.item.BlockItem",
+            "net.minecraft.world.entity.npc.Villager",
+            "net.minecraft.world.entity.npc.WanderingTrader"
         };
         for (String target : targets) {
             try {

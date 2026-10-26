@@ -1,5 +1,8 @@
 package dev.eliasnvx.tradery.economy;
 
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ArrayBlockingQueue;
 import com.google.gson.JsonObject;
 import dev.eliasnvx.tradery.Tradery;
 
@@ -15,7 +18,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -27,17 +29,28 @@ import java.util.concurrent.TimeUnit;
 public final class TransactionLog implements AutoCloseable {
     private final Path directory;
     private final int retentionDays;
+    /** Lines waiting for the disk at most; beyond it, lines are dropped and counted. */
+    static final int QUEUE_LIMIT = 10_000;
     private final ExecutorService executor;
+    private final AtomicLong dropped = new AtomicLong();
     private BufferedWriter writer;
     private LocalDate writerDay;
 
     public TransactionLog(Path directory, int retentionDays) {
         this.directory = directory;
         this.retentionDays = retentionDays;
-        this.executor = Executors.newSingleThreadExecutor(runnable -> {
+        // One thread, a bounded queue: a disk that can't keep up costs log lines (counted and reported), never memory
+        this.executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(QUEUE_LIMIT), runnable -> {
             Thread thread = new Thread(runnable, "Tradery transaction log");
             thread.setDaemon(true);
             return thread;
+        }, (runnable, pool) -> {
+            if (pool.isShutdown()) {
+                throw new RejectedExecutionException("closed");
+            }
+            if (dropped.getAndIncrement() == 0) {
+                Tradery.LOGGER.warn("The transaction log can't keep up with the disk: dropping lines (counted)");
+            }
         });
         executor.execute(this::deleteOldFiles);
     }
@@ -111,9 +124,20 @@ public final class TransactionLog implements AutoCloseable {
     }
 
     /** Writes everything queued, then stops. Waits up to 5 seconds. */
+    /** Lines dropped because the queue was full. */
+    public long dropped() {
+        return dropped.get();
+    }
+
     @Override
     public void close() {
-        executor.execute(this::closeWriter);
+        if (dropped.get() > 0) {
+            Tradery.LOGGER.warn("Transaction log: {} lines were dropped this session", dropped.get());
+        }
+        try {
+            executor.execute(this::closeWriter);
+        } catch (RejectedExecutionException ignored) {
+        }
         executor.shutdown();
         try {
             if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {

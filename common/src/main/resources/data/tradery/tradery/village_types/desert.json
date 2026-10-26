@@ -1,0 +1,52 @@
+{
+  "caravan_trades": 8,
+  "cheap": [
+    {
+      "item": "minecraft:sand",
+      "factor": 0.6,
+      "lot": 32
+    },
+    {
+      "item": "minecraft:sandstone",
+      "factor": 0.7,
+      "lot": 16
+    },
+    {
+      "item": "minecraft:cactus",
+      "factor": 0.6,
+      "lot": 16
+    },
+    {
+      "tag": "minecraft:terracotta",
+      "factor": 0.7,
+      "lot": 16
+    }
+  ],
+  "dear": [
+    {
+      "tag": "minecraft:logs_that_burn",
+      "factor": 1.5,
+      "lot": 16
+    },
+    {
+      "tag": "minecraft:wool",
+      "factor": 1.4,
+      "lot": 8
+    },
+    {
+      "item": "minecraft:cod",
+      "factor": 1.4,
+      "lot": 8
+    },
+    {
+      "item": "minecraft:cooked_cod",
+      "factor": 1.4,
+      "lot": 8
+    },
+    {
+      "item": "minecraft:cooked_salmon",
+      "factor": 1.4,
+      "lot": 8
+    }
+  ]
+}

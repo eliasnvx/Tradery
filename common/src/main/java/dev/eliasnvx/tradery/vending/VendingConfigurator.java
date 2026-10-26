@@ -62,6 +62,10 @@ public final class VendingConfigurator {
         if (vendor == null || !menu.stillValid(player)) {
             return;
         }
+        if (!VendingTrades.allow(player)) {
+            reply(player, menu, false, Messages.tr("tradery.vending.too_fast", "Slow down"));
+            return;
+        }
         long maxPrice = Math.max(0, EconomyService.INSTANCE.maxBalance());
         long price = Math.max(0, maxPrice > 0 ? Math.min(requestedPrice, maxPrice) : requestedPrice);
         VendingSettings draft = menu.draft(price);
@@ -86,9 +90,15 @@ public final class VendingConfigurator {
         VendingSettings applied = draft.priceMode() == PriceMode.CURRENCY
             ? draft.withPrice(event.price())
             : draft.withPriceItem(draft.priceItem().copyWithCount((int) Math.max(1, Math.min(event.price(), draft.priceItem().getMaxStackSize()))));
-        boolean offerChanged = !applied.sameAs(vendor.settings());
-        vendor.setSettings(applied);
-        vendor.setFacade(facade);
+        VendingSettings current = vendor.settings();
+        boolean offerChanged = !applied.sameAs(current);
+        // Saving unchanged settings sends nothing to the chunk's viewers: a save is a block update for all of them
+        if (offerChanged || applied.animation() != current.animation() || applied.villagers() != current.villagers()) {
+            vendor.setSettings(applied);
+        }
+        if (!java.util.Objects.equals(facade, vendor.facade())) {
+            vendor.setFacade(facade);
+        }
         if (offerChanged) {
             // Buyers must never pay a price they didn't see: close their screens
             VendingMenus.closeBuyers((ServerLevel) vendor.getLevel(), vendor.getBlockPos());

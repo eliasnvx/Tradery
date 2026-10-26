@@ -2,6 +2,7 @@ package dev.eliasnvx.tradery.platform;
 
 import dev.eliasnvx.tradery.command.TraderyPermission;
 import dev.eliasnvx.tradery.network.TraderyPacket;
+import dev.eliasnvx.tradery.network.codec.StreamCodec;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
@@ -63,11 +64,27 @@ public interface Platform {
     /** Opens a menu of a {@link #menuType} type, sending its opening data. */
     <D> void openMenu(ServerPlayer player, MenuProvider provider, BiConsumer<FriendlyByteBuf, D> writer, D data);
 
+    /** {@link #menuType(MenuFactory, Function)} with the data's codec. */
+    default <M extends AbstractContainerMenu, D> MenuType<M> menuType(MenuFactory<M, D> factory, StreamCodec<? super FriendlyByteBuf, D> dataCodec) {
+        return menuType(factory, dataCodec::decode);
+    }
+
+    /** {@link #openMenu(ServerPlayer, MenuProvider, BiConsumer, Object)} with the data's codec. */
+    default <D> void openMenu(ServerPlayer player, MenuProvider provider, StreamCodec<? super FriendlyByteBuf, D> dataCodec, D data) {
+        openMenu(player, provider, dataCodec::encode, data);
+    }
+
     /** Positions ({@code BlockPos#asLong}) of player-placed blocks in this chunk that matter for rewards. Don't mutate. */
     it.unimi.dsi.fastutil.longs.LongSet placedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk);
 
     /** Replaces the marks of a chunk (and marks it for saving). */
     void setPlacedBlocks(net.minecraft.world.level.chunk.LevelChunk chunk, it.unimi.dsi.fastutil.longs.LongSet positions);
+
+    /**
+     * Registers a server data reload listener: it runs when data packs load (server start, {@code /reload}).
+     * Call during mod initialization.
+     */
+    void registerServerReloadListener(net.minecraft.resources.ResourceLocation id, net.minecraft.server.packs.resources.PreparableReloadListener listener);
 
     /** A creative tab builder the loader accepts (Fabric needs its own). */
     CreativeModeTab.Builder creativeTabBuilder();

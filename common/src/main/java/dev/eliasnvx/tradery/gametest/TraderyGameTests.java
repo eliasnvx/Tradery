@@ -23,6 +23,17 @@ public final class TraderyGameTests {
         List<Entry> all = new ArrayList<>(EconomyGameTests.ALL);
         all.addAll(VendingGameTests.ALL);
         all.addAll(SourcesGameTests.ALL);
+        all.addAll(VillagerGameTests.ALL);
+        all.addAll(MarketGameTests.ALL);
+        all.addAll(VillagerTradeGameTests.ALL);
+        all.addAll(VillageGameTests.ALL);
+        all.addAll(RobustnessGameTests.ALL);
+        all.addAll(SupplierGameTests.ALL);
+        all.addAll(VillageCommerceGameTests.ALL);
+        all.addAll(VillageBoardGameTests.ALL);
+        all.addAll(MarketCounterGameTests.ALL);
+        all.addAll(ShopLedgerGameTests.ALL);
+        all.addAll(VillageBuildingGameTests.ALL);
         return List.copyOf(all);
     }
 }

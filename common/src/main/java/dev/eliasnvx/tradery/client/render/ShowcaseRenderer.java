@@ -61,7 +61,8 @@ public abstract class ShowcaseRenderer<T extends BlockEntity> implements BlockEn
     /** The player's own choice wins over the block's (client config). */
     private static DisplayAnimation effectiveAnimation(DisplayAnimation fromBlock) {
         ClientConfig.AnimationOverride override = TraderyConfig.client().vending().animationOverride();
-        return override == ClientConfig.AnimationOverride.SERVER ? fromBlock : DisplayAnimation.valueOf(override.name());
+        DisplayAnimation forced = override.animation();
+        return forced == null ? fromBlock : forced;
     }
 
     @Override

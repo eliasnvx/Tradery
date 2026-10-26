@@ -4,11 +4,15 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.RecordBuilder;
+import com.mojang.serialization.MapLike;
 import com.mojang.datafixers.util.Pair;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.List;
+import java.util.stream.Stream;
 import java.util.function.Function;
 
 /** Codec building blocks for the JSON5 configs. */
@@ -62,6 +66,13 @@ public final class ConfigCodecs {
     }
 
     /** A string of {@code min..max} characters (DFU 6 has no {@code Codec.string(min, max)}). */
+    /** A list size check for {@code listOf().flatXmap}: DFU 6 has no {@code listOf(min, max)}. */
+    public static <T> Function<List<T>, DataResult<List<T>>> sizeCheck(int min, int max) {
+        return list -> list.size() < min || list.size() > max
+            ? DataResult.error(() -> "List size " + list.size() + " is outside [" + min + ", " + max + "]")
+            : DataResult.success(list);
+    }
+
     public static Codec<String> string(int min, int max) {
         return validate(Codec.STRING, value -> value.length() >= min && value.length() <= max
             ? DataResult.success(value)
@@ -106,6 +117,30 @@ public final class ConfigCodecs {
      */
     public static <A> MapCodec<A> field(Codec<A> codec, String name, A fallback) {
         return codec.optionalFieldOf(name).xmap(value -> value.orElse(fallback), Optional::of);
+    }
+
+    /**
+     * A field that falls back to {@code fallback} only when missing: an invalid value is an error (DFU 7's
+     * {@code optionalFieldOf}; DFU 6's would read it as missing).
+     */
+    public static <A> MapCodec<A> strictOptionalField(Codec<A> codec, String name, A fallback) {
+        return new MapCodec<>() {
+            @Override
+            public <T> Stream<T> keys(DynamicOps<T> ops) {
+                return Stream.of(ops.createString(name));
+            }
+
+            @Override
+            public <T> DataResult<A> decode(DynamicOps<T> ops, MapLike<T> input) {
+                T value = input.get(name);
+                return value == null ? DataResult.success(fallback) : codec.parse(ops, value);
+            }
+
+            @Override
+            public <T> RecordBuilder<T> encode(A input, DynamicOps<T> ops, RecordBuilder<T> prefix) {
+                return prefix.add(name, codec.encodeStart(ops, input));
+            }
+        };
     }
 
     /** An int in {@code [min, max]}. */

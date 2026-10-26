@@ -1,0 +1,188 @@
+{
+  "offers": [
+    {
+      "weight": 6,
+      "item": "minecraft:book",
+      "modifier": {
+        "function": "minecraft:enchant_randomly",
+        "enchantments": [
+          "minecraft:protection",
+          "minecraft:fire_protection",
+          "minecraft:feather_falling",
+          "minecraft:blast_protection",
+          "minecraft:projectile_protection",
+          "minecraft:respiration",
+          "minecraft:aqua_affinity",
+          "minecraft:thorns",
+          "minecraft:depth_strider",
+          "minecraft:sharpness",
+          "minecraft:smite",
+          "minecraft:bane_of_arthropods",
+          "minecraft:knockback",
+          "minecraft:fire_aspect",
+          "minecraft:looting",
+          "minecraft:sweeping",
+          "minecraft:efficiency",
+          "minecraft:silk_touch",
+          "minecraft:unbreaking",
+          "minecraft:fortune",
+          "minecraft:power",
+          "minecraft:punch",
+          "minecraft:flame",
+          "minecraft:infinity",
+          "minecraft:luck_of_the_sea",
+          "minecraft:lure",
+          "minecraft:loyalty",
+          "minecraft:impaling",
+          "minecraft:riptide",
+          "minecraft:channeling",
+          "minecraft:multishot",
+          "minecraft:quick_charge",
+          "minecraft:piercing"
+        ]
+      },
+      "price": {
+        "min": 30,
+        "max": 75
+      }
+    },
+    {
+      "weight": 4,
+      "item": "minecraft:name_tag",
+      "price": {
+        "min": 25,
+        "max": 40
+      }
+    },
+    {
+      "weight": 3,
+      "item": "minecraft:saddle",
+      "price": {
+        "min": 15,
+        "max": 25
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:map",
+      "price": {
+        "min": 8,
+        "max": 12
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:compass",
+      "price": {
+        "min": 10,
+        "max": 15
+      }
+    },
+    {
+      "weight": 3,
+      "item": "minecraft:ender_pearl",
+      "count": 4,
+      "price": {
+        "min": 12,
+        "max": 20
+      }
+    },
+    {
+      "weight": 3,
+      "item": "minecraft:golden_carrot",
+      "count": 8,
+      "price": {
+        "min": 10,
+        "max": 16
+      }
+    },
+    {
+      "weight": 3,
+      "item": "minecraft:experience_bottle",
+      "count": 8,
+      "price": {
+        "min": 20,
+        "max": 30
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:lead",
+      "count": 2,
+      "price": {
+        "min": 6,
+        "max": 10
+      }
+    },
+    {
+      "weight": 1,
+      "item": {
+        "id": "minecraft:enchanted_book",
+        "Count": 1,
+        "tag": {
+          "StoredEnchantments": [
+            {
+              "id": "minecraft:frost_walker",
+              "lvl": 2
+            }
+          ]
+        }
+      },
+      "price": {
+        "min": 60,
+        "max": 80
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:blue_ice",
+      "count": 4,
+      "price": {
+        "min": 12,
+        "max": 18
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:powder_snow_bucket",
+      "price": {
+        "min": 6,
+        "max": 10
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:sweet_berries",
+      "count": 8,
+      "price": {
+        "min": 5,
+        "max": 8
+      }
+    },
+    {
+      "weight": 2,
+      "item": "minecraft:glow_berries",
+      "count": 4,
+      "price": {
+        "min": 8,
+        "max": 12
+      }
+    },
+    {
+      "weight": 1,
+      "item": "minecraft:spyglass",
+      "price": {
+        "min": 12,
+        "max": 18
+      }
+    },
+    {
+      "weight": 1,
+      "item": "minecraft:music_disc_strad",
+      "price": {
+        "min": 30,
+        "max": 45
+      }
+    }
+  ]
+}

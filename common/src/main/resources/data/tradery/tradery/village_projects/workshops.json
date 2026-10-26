@@ -1,0 +1,10 @@
+{
+  "cost": 500,
+  "level": 2,
+  "icon": "minecraft:smithing_table",
+  "effects": {
+    "wage_multiplier": 1.2
+  },
+  "action": "structure",
+  "structure": "workshops"
+}

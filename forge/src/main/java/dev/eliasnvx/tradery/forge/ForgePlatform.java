@@ -180,6 +180,11 @@ final class ForgePlatform implements Platform {
     });
 
     /** Registers the capability and attaches it to every server chunk. */
+    @Override
+    public void registerServerReloadListener(net.minecraft.resources.ResourceLocation id, net.minecraft.server.packs.resources.PreparableReloadListener listener) {
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.AddReloadListenerEvent event) -> event.addListener(listener));
+    }
+
     void registerPlacedBlocks(IEventBus modBus) {
         modBus.addListener((RegisterCapabilitiesEvent event) -> event.register(PlacedBlocksData.class));
         MinecraftForge.EVENT_BUS.addGenericListener(LevelChunk.class, (AttachCapabilitiesEvent<LevelChunk> event) -> {
