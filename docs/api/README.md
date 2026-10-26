@@ -5,7 +5,7 @@
 ```groovy
 repositories { maven { url "<Tradery maven>" } }
 dependencies {
-    compileOnly "dev.eliasnvx:tradery-api:1.0.0+1.21.1"   // the classes ship inside the Tradery mod jar
+    compileOnly "dev.eliasnvx:tradery-api:1.1.0+1.21.1"   // the classes ship inside the Tradery mod jar
 }
 ```
 
