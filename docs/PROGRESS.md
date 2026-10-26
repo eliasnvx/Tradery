@@ -80,3 +80,24 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] `tools/crash-test.sh` on Forge: PASS; found and fixed the economy start racing other mods' ServerStarted listeners
 - [x] Production jars: Forge reobf jar with the SRG refmap and `MixinConfigs`; Fabric remapped jar with an intermediary refmap
 
+## Phase 6 — v1.1 Living Market (active, 2026-10-18)
+- [x] Design: SPEC "Живой рынок (v1.1)", docs/decisions.md 2026-10-18; config sections `villagers` and `market`
+- [x] Villager customers: manager, wallets, needs/prices data packs, demand, reputation, owner toggle, notifications (VillagerGameTests 8/8)
+- [x] Village market: stall structures, processor, pool injection, changer (MarketGameTests 3/3)
+- [x] GameTests (gate): Fabric 45/45, NeoForge 43/43; 15 languages; live client check in a generated village (farmer bought bread)
+- [x] Villager trading for money (author's choice): Tradery trade window via a `Villager#startTrading` mixin, wallet in and out, config `villagerTrading`, 15 languages (VillagerTradeGameTests 5/5)
+- [x] Live check of the villager trade window (`TRADERY_MARKET_SHOTS=trade`): a village butcher's own offers in coins, sold 4 rabbits for 3.00 from its wallet, bought rabbit stew for 3.00 into it; GameTests Fabric 50/50, NeoForge 48/48
+- [x] Village economy core (author's choice 2026-10-20): `villages` config, `VillageEconomy`/`VillageState`, `Villages` (census, prosperity and levels, treasury, trade tax, wages by level), `VillageProjects` loader, `VillageCommerce` API (VillageGameTests 6/6)
+- [x] Village board: orders, projects, bell hint, board on market stalls (VillageBoardGameTests 12/12)
+- [x] Villager suppliers to buyback blocks (SupplierGameTests 8/8)
+- [x] Commerce: regional prices, market days, trading places, caravans, raids (VillageCommerceGameTests 8/8); Fabric GameTests 84/84, 15 languages
+- [x] Server conveniences: shop ledger, multi-offer counter, villagers at counters (MarketCounterGameTests 12/12, ShopLedgerGameTests 6/6)
+- [x] Live check of the village economy (`TRADERY_MARKET_SHOTS=village|shops`): board tabs, an order delivered, bell hint, a caravan and its window, counter with six offers, buyer/owner screens, shop ledger; 15 languages; GameTests Fabric 102/102, NeoForge 100/100
+- [x] Review round 2026-10-23: performance (coalesced saves, spread customer scan, bell cache, cached priced items, bounded log queue), robustness (untrusted sample codec + 2 KB cap, Save rate limit, pruning keeps funded villages, lenient settings codecs, wallet vs tax), client render paths allocation-free; RobustnessGameTests 4/4, JUnit StackMath/TradeTerms; Fabric 106/106, NeoForge 104/104
+- [x] Treasury donations from the board and a 7-day treasury history on the Village tab (2026-10-23; VillageBoardGameTests 14/14, `Reasons.VILLAGE_DONATION`, 15 languages)
+- [x] Projects build visibly (lamp posts, granary, workshops, trading yard templates), village title on entering, wrapped board tooltips, SDL mouse buttons (2026-10-24; VillageBoardGameTests 16/16)
+- [x] Placement like village houses (real ground, outside houses, beside streets), villages build a well / watchtower / trade hall from a savings fund, festivals on market days, Jade on bells (2026-10-24; VillageBuildingGameTests 3/3)
+- [x] Streets: paths from new buildings to the street, "Paved Streets" project over the whole village with daily repaving; the watch post builds a lookout; street lights with arms along every dark street (2026-10-24; VillageBoardGameTests 18/18)
+- [x] Port to 1.21.1 (2026-10-26, branch `1.21.1-dev`)
+- [x] Port to 1.20.1 (2026-10-26): every 1.1 source, resource and test; `./gradlew build` green (JUnit, GameTests Fabric 114/114, Forge 113/113); client checks on both loaders open the village title, the board's three tabs, a villager's trade window, the counter (block, buyer, owner) and the shop ledger; differences in `docs/decisions.md` 2026-10-26
+
