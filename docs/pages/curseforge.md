@@ -157,7 +157,7 @@ A village is the villagers who meet at one bell. Looking at the bell shows its l
 
 ![The Village tab of the village board](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/village/board_village.jpg)
 
-**The village board.** Craft one (three planks over paper, a sign and paper) and place it within 48 blocks of a bell, or find one on a village market. Its tabs show the orders, the village (level, people, the treasury and its last week, what it's saving for, your reputation, projects) and the market (cheap and dear goods, market days, trading places, caravans).
+**The village board.** Craft one (three planks over paper, a sign and paper) and place it within 48 blocks of a bell, or find one on a village market. Its tabs show the orders, the village (level, people, the treasury and its last week, what it's saving for, your reputation, projects) the market (cheap and dear goods, market days, trading places, caravans) and the patron (who gave the most, the village's name and specialization).
 
 **Orders.** Each morning the village posts three to six orders for what its professions need, 8 to 64 items each, paying the fair price times 1.3 from its treasury. Deliver plain items all at once or in parts; orders are shared by everyone and last two days.
 
@@ -200,7 +200,7 @@ Buildings go where a village house could stand: on real ground near the bell, ne
 
 **Patron and specialization.** Whoever has given a village the most through projects and donations (at least 100 ₮) is its patron: they name it, get 10% of its trade tax, and from Town level pick Farming (+15% produce), Crafts (+15% pay and treasury income) or Trade (+15% customers), each with its own building to fund: an orchard farmstead, a forge or an exchange office.
 
-**Village markets.** Newly generated plains, desert, savanna, taiga and snowy villages can have market stalls with server vendors selling enchanted books, name tags, saddles, maps, rare seeds and more for money, and a changer that sells emeralds for 3.00 ₮ and buys them for 2.00 ₮. Existing chunks don't change.
+**Village markets.** Newly generated plains, desert, savanna, taiga and snowy villages, and the villages of ChoiceTheorem's Overhauled Village, can have market stalls with server vendors selling enchanted books, name tags, saddles, maps, rare seeds and more for money, and a changer that sells emeralds for 3.00 ₮ and buys them for 2.00 ₮. A plot under water stays empty. Existing chunks don't change.
 
 ---
 

@@ -20,6 +20,8 @@ Tradery adds shops that keep selling while you're away. You place a vending bloc
 
 Money enters the world through coin ore, mob rewards and villagers, and leaves it through fees and village projects. Since 1.1 villagers take part in that: they carry wallets, walk to players' stalls to buy what they need, sell what they produce to players who run buyback blocks, and every village keeps a treasury that pays for orders and buildings. A village grows because players trade with it. All of this works in single-player too.
 
+**New in 1.2:** the [trade crate](#trade-crate), which villagers walk up to and trade with on their own; [patrons and specializations](#patron-and-specialization) for villages; support for WTHIT, BlueMap, squaremap, ChoiceTheorem's Overhauled Village, VillagersPlus and Guard Villagers. Every change and fix is in the [changelog](CHANGELOG.md).
+
 **Contents:** [Installing](#installing) · [Your first shop](#your-first-shop) · [Money](#money) · [Vending blocks](#vending-blocks) · [Villagers](#villagers) · [Villages](#villages) · [Commands](#commands) · [Configuration](#configuration) · [Compatibility](#compatibility) · [For developers](#for-developers) · [FAQ](#faq)
 
 ![A market street with vending blocks and display cases](docs/images/page/market.jpg)
@@ -173,7 +175,7 @@ Hoppers and pipes fill the payment from the top and the sides and take the recei
 
 Tradery counts the villagers who meet at a bell as one village and checks every 30 seconds on loaded bells: how many adults live there, how many have a job, which professions, and the village type. Nothing is simulated in unloaded chunks; daily income and decay are worked out when the village is next loaded, by the number of in-game days that passed.
 
-Looking at a bell shows the village's name, level, prosperity and next market day. Entering a village shows its name and level at the top centre of the screen for a few seconds, away from the corners where minimaps sit.
+Looking at a bell shows the village's name, level, prosperity, specialization, patron and next market day. Entering a village shows its name and level at the top centre of the screen for a few seconds, away from the corners where minimaps sit.
 
 ### Prosperity and levels
 
@@ -203,11 +205,12 @@ Each day the treasury gains 1.00 ₮ per villager times the level's pay multipli
 
 ![The Village tab of the board](docs/images/village/board_village.jpg)
 
-Craft a village board from three planks over paper, a sign and paper, and place it within 48 blocks of a bell; boards also generate on village market stalls. It has three tabs:
+Craft a village board from three planks over paper, a sign and paper, and place it within 48 blocks of a bell; boards also generate on village market stalls. It has four tabs:
 
 - **Orders:** what the village wants delivered, how many, what it pays.
 - **Village:** level, prosperity, people and professions, the treasury and its week, what the village is saving for, your reputation, projects and donations.
 - **Market:** what's cheap and dear here, the next market day, trading places and caravans.
+- **Patron:** who has given the village the most, its name and its specialization.
 
 ### Orders
 
@@ -297,7 +300,9 @@ A raid lost at a village costs it 30% of its prosperity, half its treasury and h
 
 ### Village markets
 
-Newly generated plains, desert, savanna, taiga and snowy villages can have market stalls. Each has two or three server vendors selling things like enchanted books, name tags, saddles, maps and rare seeds for money. A changer stall sells emeralds for 3.00 ₮ and buys them for 2.00 ₮. Only operators can break market stalls. Chunks generated before the mod was installed don't get stalls.
+Newly generated plains, desert, savanna, taiga and snowy villages can have market stalls, and so can the villages of ChoiceTheorem's Overhauled Village, where a stall takes the closest vanilla style. Each stall has two or three server vendors selling things like enchanted books, name tags, saddles, maps and rare seeds for money. A changer stall sells emeralds for 3.00 ₮ and buys them for 2.00 ₮. Only operators can break market stalls. A stall that would stand in water, by a pond at road height, isn't built and its plot stays empty. Chunks generated before the mod was installed don't get stalls.
+
+![A Tradery market stall in a ChoiceTheorem's Overhauled Village](docs/images/village/ctov_village.jpg)
 
 ## Commands
 
@@ -380,18 +385,22 @@ Every transaction is also written to `<world>/tradery/logs/YYYY-MM-DD.log` as on
 
 | Mod | What you get |
 |---|---|
-| Jade, WTHIT | Owner, offers and stock of vending blocks and counters, what a trade crate wants; a bell's village, level, specialization, patron, treasury and what it's saving for |
-| JEI, REI | Drag items into the goods, price and facade slots; info pages for the blocks, coin ore and coins |
-| Common Economy API (Fabric, built in) | Other economy mods read and change Tradery balances, so shop mods built on it use the same money |
-| Text Placeholder API (Fabric) | `%tradery:balance%`, `%tradery:balance_short%`, `%tradery:top_name 1%`, `%tradery:top_balance 1%`, `%tradery:currency%` |
-| LuckPerms | All `tradery.*` permission nodes |
-| BlueMap, squaremap | Map layers of Tradery's villages (level, prosperity, treasury, specialization, patron) and of players' shops (owner and offers) |
-| ChoiceTheorem's Overhauled Village | Market stalls generate in its villages too, in the closest vanilla style |
-| VillagersPlus | Its alchemists, horticulturists, miners, occultists and oceanographers supply buyback blocks and shop at players' stalls |
-| Guard Villagers (NeoForge) | The Watch Post brings two guards with its iron golem |
+| [Jade](https://modrinth.com/mod/jade), [WTHIT](https://modrinth.com/mod/wthit) | Owner, offers and stock of vending blocks and counters, what a trade crate wants; a bell's village, level, specialization, patron, treasury and what it's saving for |
+| [JEI](https://modrinth.com/mod/jei), [REI](https://modrinth.com/mod/rei) | Drag items into the goods, price and facade slots; info pages for the blocks, coin ore and coins |
+| [Common Economy API](https://github.com/Patbox/common-economy-api) (Fabric, built in) | Other economy mods read and change Tradery balances, so shop mods built on it use the same money |
+| [Text Placeholder API](https://modrinth.com/mod/placeholder-api) (Fabric) | `%tradery:balance%`, `%tradery:balance_short%`, `%tradery:top_name 1%`, `%tradery:top_balance 1%`, `%tradery:currency%` |
+| [LuckPerms](https://luckperms.net/) | All `tradery.*` permission nodes |
+| [BlueMap](https://modrinth.com/mod/bluemap), [squaremap](https://modrinth.com/mod/squaremap) | Map layers of Tradery's villages (level, prosperity, treasury, specialization, patron) and of players' shops (owner and offers) |
+| [ChoiceTheorem's Overhauled Village](https://modrinth.com/mod/ct-overhaul-village) | Market stalls generate in its villages too, in the closest vanilla style |
+| [VillagersPlus](https://modrinth.com/mod/villagersplus) | Its alchemists, horticulturists, miners, occultists and oceanographers supply buyback blocks and shop at players' stalls |
+| [Guard Villagers](https://modrinth.com/mod/guard-villagers) (NeoForge) | The Watch Post brings two guards with its iron golem |
 | Minimaps | The village title stays in the middle of the screen, clear of the corners minimaps use |
 
 All of them are optional. EMI will follow when it's available for 26.3.
+
+Tradery rebuilds its BlueMap and squaremap layers every minute by default. On squaremap a shop is a gold coin, on BlueMap a pin like the village's.
+
+![Tradery's villages and shops on BlueMap](docs/images/village/web_map.jpg)
 
 ## For developers
 
@@ -425,6 +434,8 @@ Every movement of money has a reason id such as `tradery:vending/sale`, `tradery
 
 **Can I turn the villager part off?** Yes, separately: `villagers.enabled` (customers and suppliers), `villagerTrading.enabled` (the trade window), `market.enabled` (stalls in new villages), `villages.buildings.enabled` and `villages.festival.enabled`.
 
+**Villages don't show up on my web map.** Tradery adds a village once it has seen its bell loaded, and rebuilds the layers every minute (`integrations.maps.updateSeconds`). Shop pins are for blocks that belong to players: vending blocks, counters and trade crates. Market stalls belong to the server and don't get one.
+
 ## Versions
 
 | Minecraft | Loaders | Branch |
@@ -439,15 +450,17 @@ Every movement of money has a reason id such as `tradery:vending/sale`, `tradery
 ./gradlew build                      # both loaders, JUnit and GameTests
 ./gradlew :fabric:runClient
 ./gradlew :neoforge:runClient
-./gradlew :fabric:runClient -Pcompat=true   # with JEI, REI, Jade, Placeholder API
+./gradlew :fabric:runClient -Pcompat=true   # with every optional mod
 ./gradlew :fabric:runClientGameTest  # client checks with screenshots
 ```
+
+`-Pcompat` also takes groups of those mods: `recipes`, `jade`, `placeholders`, `wthit`, `maps` (or `bluemap`, `squaremap`) and `villages`.
 
 Gradle runs on JDK 25 (`gradle/gradle-daemon-jvm.properties`).
 
 ## Credits
 
-The textures, the icon and the page icons are pixel art, drawn pixel by pixel by the author's own scripts. The banner is an in-game screenshot with Complementary Reimagined shaders; every other picture is a plain in-game screenshot. No image here is AI-generated.
+The textures, the icon and the page icons are pixel art, drawn pixel by pixel by the author's own scripts. The banner is an in-game screenshot with Complementary Reimagined shaders; every other picture is a plain in-game screenshot, except the web map, which is BlueMap's page in a browser. No image here is AI-generated.
 
 Tradery was inspired by the Vending Block mod and is written from scratch; it contains no code from Vending Block or its ports.
 
