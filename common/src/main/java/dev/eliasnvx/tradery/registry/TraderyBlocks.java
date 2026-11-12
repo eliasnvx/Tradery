@@ -48,6 +48,11 @@ public final class TraderyBlocks {
         BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f, BLAST_PROOF).sound(SoundType.WOOD)
             .noOcclusion().pushReaction(PushReaction.BLOCK));
     public static final Supplier<BlockItem> MARKET_COUNTER_ITEM = blockItem("market_counter", MARKET_COUNTER);
+    public static final Supplier<dev.eliasnvx.tradery.vending.TradeCrateBlock> TRADE_CRATE = block("trade_crate",
+        dev.eliasnvx.tradery.vending.TradeCrateBlock::new,
+        BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f, BLAST_PROOF).sound(SoundType.WOOD)
+            .pushReaction(PushReaction.BLOCK));
+    public static final Supplier<BlockItem> TRADE_CRATE_ITEM = blockItem("trade_crate", TRADE_CRATE);
     public static final Supplier<dev.eliasnvx.tradery.vending.ShopLedgerItem> SHOP_LEDGER = item("shop_ledger",
         properties -> new dev.eliasnvx.tradery.vending.ShopLedgerItem(properties.stacksTo(1)));
 
@@ -59,6 +64,9 @@ public final class TraderyBlocks {
     public static final Supplier<BlockEntityType<dev.eliasnvx.tradery.vending.MarketCounterBlockEntity>> MARKET_COUNTER_BLOCK_ENTITY =
         Platform.get().register(Registries.BLOCK_ENTITY_TYPE, "market_counter",
             () -> BlockEntityType.Builder.of(dev.eliasnvx.tradery.vending.MarketCounterBlockEntity::new, MARKET_COUNTER.get()).build(null));
+    public static final Supplier<BlockEntityType<dev.eliasnvx.tradery.vending.TradeCrateBlockEntity>> TRADE_CRATE_BLOCK_ENTITY =
+        Platform.get().register(Registries.BLOCK_ENTITY_TYPE, "trade_crate",
+            () -> BlockEntityType.Builder.of(dev.eliasnvx.tradery.vending.TradeCrateBlockEntity::new, TRADE_CRATE.get()).build(null));
 
     public static final Supplier<CreativeModeTab> TAB = Platform.get().register(Registries.CREATIVE_MODE_TAB, "main",
         () -> Platform.get().creativeTabBuilder()
@@ -69,6 +77,7 @@ public final class TraderyBlocks {
                 output.accept(DISPLAY_BLOCK_ITEM.get());
                 output.accept(VILLAGE_BOARD_ITEM.get());
                 output.accept(MARKET_COUNTER_ITEM.get());
+                output.accept(TRADE_CRATE_ITEM.get());
                 output.accept(SHOP_LEDGER.get());
                 output.accept(VENDOR_KEY.get());
                 TraderyItems.tabItems().forEach(item -> output.accept(item.get()));

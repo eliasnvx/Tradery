@@ -1,6 +1,7 @@
 {
   "values": [
     "tradery:village_board",
-    "tradery:market_counter"
+    "tradery:market_counter",
+    "tradery:trade_crate"
   ]
 }

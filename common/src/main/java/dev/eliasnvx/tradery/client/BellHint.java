@@ -1,9 +1,9 @@
 package dev.eliasnvx.tradery.client;
 
-import dev.eliasnvx.tradery.config.ClientConfig;
 import dev.eliasnvx.tradery.config.TraderyConfig;
 import dev.eliasnvx.tradery.network.TraderyPayloads;
 import dev.eliasnvx.tradery.platform.Platform;
+import dev.eliasnvx.tradery.village.VillageSpecialization;
 import dev.eliasnvx.tradery.village.Villages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The village of a bell, shown at the top of the screen while the crosshair is on it (SPEC "Доска деревни"): its
- * name, level and prosperity, and the next market day. The server answers {@link TraderyPayloads.BellInfoRequestPayload}
+ * name, level and prosperity, its specialization and patron, and the next market day. The server answers {@link TraderyPayloads.BellInfoRequestPayload}
  * (asked again every two seconds while looking); the rows are built when the answer arrives, so drawing allocates
  * nothing. Shown unless the look-at hints are off ({@code vending.hint: OFF}).
  */
@@ -30,7 +30,7 @@ public final class BellHint {
     private static final int ROW = 11;
     /** Ticks between two questions about the same bell. */
     private static final int REFRESH_TICKS = 40;
-    private static final int MAX_ROWS = 3;
+    private static final int MAX_ROWS = 5;
 
     private static @Nullable BlockPos askedPos;
     private static long askedAt;
@@ -45,7 +45,7 @@ public final class BellHint {
     }
 
     private static boolean enabled() {
-        return TraderyConfig.client().vending().hint() != ClientConfig.HintMode.OFF;
+        return LookHints.enabled();
     }
 
     /** The bell under the crosshair, or null. */
@@ -87,6 +87,11 @@ public final class BellHint {
             ? Component.translatable("tradery.bell.prosperity_next", info.prosperity(), info.nextThreshold())
             : Component.translatable("tradery.bell.prosperity", info.prosperity());
         add(font, Component.translatable("tradery.bell.level", Villages.levelName(info.level()), prosperity), TEXT);
+        VillageSpecialization.byId(info.specialization())
+            .ifPresent(specialization -> add(font, Component.translatable("tradery.bell.specialization", specialization.displayName()), TEXT));
+        if (!info.patron().isEmpty()) {
+            add(font, Component.translatable("tradery.bell.patron", info.patron()), LABEL);
+        }
         if (info.marketDayIn() == 0) {
             add(font, Component.translatable("tradery.board.market_day_today"), GOLD);
         } else if (info.marketDayIn() == 1) {

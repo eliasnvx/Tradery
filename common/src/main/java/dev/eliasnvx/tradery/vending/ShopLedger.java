@@ -107,6 +107,9 @@ public final class ShopLedger {
         if (blockEntity instanceof MarketCounterBlockEntity counter) {
             return ShopSnapshot.of(counter);
         }
+        if (blockEntity instanceof TradeCrateBlockEntity crate) {
+            return ShopSnapshot.of(crate);
+        }
         return null;
     }
 
@@ -140,9 +143,11 @@ public final class ShopLedger {
             offers.add(new ShopLedgerMenu.OfferView(new ItemStack(offer.goods(), offer.perTrade()), offer.price(), priceItem, offer.stock()));
         }
         boolean counter = snapshot.kind() == ShopSnapshot.Kind.COUNTER;
+        boolean crate = snapshot.kind() == ShopSnapshot.Kind.CRATE;
+        int kind = counter ? ShopLedgerMenu.KIND_COUNTER : crate ? ShopLedgerMenu.KIND_CRATE : ShopLedgerMenu.KIND_VENDING;
         ItemStack revenue = snapshot.revenueItem() == Items.AIR || snapshot.revenue() <= 0 ? ItemStack.EMPTY : new ItemStack(snapshot.revenueItem());
-        return new ShopLedgerMenu.Row(listing.pos(), counter ? ShopLedgerMenu.KIND_COUNTER : ShopLedgerMenu.KIND_VENDING, listing.live(),
-            snapshot.buyback(), snapshot.villagers(), counter || (money && !snapshot.offers().isEmpty()), List.copyOf(offers), revenue,
+        return new ShopLedgerMenu.Row(listing.pos(), kind, listing.live(),
+            snapshot.buyback(), snapshot.villagers(), !crate && (counter || (money && !snapshot.offers().isEmpty())), List.copyOf(offers), revenue,
             revenue.isEmpty() ? 0 : snapshot.revenue(), snapshot.alerts());
     }
 

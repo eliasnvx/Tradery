@@ -27,6 +27,11 @@ dependencies {
     compileOnly("me.shedaniel.cloth:basic-math:0.6.1") { transitive = false }
     modCompileOnly("dev.architectury:architectury-forge:${architectury_version}") { transitive = false }
     modCompileOnly("maven.modrinth:jade:${jade_forge_version}") { transitive = false }
+    // v1.2: WTHIT (its API ships in the mod jar), server web maps (plain Java APIs)
+    modCompileOnly("maven.modrinth:wthit:forge-${wthit_version}") { transitive = false }
+    compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${bluemap_api_version}") { transitive = false }
+    compileOnly("com.flowpowered:flow-math:${flow_math_version}") { transitive = false }
+    compileOnly("xyz.jpenilla:squaremap-api:${squaremap_api_version}") { transitive = false }
 
     // Both loaders ship Mixin; Forge resolves the mixins through the refmap the :forge build generates
     // Forge 47 ships plain Mixin 0.8.5 and no MixinExtras: common mixins use plain Mixin only

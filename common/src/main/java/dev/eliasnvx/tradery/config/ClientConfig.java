@@ -77,7 +77,7 @@ public record ClientConfig(Hud hud, Notifications notifications, Vending vending
         ).apply(i, Notifications::new));
     }
 
-    /** The look-at hint of vending blocks. {@code AUTO}: on, unless Jade (which shows the same) is installed. */
+    /** The look-at hints (vending blocks, market counters, bells). {@code AUTO}: on, unless Jade or WTHIT (they show the same) is installed. */
     public enum HintMode {
         AUTO, ON, OFF
     }
@@ -130,8 +130,8 @@ public record ClientConfig(Hud hud, Notifications notifications, Vending vending
         Map.entry("notifications", "Messages about your vending blocks"),
         Map.entry("notifications.offlineSummary", "Summary of sales made while you were away, shown when you join"),
         Map.entry("vending.animationOverride", "SERVER (as the server says), STATIC, SPIN, BOB, SPIN_BOB or NONE"),
-        Map.entry("vending.hint", "Owner, offer and trade keys at the top of the screen while you look at a vending block: "
-            + "AUTO (off when Jade is installed, it shows the same), ON or OFF"),
+        Map.entry("vending.hint", "Owner, offer and trade keys at the top of the screen while you look at a vending block (a market counter, a bell): "
+            + "AUTO (off when Jade or WTHIT is installed, they show the same), ON or OFF"),
         Map.entry("vending.hintY", "Distance of the hint from the top of the screen, in GUI pixels"),
         Map.entry("villageTitle", "The village's name and level, shown for a few seconds at the top of the screen when you enter it"),
         Map.entry("villageTitle.offsetY", "Distance from the top of the screen, in GUI pixels: under the look-at hints, in the middle, clear of minimaps in the corners"),

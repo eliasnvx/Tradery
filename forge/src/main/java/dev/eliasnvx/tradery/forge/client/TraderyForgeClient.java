@@ -44,6 +44,7 @@ public final class TraderyForgeClient {
             MenuScreens.register(TraderyMenus.COUNTER_OWNER.get(), dev.eliasnvx.tradery.client.screen.CounterOwnerScreen::new);
             MenuScreens.register(TraderyMenus.COUNTER_BUYER.get(), dev.eliasnvx.tradery.client.screen.CounterBuyerScreen::new);
             MenuScreens.register(TraderyMenus.SHOP_LEDGER.get(), dev.eliasnvx.tradery.client.screen.ShopLedgerScreen::new);
+            MenuScreens.register(TraderyMenus.TRADE_CRATE.get(), dev.eliasnvx.tradery.client.screen.TradeCrateScreen::new);
         }));
         modBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
             event.registerBlockEntityRenderer(TraderyBlocks.VENDING_BLOCK_ENTITY.get(), VendingRenderer::new);

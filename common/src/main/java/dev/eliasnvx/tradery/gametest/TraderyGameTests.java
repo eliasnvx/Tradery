@@ -34,6 +34,8 @@ public final class TraderyGameTests {
         all.addAll(MarketCounterGameTests.ALL);
         all.addAll(ShopLedgerGameTests.ALL);
         all.addAll(VillageBuildingGameTests.ALL);
+        all.addAll(TradeCrateGameTests.ALL);
+        all.addAll(VillageCouncilGameTests.ALL);
         return List.copyOf(all);
     }
 }

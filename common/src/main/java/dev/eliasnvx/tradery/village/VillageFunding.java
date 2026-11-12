@@ -2,6 +2,8 @@ package dev.eliasnvx.tradery.village;
 
 import java.util.HashMap;
 import dev.eliasnvx.tradery.Tradery;
+import dev.eliasnvx.tradery.compat.guardvillagers.GuardVillagers;
+import net.minecraft.world.entity.Entity;
 import dev.eliasnvx.tradery.api.FailReason;
 import dev.eliasnvx.tradery.api.Reason;
 import dev.eliasnvx.tradery.api.Reasons;
@@ -103,6 +105,10 @@ public final class VillageFunding {
             return VillageBoard.Outcome.fail(Messages.tr("tradery.board.project_level", "%s needs the village to be a %s", name,
                 Villages.levelName(project.level())));
         }
+        if (project.specialization() != null && VillageCouncil.active(village).orElse(null) != project.specialization()) {
+            return VillageBoard.Outcome.fail(Messages.tr("tradery.board.project_specialization", "%s needs the village to specialize in %s", name,
+                project.specialization().displayName()));
+        }
         long cost = VillagerPurchases.toMinor(project.cost());
         if (cost == Long.MAX_VALUE) {
             return VillageBoard.Outcome.fail(Messages.failure(FailReason.LIMIT_EXCEEDED));
@@ -191,12 +197,20 @@ public final class VillageFunding {
             if (building != null) {
                 // The golem stands by its post, when there's room there
                 BoundingBox box = building.box();
-                BlockPos post = golemSpot(level, new BlockPos((box.minX() + box.maxX()) / 2, box.minY() + 1, (box.minZ() + box.maxZ()) / 2));
+                BlockPos post = golemSpot(level, new BlockPos((box.minX() + box.maxX()) / 2, box.minY() + 1, (box.minZ() + box.maxZ()) / 2), box);
                 if (post != null) {
                     golem.moveTo(post.getX() + 0.5, post.getY(), post.getZ() + 0.5, golem.getYRot(), 0.0f);
                 }
             }
             level.addFreshEntity(golem);
+            // With Guard Villagers, guards come to the post too
+            for (int i = 0; i < GuardVillagers.PER_WATCH_POST; i++) {
+                BlockPos spot = golemSpot(level, golem.blockPosition(), building == null ? null : building.box());
+                Entity guard = spot == null ? null : GuardVillagers.prepareGuard(level, spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5);
+                if (guard != null) {
+                    level.addFreshEntity(guard);
+                }
+            }
         }
         if (building != null) {
             // The building (chunk) and the money (saved data) reach the disk together
@@ -209,6 +223,7 @@ public final class VillageFunding {
         }
         VillageLamps.place(level, village, lamps);
         Villages.addProsperity(server, village, Villages.points(cost, POINTS_PER_UNIT));
+        VillageCouncil.contribute(server, village, player, cost);
         VillageBoard.gossip(server, village, player.getUUID(), GossipType.MINOR_POSITIVE, GossipType.REPUTATION_CHANGE_PER_EVENT);
         return VillageBoard.Outcome.done(Messages.tr("tradery.board.funded", "You funded %s for %s. The village thanks you", name,
             Messages.coins(cost)));
@@ -241,6 +256,7 @@ public final class VillageFunding {
         }
         Villages.addToTreasury(server, village, amount);
         Villages.addProsperity(server, village, Villages.points(amount, POINTS_PER_UNIT));
+        VillageCouncil.contribute(server, village, player, amount);
         VillageBoard.gossip(server, village, player.getUUID(), GossipType.MINOR_POSITIVE, GossipType.REPUTATION_CHANGE_PER_EVENT);
         return VillageBoard.Outcome.done(Messages.tr("tradery.board.donated", "You gave %s to the treasury of %s. The village thanks you",
             Messages.coins(amount), Villages.displayName(village)));
@@ -270,7 +286,20 @@ public final class VillageFunding {
 
     /** Nearest spot to the bell with a solid floor and room for a golem. */
     static @Nullable BlockPos golemSpot(ServerLevel level, BlockPos bell) {
+        return golemSpot(level, bell, null);
+    }
+
+    /**
+     * Nearest spot to {@code center} with a solid floor and room for a golem, outside {@code avoid}'s columns: a golem
+     * (or a guard) stands by the post on the ground, not on its roof.
+     */
+    static @Nullable BlockPos golemSpot(ServerLevel level, BlockPos center, @Nullable BoundingBox avoid) {
+        BlockPos bell = center;
         for (BlockPos offset : ringOffsets(GOLEM_RANGE)) {
+            if (avoid != null && bell.getX() + offset.getX() >= avoid.minX() && bell.getX() + offset.getX() <= avoid.maxX()
+                && bell.getZ() + offset.getZ() >= avoid.minZ() && bell.getZ() + offset.getZ() <= avoid.maxZ()) {
+                continue;
+            }
             // Nearest the given height first, so the ground beats a roof above it
             for (int step = 0; step <= 2 * GOLEM_HEIGHT_RANGE; step++) {
                 int dy = (step + 1) / 2 * (step % 2 == 0 ? -1 : 1);

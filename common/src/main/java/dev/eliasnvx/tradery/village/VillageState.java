@@ -22,7 +22,7 @@ import java.util.UUID;
 
 /**
  * One village's economy (SPEC "Деревня-экономика"): census, prosperity, treasury, projects, board orders, trading
- * licences and the dates of its events. Mutable, owned by {@link VillageEconomy}; change it only through
+ * licences, the dates of its events, its patron and specialization. Mutable, owned by {@link VillageEconomy}; change it only through
  * {@link Villages} and the features' services, which mark the saved data dirty. Days are in-game days
  * ({@link VillagerPurchases#today}), money is in minor units. Server thread only.
  */
@@ -139,6 +139,37 @@ public final class VillageState {
         ).apply(i, Growth::new));
     }
 
+    /**
+     * What one player gave the village (projects and donations), minor units, and the name they had then.
+     *
+     * @param name   the player's name at their last contribution
+     * @param amount everything they gave, minor units
+     */
+    public record Contribution(String name, long amount) {
+        static final Codec<Contribution> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.STRING.optionalFieldOf("name", "").forGetter(Contribution::name),
+            Codec.LONG.optionalFieldOf("amount", 0L).forGetter(Contribution::amount)
+        ).apply(i, Contribution::new));
+    }
+
+    /**
+     * The village's patron and specialization ({@link VillageCouncil}).
+     *
+     * @param contributions     player → what they gave
+     * @param patron            the patron, if any
+     * @param specialization    {@link VillageSpecialization} id, or empty
+     * @param specializationDay day the specialization was last picked (-1: never)
+     */
+    record Council(Map<UUID, Contribution> contributions, java.util.Optional<UUID> patron, String specialization, long specializationDay) {
+        static final Council NONE = new Council(Map.of(), java.util.Optional.empty(), "", -1);
+        static final Codec<Council> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.unboundedMap(UUIDUtil.STRING_CODEC, Contribution.CODEC).optionalFieldOf("contributions", Map.of()).forGetter(Council::contributions),
+            UUIDUtil.CODEC.optionalFieldOf("patron").forGetter(Council::patron),
+            Codec.STRING.optionalFieldOf("specialization", "").forGetter(Council::specialization),
+            Codec.LONG.optionalFieldOf("specialization_day", -1L).forGetter(Council::specializationDay)
+        ).apply(i, Council::new));
+    }
+
     static final Codec<VillageState> CODEC = RecordCodecBuilder.create(i -> i.group(
         ResourceKey.codec(Registries.DIMENSION).fieldOf("dimension").forGetter(v -> v.dimension),
         BlockPos.CODEC.fieldOf("bell").forGetter(v -> v.bell),
@@ -154,7 +185,9 @@ public final class VillageState {
         Events.CODEC.optionalFieldOf("events", Events.EMPTY).forGetter(v -> v.events),
         Codec.LONG.optionalFieldOf("seen_day", 0L).forGetter(v -> v.seenDay),
         DayFlow.CODEC.listOf().optionalFieldOf("history", List.of()).forGetter(v -> v.history),
-        Growth.CODEC.optionalFieldOf("growth", Growth.NONE).forGetter(v -> new Growth(v.savings, List.copyOf(v.buildings), v.buildDay, v.festivalDay))
+        Growth.CODEC.optionalFieldOf("growth", Growth.NONE).forGetter(v -> new Growth(v.savings, List.copyOf(v.buildings), v.buildDay, v.festivalDay)),
+        Council.CODEC.optionalFieldOf("council", Council.NONE).forGetter(v -> new Council(Map.copyOf(v.contributions),
+            java.util.Optional.ofNullable(v.patron), v.specialization, v.specializationDay))
     ).apply(i, VillageState::new));
 
     final ResourceKey<Level> dimension;
@@ -180,10 +213,18 @@ public final class VillageState {
     long buildDay;
     /** Day of the last festival. */
     long festivalDay;
+    /** Who gave the village what ({@link VillageCouncil}). */
+    final Map<UUID, Contribution> contributions;
+    /** The patron: the biggest contributor above the minimum; null when nobody is. */
+    @org.jetbrains.annotations.Nullable UUID patron;
+    /** {@link VillageSpecialization} id, or empty. */
+    String specialization;
+    /** Day the specialization was last picked, -1 never. */
+    long specializationDay;
 
     VillageState(ResourceKey<Level> dimension, BlockPos bell, String name, Census census, double prosperity, long prosperityDay, long treasury,
                  long treasuryDay, List<String> projects, List<Order> orders, Map<UUID, Long> licences, Events events, long seenDay,
-                 List<DayFlow> history, Growth growth) {
+                 List<DayFlow> history, Growth growth, Council council) {
         this.dimension = dimension;
         this.bell = bell.immutable();
         this.name = name;
@@ -202,11 +243,15 @@ public final class VillageState {
         this.buildings = new LinkedHashSet<>(growth.buildings());
         this.buildDay = growth.buildDay();
         this.festivalDay = growth.festivalDay();
+        this.contributions = new HashMap<>(council.contributions());
+        this.patron = council.patron().orElse(null);
+        this.specialization = council.specialization();
+        this.specializationDay = council.specializationDay();
     }
 
     static VillageState create(ResourceKey<Level> dimension, BlockPos bell, long today) {
         return new VillageState(dimension, bell, "", Census.EMPTY, 0, today, 0, today, List.of(), List.of(), Map.of(), Events.EMPTY, today,
-            List.of(), Growth.NONE);
+            List.of(), Growth.NONE, Council.NONE);
     }
 
     public ResourceKey<Level> dimension() {
@@ -275,5 +320,25 @@ public final class VillageState {
 
     public long festivalDay() {
         return festivalDay;
+    }
+
+    /** What each player gave the village (projects and donations). */
+    public Map<UUID, Contribution> contributions() {
+        return Map.copyOf(contributions);
+    }
+
+    /** The patron, if the village has one. */
+    public java.util.Optional<UUID> patron() {
+        return java.util.Optional.ofNullable(patron);
+    }
+
+    /** The specialization the patron picked, if any. */
+    public java.util.Optional<VillageSpecialization> specialization() {
+        return VillageSpecialization.byId(specialization);
+    }
+
+    /** Day the specialization was last picked, -1 never. */
+    public long specializationDay() {
+        return specializationDay;
     }
 }

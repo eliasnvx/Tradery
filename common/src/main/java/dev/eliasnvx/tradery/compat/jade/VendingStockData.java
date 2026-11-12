@@ -1,10 +1,8 @@
 package dev.eliasnvx.tradery.compat.jade;
 
 import dev.eliasnvx.tradery.Tradery;
-import dev.eliasnvx.tradery.vending.StackMath;
+import dev.eliasnvx.tradery.compat.TooltipData;
 import dev.eliasnvx.tradery.vending.VendingBlockEntity;
-import dev.eliasnvx.tradery.vending.VendingSettings;
-import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -34,15 +32,7 @@ enum VendingStockData implements IServerDataProvider<BlockAccessor> {
         if (!(accessor.getBlockEntity() instanceof VendingBlockEntity vendor)) {
             return;
         }
-        data.putInt(KEY, count(vendor));
-    }
-
-    private static int count(VendingBlockEntity vendor) {
-        VendingSettings settings = vendor.settings();
-        if (settings.isBuyback() && !vendor.admin().infiniteStock()) {
-            return (int) Math.min(VendingTrades.UNLIMITED, StackMath.space(vendor.stock().getItems(), settings.goods()) / settings.perTrade());
-        }
-        return vendor.tradesInStock();
+        data.putInt(KEY, TooltipData.vendingStock(vendor));
     }
 
     /** Client side: the number the server sent, if it did (it has Tradery and Jade). */

@@ -33,6 +33,7 @@ public final class TraderyServer {
     }
 
     public static void onServerStopped(MinecraftServer server) {
+        dev.eliasnvx.tradery.compat.maps.MapsIntegration.onServerStopped();
         EconomyService.INSTANCE.stop();
         dev.eliasnvx.tradery.vending.TradePersistence.clear();
         dev.eliasnvx.tradery.village.VillagerCustomers.onServerStopped();
@@ -79,6 +80,7 @@ public final class TraderyServer {
         dev.eliasnvx.tradery.village.VillageFestivals.onLevelTick(level);
         dev.eliasnvx.tradery.village.VillageStreets.onLevelTick(level);
         dev.eliasnvx.tradery.village.VillageLamps.onLevelTick(level);
+        dev.eliasnvx.tradery.compat.maps.MapsIntegration.onLevelTick(level);
         dev.eliasnvx.tradery.vending.TradePersistence.flush(level.getServer());
     }
 
@@ -109,6 +111,9 @@ public final class TraderyServer {
         } else if (payload instanceof TraderyPayloads.VillageDonatePayload donate
             && player.containerMenu instanceof dev.eliasnvx.tradery.menu.VillageBoardMenu menu && menu.containerId == donate.containerId()) {
             menu.donate(player, donate.amount());
+        } else if (payload instanceof TraderyPayloads.VillageRenamePayload rename
+            && player.containerMenu instanceof dev.eliasnvx.tradery.menu.VillageBoardMenu menu && menu.containerId == rename.containerId()) {
+            menu.rename(player, rename.name());
         }
     }
 

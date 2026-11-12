@@ -17,7 +17,8 @@ import static dev.eliasnvx.tradery.config.ConfigCodecs.field;
  */
 public record ServerConfig(CurrencySection currency, EconomySection economy, PaySection pay, VendingSection vending,
                            OreSection ore, HistorySection history, LogSection log, VillagersSection villagers,
-                           MarketSection market, VillagerTradingSection villagerTrading, VillagesConfig villages) {
+                           MarketSection market, VillagerTradingSection villagerTrading, VillagesConfig villages,
+                           TradeCratesSection tradeCrates, IntegrationsSection integrations) {
 
     public record CurrencySection(ResourceLocation id, String name, String symbol, int decimals, String thousandsSeparator) {
         static final CurrencySection DEFAULT = new CurrencySection(TraderyApi.id("coin"), "Coins", "₮", 2, " ");
@@ -180,9 +181,53 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         ).apply(i, VillagerTradingSection::new));
     }
 
+    /**
+     * Trade crates (SPEC "Торговый ящик").
+     *
+     * @param visitChance       chance per crate per {@code villagers.checkIntervalTicks} to call a villager
+     * @param browseTicks       how long the villager looks at the crate before it trades
+     * @param maxTradesPerVisit most single trades one visit does
+     * @param hoppers           hoppers and pipes may fill the payment and empty the received items
+     */
+    public record TradeCratesSection(boolean enabled, double visitChance, int browseTicks, int maxTradesPerVisit, boolean hoppers) {
+        static final TradeCratesSection DEFAULT = new TradeCratesSection(true, 0.5, 40, 16, true);
+        static final Codec<TradeCratesSection> CODEC = RecordCodecBuilder.create(i -> i.group(
+            field(Codec.BOOL, "enabled", DEFAULT.enabled).forGetter(TradeCratesSection::enabled),
+            field(Codec.doubleRange(0, 1), "visitChance", DEFAULT.visitChance).forGetter(TradeCratesSection::visitChance),
+            field(Codec.intRange(0, 1200), "browseTicks", DEFAULT.browseTicks).forGetter(TradeCratesSection::browseTicks),
+            field(Codec.intRange(1, 64), "maxTradesPerVisit", DEFAULT.maxTradesPerVisit).forGetter(TradeCratesSection::maxTradesPerVisit),
+            field(Codec.BOOL, "hoppers", DEFAULT.hoppers).forGetter(TradeCratesSection::hoppers)
+        ).apply(i, TradeCratesSection::new));
+    }
+
+    /**
+     * Server web maps (SPEC "Интеграции 1.2"): BlueMap and squaremap layers.
+     *
+     * @param villages      a layer of Tradery's villages
+     * @param shops         a layer of players' vending blocks, market counters and trade crates
+     * @param updateSeconds how often the layers are rebuilt
+     */
+    public record MapsSection(boolean villages, boolean shops, int updateSeconds) {
+        static final MapsSection DEFAULT = new MapsSection(true, true, 60);
+        static final Codec<MapsSection> CODEC = RecordCodecBuilder.create(i -> i.group(
+            field(Codec.BOOL, "villages", DEFAULT.villages).forGetter(MapsSection::villages),
+            field(Codec.BOOL, "shops", DEFAULT.shops).forGetter(MapsSection::shops),
+            field(Codec.intRange(10, 3600), "updateSeconds", DEFAULT.updateSeconds).forGetter(MapsSection::updateSeconds)
+        ).apply(i, MapsSection::new));
+    }
+
+    /** Optional mods Tradery works with. */
+    public record IntegrationsSection(MapsSection maps) {
+        static final IntegrationsSection DEFAULT = new IntegrationsSection(MapsSection.DEFAULT);
+        static final Codec<IntegrationsSection> CODEC = RecordCodecBuilder.create(i -> i.group(
+            field(MapsSection.CODEC, "maps", DEFAULT.maps).forGetter(IntegrationsSection::maps)
+        ).apply(i, IntegrationsSection::new));
+    }
+
     public static final ServerConfig DEFAULT = new ServerConfig(CurrencySection.DEFAULT, EconomySection.DEFAULT,
         PaySection.DEFAULT, VendingSection.DEFAULT, OreSection.DEFAULT, HistorySection.DEFAULT, LogSection.DEFAULT,
-        VillagersSection.DEFAULT, MarketSection.DEFAULT, VillagerTradingSection.DEFAULT, VillagesConfig.DEFAULT);
+        VillagersSection.DEFAULT, MarketSection.DEFAULT, VillagerTradingSection.DEFAULT, VillagesConfig.DEFAULT, TradeCratesSection.DEFAULT,
+        IntegrationsSection.DEFAULT);
 
     public static final Codec<ServerConfig> CODEC = RecordCodecBuilder.create(i -> i.group(
         field(CurrencySection.CODEC, "currency", DEFAULT.currency).forGetter(ServerConfig::currency),
@@ -195,7 +240,9 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         field(VillagersSection.CODEC, "villagers", DEFAULT.villagers).forGetter(ServerConfig::villagers),
         field(MarketSection.CODEC, "market", DEFAULT.market).forGetter(ServerConfig::market),
         field(VillagerTradingSection.CODEC, "villagerTrading", DEFAULT.villagerTrading).forGetter(ServerConfig::villagerTrading),
-        field(VillagesConfig.CODEC, "villages", DEFAULT.villages).forGetter(ServerConfig::villages)
+        field(VillagesConfig.CODEC, "villages", DEFAULT.villages).forGetter(ServerConfig::villages),
+        field(TradeCratesSection.CODEC, "tradeCrates", DEFAULT.tradeCrates).forGetter(ServerConfig::tradeCrates),
+        field(IntegrationsSection.CODEC, "integrations", DEFAULT.integrations).forGetter(ServerConfig::integrations)
     ).apply(i, ServerConfig::new));
 
     public static final String HEADER = """
@@ -248,7 +295,15 @@ public record ServerConfig(CurrencySection currency, EconomySection economy, Pay
         Map.entry("market.emeraldSellPrice", "The market changer sells one emerald for this much"),
         Map.entry("market.emeraldBuyPrice", "The market changer buys one emerald for this much (keep it below the sell price)"),
         Map.entry("villagerTrading", "The villager trade window takes and pays money instead of emeralds; false = vanilla window"),
-        Map.entry("villagerTrading.emeraldValue", "Money for each emerald in a villager's trades (paid from the balance, or from the villager's wallet)")
+        Map.entry("villagerTrading.emeraldValue", "Money for each emerald in a villager's trades (paid from the balance, or from the villager's wallet)"),
+        Map.entry("tradeCrates", "Trade crates: villagers walk up and do their own trades with what the crate holds"),
+        Map.entry("tradeCrates.visitChance", "Chance per crate per villagers.checkIntervalTicks that a villager comes"),
+        Map.entry("tradeCrates.browseTicks", "How long the villager looks at the crate before it trades"),
+        Map.entry("tradeCrates.maxTradesPerVisit", "Most single trades one visit does"),
+        Map.entry("tradeCrates.hoppers", "Hoppers and pipes may fill the payment (top, sides) and empty the received items (bottom)"),
+        Map.entry("integrations", "Optional mods"),
+        Map.entry("integrations.maps", "BlueMap and squaremap: layers of Tradery's villages and of players' shops"),
+        Map.entry("integrations.maps.updateSeconds", "How often the map layers are rebuilt")
     ));
 
     private static Map<String, String> withVillages(Map<String, String> comments) {

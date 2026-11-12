@@ -44,6 +44,13 @@ public final class TraderyForge {
         IEventBus bus = MinecraftForge.EVENT_BUS;
         bus.addListener((PermissionGatherEvent.Nodes event) -> event.addNodes(ForgePlatform.nodes()));
         bus.addListener((RegisterCommandsEvent event) -> TraderyServer.registerCommands(event.getDispatcher()));
+        // Pipes reach a trade crate through the item capability, by side like vanilla hoppers (none without a side)
+        bus.addGenericListener(net.minecraft.world.level.block.entity.BlockEntity.class,
+            (net.minecraftforge.event.AttachCapabilitiesEvent<net.minecraft.world.level.block.entity.BlockEntity> event) -> {
+                if (event.getObject() instanceof dev.eliasnvx.tradery.vending.TradeCrateBlockEntity crate) {
+                    event.addCapability(dev.eliasnvx.tradery.Tradery.id("trade_crate_items"), new CrateItems(crate));
+                }
+            });
         // The economy is up before other mods' ServerStartedEvent listeners and still up in their ServerStoppedEvent ones
         bus.addListener(EventPriority.HIGHEST, (ServerStartedEvent event) -> TraderyServer.onServerStarted(event.getServer()));
         bus.addListener(EventPriority.LOWEST, (ServerStoppedEvent event) -> TraderyServer.onServerStopped(event.getServer()));
@@ -91,5 +98,26 @@ public final class TraderyForge {
                 TraderyServer.onPlayerRespawnOrTravel(player);
             }
         });
+    }
+
+    /** The crate's item capability, one wrapper per side; lazy values are invalidated when the crate goes. */
+    private static final class CrateItems implements net.minecraftforge.common.capabilities.ICapabilityProvider {
+        private final java.util.EnumMap<net.minecraft.core.Direction, net.minecraftforge.common.util.LazyOptional<net.minecraftforge.items.IItemHandler>>
+            sides = new java.util.EnumMap<>(net.minecraft.core.Direction.class);
+
+        CrateItems(dev.eliasnvx.tradery.vending.TradeCrateBlockEntity crate) {
+            for (net.minecraft.core.Direction side : net.minecraft.core.Direction.values()) {
+                sides.put(side, net.minecraftforge.common.util.LazyOptional.of(() -> new net.minecraftforge.items.wrapper.SidedInvWrapper(crate, side)));
+            }
+        }
+
+        @Override
+        public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability,
+                                                                                @org.jetbrains.annotations.Nullable net.minecraft.core.Direction side) {
+            if (capability != net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER || side == null) {
+                return net.minecraftforge.common.util.LazyOptional.empty();
+            }
+            return sides.get(side).cast();
+        }
     }
 }

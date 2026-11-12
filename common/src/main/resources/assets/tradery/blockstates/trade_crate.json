@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "tradery:block/trade_crate"
+    },
+    "facing=east": {
+      "model": "tradery:block/trade_crate",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "tradery:block/trade_crate",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "tradery:block/trade_crate",
+      "y": 270
+    }
+  }
+}

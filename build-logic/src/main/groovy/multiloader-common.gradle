@@ -28,6 +28,10 @@ repositories {
         filter { includeGroup 'me.shedaniel'; includeGroup 'me.shedaniel.cloth'; includeGroup 'dev.architectury' }
     }
     exclusiveContent {
+        forRepository { maven { name = 'JitPack'; url = 'https://jitpack.io' } }
+        filter { includeGroup 'com.github.BlueMap-Minecraft' }
+    }
+    exclusiveContent {
         forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
         filter { includeGroup 'maven.modrinth' }
     }

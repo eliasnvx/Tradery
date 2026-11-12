@@ -427,7 +427,7 @@ public final class TraderyPayloads {
      * {@code nextThreshold} -1 at the top level, {@code marketDayIn} 0 today and -1 without market days.
      */
     public record BellInfoPayload(BlockPos pos, boolean known, Component name, int level, int prosperity, int nextThreshold,
-                                  int marketDayIn) implements TraderyPacket {
+                                  int marketDayIn, String specialization, String patron) implements TraderyPacket {
         public static final ResourceLocation TYPE = Tradery.id("bell_info");
         public static final StreamCodec<FriendlyByteBuf, BellInfoPayload> STREAM_CODEC = dev.eliasnvx.tradery.network.PortCodecs.composite(
             TraderyStreamCodecs.BLOCK_POS, BellInfoPayload::pos,
@@ -437,6 +437,8 @@ public final class TraderyPayloads {
             ByteBufCodecs.VAR_INT, BellInfoPayload::prosperity,
             ByteBufCodecs.VAR_INT, BellInfoPayload::nextThreshold,
             ByteBufCodecs.VAR_INT, BellInfoPayload::marketDayIn,
+            ByteBufCodecs.stringUtf8(64), BellInfoPayload::specialization,
+            ByteBufCodecs.stringUtf8(64), BellInfoPayload::patron,
             BellInfoPayload::new);
 
         @Override
@@ -543,6 +545,27 @@ public final class TraderyPayloads {
         }
     }
 
+    /** "Rename" on the village board's Patron tab: the name the patron typed (cleaned and checked on the server). */
+    public record VillageRenamePayload(int containerId, String name) implements TraderyPacket {
+        /** Longer input than this is never a valid name, whatever the cleaning removes. */
+        public static final int MAX_INPUT = 128;
+        public static final ResourceLocation TYPE = Tradery.id("village_rename");
+        public static final StreamCodec<FriendlyByteBuf, VillageRenamePayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, VillageRenamePayload::containerId,
+            ByteBufCodecs.stringUtf8(MAX_INPUT), VillageRenamePayload::name,
+            VillageRenamePayload::new);
+
+        @Override
+        public ResourceLocation id() {
+            return TYPE;
+        }
+
+        @Override
+        public void write(FriendlyByteBuf buf) {
+            STREAM_CODEC.encode(buf, this);
+        }
+    }
+
     /** Another page (or a fresh copy after an action) for the open shop ledger window. */
     public record ShopLedgerSyncPayload(int containerId, dev.eliasnvx.tradery.menu.ShopLedgerMenu.Data data) implements TraderyPacket {
         public static final ResourceLocation TYPE = Tradery.id("shop_ledger_sync");
@@ -617,7 +640,8 @@ public final class TraderyPayloads {
         new Entry<>(VendingQuickTradePayload.TYPE, VendingQuickTradePayload.class, VendingQuickTradePayload.STREAM_CODEC),
         new Entry<>(BellInfoRequestPayload.TYPE, BellInfoRequestPayload.class, BellInfoRequestPayload.STREAM_CODEC),
         new Entry<>(CounterSavePayload.TYPE, CounterSavePayload.class, CounterSavePayload.STREAM_CODEC),
-        new Entry<>(VillageDonatePayload.TYPE, VillageDonatePayload.class, VillageDonatePayload.STREAM_CODEC)
+        new Entry<>(VillageDonatePayload.TYPE, VillageDonatePayload.class, VillageDonatePayload.STREAM_CODEC),
+        new Entry<>(VillageRenamePayload.TYPE, VillageRenamePayload.class, VillageRenamePayload.STREAM_CODEC)
     );
 
     private TraderyPayloads() {

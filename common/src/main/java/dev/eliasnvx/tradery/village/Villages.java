@@ -189,9 +189,10 @@ public final class Villages {
         return Component.translatableWithFallback("tradery.village.level." + level, fallback[Math.max(0, Math.min(fallback.length - 1, level - 1))]);
     }
 
-    /** Villagers' wages and the treasury income are multiplied by this: the level's multiplier and the projects'. */
+    /** Villagers' wages and the treasury income are multiplied by this: the level's, the projects' and the crafts specialization's. */
     public static double wageFactor(VillageState village) {
-        return byLevel(config().levels().wageMultiplier(), level(village)) * VillageProjects.effects(village).wageMultiplier();
+        return byLevel(config().levels().wageMultiplier(), level(village)) * VillageProjects.effects(village).wageMultiplier()
+            * VillageCouncil.factor(village, VillageSpecialization.CRAFTS);
     }
 
     /** {@code villagers.dailyCapPerVillage} is multiplied by this. */
@@ -403,7 +404,9 @@ public final class Villages {
         MinecraftServer server = level.getServer();
         addProsperity(server, village, points(paid + received, POINTS_WINDOW_TRADE));
         long tax = paid > 0 ? Money.percentOf(paid, config().tradeTaxPercent()) : 0;
-        addToTreasury(server, village, tax);
+        // The patron's share comes out of the tax: the treasury gets the rest
+        long share = VillageCouncil.payPatron(server, village, tax);
+        addToTreasury(server, village, tax - share);
         return tax;
     }
 

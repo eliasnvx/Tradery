@@ -192,7 +192,7 @@ public final class VillagerGameTests {
         return new ServerConfig(config.currency(), config.economy(), config.pay(), config.vending(), config.ore(), config.history(),
             config.log(), new ServerConfig.VillagersSection(v.enabled(), v.requireHomeAndJob(), v.visitRadius(), v.checkIntervalTicks(),
             v.visitChance(), v.browseTicks(), v.walkTimeoutTicks(), v.customerCooldownTicks(), v.maxLotsPerVisit(), v.wages(), v.walletDays(),
-            dailyCap, v.maxPriceRatio(), v.gougingRatio(), v.demandDropPerLot(), v.demandRecoveryPerDay()), config.market(), config.villagerTrading(), config.villages());
+            dailyCap, v.maxPriceRatio(), v.gougingRatio(), v.demandDropPerLot(), v.demandRecoveryPerDay()), config.market(), config.villagerTrading(), config.villages(), config.tradeCrates(), config.integrations());
     }
 
     // ------------------------------------------------------------------ tests

@@ -1,0 +1,21 @@
+{
+  "profession": "villagersplus:horticulturist",
+  "supplies": [
+    {
+      "item": "minecraft:bone_meal",
+      "per_day": 6
+    },
+    {
+      "item": "minecraft:poppy",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:dandelion",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:oak_sapling",
+      "per_day": 2
+    }
+  ]
+}

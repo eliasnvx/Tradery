@@ -10,6 +10,8 @@ import dev.eliasnvx.tradery.registry.TraderyBlocks;
 import dev.eliasnvx.tradery.registry.TraderyMenus;
 import dev.eliasnvx.tradery.vending.VendingTrades;
 import dev.eliasnvx.tradery.village.VillageBoard;
+import dev.eliasnvx.tradery.village.VillageCouncil;
+import dev.eliasnvx.tradery.village.VillageSpecialization;
 import dev.eliasnvx.tradery.village.VillageFunding;
 import dev.eliasnvx.tradery.village.VillageOrders;
 import dev.eliasnvx.tradery.village.VillageState;
@@ -30,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * The village board window (SPEC "Доска деревни"): tabs Orders, Village and Market. No item slots, like the vending
+ * The village board window (SPEC "Доска деревни"): tabs Orders, Village, Market and Patron. No item slots, like the vending
  * buyer menu: deliveries take plain stacks from the inventory on the server. Every action is a menu button click
  * (vanilla checks it's this open menu and {@link #stillValid}): {@code action * 1000 + index}, the index into the
  * lists of the data the server sent last, so the client never names an order or project the server didn't show.
@@ -43,6 +45,9 @@ public class VillageBoardMenu extends AbstractContainerMenu {
     public static final int MAX_NEWS = 16;
     public static final int MAX_HISTORY = VillageState.HISTORY_DAYS;
     private static final int MAX_ID = 256;
+    /** Player names (16) and village names ({@link VillageCouncil#MAX_NAME}) fit. */
+    private static final int MAX_NAME = 64;
+    private static final int MAX_TOP = VillageCouncil.TOP;
 
     /** Deliver to the order at the index. */
     public static final int DELIVER = 0;
@@ -50,6 +55,8 @@ public class VillageBoardMenu extends AbstractContainerMenu {
     public static final int FUND = 1;
     /** Rent a trading place (index 0). */
     public static final int RENT = 2;
+    /** The patron picks the specialization at the index ({@link VillageSpecialization#ordinal}). */
+    public static final int SPECIALIZE = 3;
     private static final int STRIDE = 1000;
 
     /** Adults of one profession in the village. */
@@ -121,15 +128,23 @@ public class VillageBoardMenu extends AbstractContainerMenu {
         }
     }
 
-    /** A project players can fund here; {@code cost} in minor units, {@code level} the village level it needs. */
-    public record ProjectView(ResourceLocation id, ItemStack icon, long cost, int level, boolean funded) {
+    /**
+     * A project players can fund here; {@code cost} in minor units, {@code level} the village level it needs,
+     * {@code specialization} the {@link VillageSpecialization} id it needs (empty: none).
+     */
+    public record ProjectView(ResourceLocation id, ItemStack icon, long cost, int level, boolean funded, String specialization) {
         static final StreamCodec<FriendlyByteBuf, ProjectView> STREAM_CODEC = StreamCodec.composite(
-            TraderyStreamCodecs.RESOURCE_LOCATION, ProjectView::id,
-            TraderyStreamCodecs.ITEM_STACK, ProjectView::icon,
+            dev.eliasnvx.tradery.network.codec.TraderyStreamCodecs.RESOURCE_LOCATION, ProjectView::id,
+            dev.eliasnvx.tradery.network.codec.TraderyStreamCodecs.ITEM_STACK, ProjectView::icon,
             ByteBufCodecs.VAR_LONG, ProjectView::cost,
             ByteBufCodecs.VAR_INT, ProjectView::level,
             ByteBufCodecs.BOOL, ProjectView::funded,
+            ByteBufCodecs.stringUtf8(MAX_ID), ProjectView::specialization,
             ProjectView::new);
+
+        public java.util.Optional<VillageSpecialization> needs() {
+            return VillageSpecialization.byId(specialization);
+        }
     }
 
     /** Something this village sells cheap ({@code factor < 1}) or pays dear for. */
@@ -162,20 +177,69 @@ public class VillageBoardMenu extends AbstractContainerMenu {
             Market::new);
     }
 
+    /** One of the village's biggest contributors. */
+    public record Contributor(String name, long amount) {
+        static final StreamCodec<FriendlyByteBuf, Contributor> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.stringUtf8(MAX_NAME), Contributor::name,
+            ByteBufCodecs.VAR_LONG, Contributor::amount,
+            Contributor::new);
+    }
+
+    /**
+     * The Patron tab.
+     *
+     * @param patron                 the patron's name, empty without one
+     * @param viewerIsPatron         the viewer is the patron
+     * @param viewerContribution     what the viewer gave the village (minor units)
+     * @param patronContribution     what the patron gave
+     * @param minContribution        what a patron gives at least
+     * @param top                    the biggest contributors, biggest first
+     * @param specialization         the picked {@link VillageSpecialization} id, or empty
+     * @param specializationActive   it is in effect (the village is at {@code specializationMinLevel} or up)
+     * @param specializationMinLevel the level a village picks one from
+     * @param changeInDays           days until the specialization may change again (0: now)
+     * @param bonusPercent           the specialization's bonus in percent
+     * @param taxSharePercent        the patron's share of the trade tax, as the config has it ("10")
+     */
+    public record Council(String patron, boolean viewerIsPatron, long viewerContribution, long patronContribution, long minContribution,
+                          List<Contributor> top, String specialization, boolean specializationActive, int specializationMinLevel,
+                          long changeInDays, int bonusPercent, String taxSharePercent) {
+        static final StreamCodec<FriendlyByteBuf, Council> STREAM_CODEC = dev.eliasnvx.tradery.network.PortCodecs.composite(
+            ByteBufCodecs.stringUtf8(MAX_NAME), Council::patron,
+            ByteBufCodecs.BOOL, Council::viewerIsPatron,
+            ByteBufCodecs.VAR_LONG, Council::viewerContribution,
+            ByteBufCodecs.VAR_LONG, Council::patronContribution,
+            ByteBufCodecs.VAR_LONG, Council::minContribution,
+            Contributor.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_TOP)), Council::top,
+            ByteBufCodecs.stringUtf8(MAX_ID), Council::specialization,
+            ByteBufCodecs.BOOL, Council::specializationActive,
+            ByteBufCodecs.VAR_INT, Council::specializationMinLevel,
+            ByteBufCodecs.VAR_LONG, Council::changeInDays,
+            ByteBufCodecs.VAR_INT, Council::bonusPercent,
+            ByteBufCodecs.stringUtf8(MAX_ID), Council::taxSharePercent,
+            Council::new);
+
+        public java.util.Optional<VillageSpecialization> picked() {
+            return VillageSpecialization.byId(specialization);
+        }
+    }
+
     /**
      * What the window shows; sent when it opens and after every action ({@link TraderyPayloads.VillageBoardSyncPayload}).
      *
      * @param board the board block
      * @param today the in-game day number, for "expires in N days"
      */
-    public record Data(BlockPos board, long today, Info info, List<OrderView> orders, List<ProjectView> projects, Market market) {
-        public static final StreamCodec<FriendlyByteBuf, Data> STREAM_CODEC = StreamCodec.composite(
-            TraderyStreamCodecs.BLOCK_POS, Data::board,
+    public record Data(BlockPos board, long today, Info info, List<OrderView> orders, List<ProjectView> projects, Market market,
+                       Council council) {
+        public static final StreamCodec<FriendlyByteBuf, Data> STREAM_CODEC = dev.eliasnvx.tradery.network.PortCodecs.composite(
+            dev.eliasnvx.tradery.network.codec.TraderyStreamCodecs.BLOCK_POS, Data::board,
             ByteBufCodecs.VAR_LONG, Data::today,
             Info.STREAM_CODEC, Data::info,
             OrderView.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ORDERS)), Data::orders,
             ProjectView.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_PROJECTS)), Data::projects,
             Market.STREAM_CODEC, Data::market,
+            Council.STREAM_CODEC, Data::council,
             Data::new);
     }
 
@@ -222,6 +286,7 @@ public class VillageBoardMenu extends AbstractContainerMenu {
             case DELIVER -> index < data.orders().size();
             case FUND -> index < data.projects().size();
             case RENT -> index == 0;
+            case SPECIALIZE -> index < VillageSpecialization.values().length;
             default -> false;
         };
         if (!known) {
@@ -244,6 +309,7 @@ public class VillageBoardMenu extends AbstractContainerMenu {
             outcome = switch (action) {
                 case DELIVER -> VillageOrders.deliver(serverPlayer, village, data.orders().get(index).id());
                 case FUND -> VillageFunding.fund(serverPlayer, village, data.projects().get(index).id());
+                case SPECIALIZE -> VillageCouncil.specialize(serverPlayer, village, VillageSpecialization.values()[index]);
                 default -> VillageBoard.rent(serverPlayer, village);
             };
             data = VillageBoard.snapshot(serverPlayer, village, data.board());
@@ -271,6 +337,30 @@ public class VillageBoardMenu extends AbstractContainerMenu {
             outcome = VillageBoard.Outcome.fail(Messages.tr("tradery.board.no_village", "There's no village here"));
         } else {
             outcome = VillageFunding.donate(player, village, amount);
+            data = VillageBoard.snapshot(player, village, data.board());
+            Platform.get().sendToPlayer(player, new TraderyPayloads.VillageBoardSyncPayload(containerId, data));
+        }
+        reply(player, outcome.success(), outcome.message());
+    }
+
+    /**
+     * The patron renames the village ({@link TraderyPayloads.VillageRenamePayload}): the same checks as a button click,
+     * then {@link VillageCouncil#rename} and fresh data.
+     */
+    public void rename(ServerPlayer player, String name) {
+        if (level == null || !stillValid(player)) {
+            return;
+        }
+        if (!VendingTrades.allow(player)) {
+            reply(player, false, Messages.tr("tradery.vending.too_fast", "Slow down"));
+            return;
+        }
+        VillageState village = Villages.byKey(level.getServer(), villageKey);
+        VillageBoard.Outcome outcome;
+        if (village == null) {
+            outcome = VillageBoard.Outcome.fail(Messages.tr("tradery.board.no_village", "There's no village here"));
+        } else {
+            outcome = VillageCouncil.rename(player, village, name);
             data = VillageBoard.snapshot(player, village, data.board());
             Platform.get().sendToPlayer(player, new TraderyPayloads.VillageBoardSyncPayload(containerId, data));
         }
