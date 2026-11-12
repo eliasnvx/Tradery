@@ -23,16 +23,3 @@ logs/
 
 # macOS
 .DS_Store
-
-# Local tooling notes (never in the repo)
-.claude/
-.agents/
-CLAUDE.md
-CLAUDE.local.md
-AGENTS.md
-
-# texgen drafts (mod page art), never shipped
-art/generated/
-
-# Local scripts (textures, models, structures, page images, crash test), never in the repo
-tools/
