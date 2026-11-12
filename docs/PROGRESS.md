@@ -88,3 +88,13 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] Streets: paths from new buildings to the street, "Paved Streets" project over the whole village with daily repaving; the watch post builds a lookout; street lights with arms along every dark street (2026-10-24; VillageBoardGameTests 18/18)
 - [x] Ports to 1.21.1 and 1.20.1 (2026-10-26): every 1.1 feature, all GameTests and client checks with the Living Market phase on every loader; details in each branch's `docs/PROGRESS.md` and `docs/decisions.md`
 
+## Phase 7 — v1.2 Trade Crate (active, 2026-11-10)
+- [x] Design: SPEC "Торговый ящик, покровитель и специализация (v1.2)", docs/decisions.md 2026-11-10
+- [x] Trade Crate: block, container sides, owner screen, villager visits with vanilla offers, money/emerald payment, ledger and index, Jade, JEI/REI ghost slots and info page, 15 languages; 8 GameTests (Fabric 123/123, NeoForge 121/121)
+- [x] Patron: contributions, patron, rename, tax share; board tab, bell hint, Jade/WTHIT; 3 GameTests
+- [x] Specialization: choice, bonuses, three projects with buildings (orchard, forge, exchange office ×5 village types); 2 GameTests
+- [x] Integrations: WTHIT, BlueMap, squaremap, VillagersPlus, CTOV, Guard Villagers (each optional; compile-only APIs, dev runtime with -Pcompat=true)
+- [x] 15 languages, textures and models, JEI/REI/Jade/WTHIT, README, CHANGELOG and mod pages; client check (Fabric shots: crate block, window, a farmer trading at it; Patron tab, renaming, specialization; bell hint)
+- [x] Fixed a 1.1 bug on the way: the trade window charged the price minus the village tax (the tax was created from nothing); now the full price, with a GameTest
+- [x] Ports to 1.21.1 and 1.20.1 (2026-11-10): `./gradlew build` green on both (1.21.1: Fabric 128, NeoForge 127; 1.20.1: Fabric 128, Forge 127)
+- [x] Checked with the real mods (2026-11-12, `docs/decisions.md`): Fabric with WTHIT, BlueMap, squaremap, CTOV, VillagersPlus; NeoForge 26.3.0.102 with those and Guard Villagers. Screenshots of WTHIT tooltips, a CTOV village with stalls, a VillagersPlus trade window, the Watch Post's guards and both web maps in a browser. Fixed on the way: hints under WTHIT's tooltip, the bell hint under Jade's, invisible shops on squaremap, wrapped map popups, the Watch Post's golem on its roof

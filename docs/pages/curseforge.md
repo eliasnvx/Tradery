@@ -70,7 +70,7 @@ Looking at a vending block shows its owner, goods and price at the top of the sc
 | Right-click | The window: ×1, ×8, as many as you can, the exact stock |
 | Sneak while looking | The items' full tooltips: enchantments, potion effects, durability |
 
-The block in your hand isn't placed and the vending block isn't mined while you do this. The action bar adds up the whole streak, for example "Bought 20 × Bread for 12.50". When Jade is installed it shows the same lines and the built-in hint steps aside.
+The block in your hand isn't placed and the vending block isn't mined while you do this. The action bar adds up the whole streak, for example "Bought 20 × Bread for 12.50". When Jade or WTHIT is installed it shows the same lines and the built-in hint steps aside.
 
 ![Holding sneak + right-click: 20 bread in one go](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/quick_buy.jpg)
 
@@ -134,6 +134,8 @@ What a villager wants depends on its profession: food for everyone, bone meal an
 
 **They supply you.** Switch "Villagers can sell" on a buyback block and villagers bring what they produce: crops, fish, wool, stone and more, up to two days of output, if you pay at least 80% of the fair price.
 
+**Trade crate.** A wooden crate villagers trade with on their own. Put up to three wanted items in it: a villager whose own offers give one of them walks up and does its usual trade, at its price with the discount your reputation earns you, until the offer is used up, the payment runs out or there's no room. Wheat, books and sticks come out of nine payment slots, what it gives goes into nine received slots; emeralds are your balance while villagers trade for money. Hoppers fill the payment from the top and sides and empty the received items from the bottom. No villagers locked in blocks.
+
 ---
 
 ![Villages](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/header_villages.png)
@@ -195,6 +197,8 @@ Buildings go where a village house could stand: on real ground near the bell, ne
 ![A caravan from a desert village](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/village/caravan.jpg)
 
 **Raids.** A lost raid costs 30% of prosperity, half the treasury and half of the villagers' money (halved again with the Watch Post). A won raid brings prosperity and restoration orders that pay one and a half times as much.
+
+**Patron and specialization.** Whoever has given a village the most through projects and donations (at least 100 ₮) is its patron: they name it, get 10% of its trade tax, and from Town level pick Farming (+15% produce), Crafts (+15% pay and treasury income) or Trade (+15% customers), each with its own building to fund: an orchard farmstead, a forge or an exchange office.
 
 **Village markets.** Newly generated plains, desert, savanna, taiga and snowy villages can have market stalls with server vendors selling enchanted books, name tags, saddles, maps, rare seeds and more for money, and a changer that sells emeralds for 3.00 ₮ and buys them for 2.00 ₮. Existing chunks don't change.
 
@@ -258,14 +262,18 @@ Guide: [`docs/api/README.md`](https://github.com/eliasnvx/Tradery/blob/26.3-dev/
 
 | Mod | What you get |
 |---|---|
-| Jade | Owner, offer, stock and keys of vending blocks; a bell's village, level, treasury and savings |
+| Jade, WTHIT | Owner, offers, stock and keys of vending blocks and counters, what a trade crate wants; a bell's village, level, specialization, patron, treasury and savings |
 | JEI, REI | Drag items into the goods, price and facade slots; info pages for the blocks, coin ore and coins |
 | Common Economy API (Fabric, built in) | Other economy mods read and change Tradery balances |
 | Text Placeholder API (Fabric) | `%tradery:balance%`, `%tradery:balance_short%`, `%tradery:top_name 1%`, `%tradery:top_balance 1%`, `%tradery:currency%` |
 | LuckPerms | All `tradery.*` permission nodes |
+| BlueMap, squaremap | Map layers of villages (level, prosperity, treasury, specialization, patron) and players' shops |
+| ChoiceTheorem's Overhauled Village | Market stalls in its villages too |
+| VillagersPlus | Its five professions supply buyback blocks and shop at players' stalls |
+| Guard Villagers | The Watch Post brings two guards |
 | Minimaps | The village title stays in the middle of the screen, clear of the corners |
 
-All optional. EMI and WTHIT will follow when they're available for 26.3.
+All optional. EMI will follow when it's available for 26.3.
 
 ---
 
@@ -289,7 +297,7 @@ All versions have the same features. The one difference: on 1.21.1 and 1.20.1 th
 
 **Does it work without the mod on clients?** No. The blocks, the balance and the screens need Tradery on both sides.
 
-**Can hoppers fill or empty a vending block?** No. Vending blocks have no inventory that automation can reach.
+**Can hoppers fill or empty a vending block?** No. Vending blocks have no inventory that automation can reach. The trade crate is the block for automation.
 
 **Villagers don't come to my stall.** The block must sell for money, have stock and have "Villagers can buy" on, and the price must be at most 1.5 times the fair price. Villagers need a bed and a workstation, come during the day, and don't walk in unloaded chunks.
 

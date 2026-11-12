@@ -2,6 +2,28 @@
 
 All notable changes. Mod versions follow SemVer; the Economy API has its own version (`api_version`).
 
+## [1.2.0] - Unreleased
+
+Trade Crate, village patrons and specializations, six optional integrations. Economy API 1.2.0.
+
+### Added
+- Trade Crate: a wooden crate villagers trade with on their own. Set up to three wanted items; a villager whose own offer gives one of them walks up and does that trade, as often as its uses, the payment and the room allow (up to 16 trades a visit). The price is the villager's, with the discount your reputation earns you, even while you're offline. Emeralds follow the trade window: paid from or to your balance while `villagerTrading` is on, items in the crate otherwise. Hoppers fill the payment from the top and the sides and take what came in from the bottom; a comparator reads how full that is. Only the owner opens or breaks it; it counts toward `vending.maxPerPlayer` and shows in the shop ledger. Recipe: planks around a chest, an emerald on top.
+- Village patron: whoever has given a village the most through projects and donations (at least 100) is its patron, a tie keeps the patron. The patron names the village (the name shows on the board, over the bell, in the village title and on web maps) and gets 10% of its trade tax, taken out of the tax. New Patron tab on the village board: the patron, the biggest contributors, renaming and the specialization.
+- Specialization: from Town level the patron picks Farming (suppliers make 15% more), Crafts (wages and treasury income +15%) or Trade (customers and suppliers come 15% more often); it can change once a week. Each has its own project, built by the bell in the village's style: Orchard Farmstead (+10% produce), Forge (wages ×1.1, armorer, weaponsmith and toolsmith job sites), Exchange Office (+10% customers, trading places 25% cheaper). Their effects hold while the village keeps that specialization.
+- Looking at a bell shows the village's specialization and patron.
+- WTHIT: the same tooltips as Jade (vending block, market counter, trade crate, display, bell); Tradery's own hints step aside for it, as they do for Jade.
+- BlueMap and squaremap: layers of Tradery's villages (level, prosperity, treasury, specialization, patron) and of players' shops (owner and offers; gold coins on squaremap), rebuilt every minute (`integrations.maps`).
+- ChoiceTheorem's Overhauled Village: market stalls can generate in its villages, in the closest vanilla style.
+- VillagersPlus: its alchemists, horticulturists, miners, occultists and oceanographers produce goods for buyback blocks and buy what they need from players' shops.
+- Guard Villagers: the Watch Post project brings two guards along with its iron golem.
+- Economy API 1.2.0: `Reasons.VILLAGE_PATRON`.
+
+### Fixed
+- Trading with a villager of a village for money charged the price minus the village's 10% trade tax, and the tax reached the treasury on top. You now pay the full price; the tax is taken out of it and the villager's wallet gets the rest, as described.
+- With Jade installed, looking at a bell showed Tradery's bell hint under Jade's tooltip of the same village. The bell hint now steps aside for Jade and WTHIT like the vending block's and the counter's (`vending.hint: AUTO`; `ON` brings it back).
+- The Watch Post's iron golem could appear on top of the post instead of next to it. It now stands on the ground by the post, and so do Guard Villagers' guards.
+- A market stall could generate by a pond with its floor below the water line, flooded, its vendors under water. Such plots now stay empty.
+
 ## [1.1.0] - Unreleased
 
 Living Market: villagers become customers and suppliers, villages get an economy of their own (treasury, prosperity, orders, projects, caravans, market days) and markets to spend money at. Economy API 1.1.0. The same release exists for 1.21.1 (Fabric, NeoForge) and 1.20.1 (Fabric, Forge).
