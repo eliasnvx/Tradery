@@ -1,0 +1,17 @@
+{
+  "profession": "villagersplus:alchemist",
+  "supplies": [
+    {
+      "item": "minecraft:nether_wart",
+      "per_day": 4
+    },
+    {
+      "item": "minecraft:sugar",
+      "per_day": 6
+    },
+    {
+      "item": "minecraft:glistering_melon_slice",
+      "per_day": 1
+    }
+  ]
+}

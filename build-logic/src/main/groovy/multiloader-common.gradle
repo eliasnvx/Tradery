@@ -28,6 +28,10 @@ repositories {
         filter { includeGroup 'me.shedaniel'; includeGroup 'me.shedaniel.cloth'; includeGroup 'dev.architectury' }
     }
     exclusiveContent {
+        forRepository { maven { name = 'BlueColored'; url = 'https://repo.bluecolored.de/releases' } }
+        filter { includeGroupAndSubgroups 'de.bluecolored' }
+    }
+    exclusiveContent {
         forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
         filter { includeGroup 'maven.modrinth' }
     }
@@ -44,6 +48,12 @@ dependencies {
     compileOnly("me.shedaniel.cloth:basic-math:0.6.1") { transitive = false }
     compileOnly("dev.architectury:architectury:${architectury_version}") { transitive = false }
     compileOnly("maven.modrinth:jade:${jade_fabric_version}") { transitive = false }
+    // WTHIT's API ships inside its mod jar; the API packages are the same on every loader
+    compileOnly("maven.modrinth:wthit:fabric-${wthit_version}") { transitive = false }
+    // Server web maps (v1.2)
+    compileOnly("de.bluecolored:bluemap-api:${bluemap_api_version}") { transitive = false }
+    compileOnly("com.flowpowered:flow-math:${flow_math_version}") { transitive = false }
+    compileOnly("xyz.jpenilla:squaremap-api:${squaremap_version}") { transitive = false }
 }
 
 dependencies {

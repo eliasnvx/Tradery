@@ -1,0 +1,16 @@
+{
+  "profession": "villagersplus:horticulturist",
+  "wants": [
+    {
+      "item": "minecraft:flower_pot",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:bone_meal",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:moss_block"
+    }
+  ]
+}

@@ -1,9 +1,8 @@
 package dev.eliasnvx.tradery.compat.jade;
 
 import dev.eliasnvx.tradery.Tradery;
+import dev.eliasnvx.tradery.compat.TooltipLines;
 import dev.eliasnvx.tradery.vending.DisplayBlockEntity;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
@@ -23,8 +22,8 @@ enum DisplayJadeProvider implements IBlockComponentProvider {
 
     @Override
     public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
-        if (accessor.getBlockEntity() instanceof DisplayBlockEntity display && !display.shown().isEmpty()) {
-            tooltip.add(Component.translatable("tradery.jade.shows", display.shown().getHoverName()).withStyle(ChatFormatting.GRAY));
+        if (accessor.getBlockEntity() instanceof DisplayBlockEntity display) {
+            TooltipLines.display(display, tooltip::add);
         }
     }
 }

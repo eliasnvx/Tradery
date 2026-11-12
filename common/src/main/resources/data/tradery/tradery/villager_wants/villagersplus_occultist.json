@@ -1,0 +1,16 @@
+{
+  "profession": "villagersplus:occultist",
+  "wants": [
+    {
+      "item": "minecraft:glowstone_dust",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:quartz",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ]
+}

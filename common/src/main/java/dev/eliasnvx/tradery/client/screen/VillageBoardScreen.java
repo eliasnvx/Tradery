@@ -9,7 +9,9 @@ import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.registry.TraderyItems;
 import dev.eliasnvx.tradery.util.Money;
 import dev.eliasnvx.tradery.vending.StackMath;
+import dev.eliasnvx.tradery.village.VillageCouncil;
 import dev.eliasnvx.tradery.village.VillageFunding;
+import dev.eliasnvx.tradery.village.VillageSpecialization;
 import dev.eliasnvx.tradery.village.VillageState;
 import dev.eliasnvx.tradery.village.Villages;
 import net.minecraft.ChatFormatting;
@@ -42,14 +44,19 @@ import java.util.OptionalLong;
 /**
  * The village board (SPEC "Доска деревни"): tabs Orders (deliver plain stacks for money from the treasury), Village
  * (level, prosperity, people, treasury with its last week, the viewer's reputation, projects to fund and a donation
- * to the treasury) and Market (cheap and dear goods, market days, trading places, caravans). The server does
- * everything; this only shows what it sent and asks.
+ * to the treasury), Market (cheap and dear goods, market days, trading places, caravans) and Patron (the patron, the
+ * biggest contributors, the village's name and specialization). The server does everything; this only shows what it
+ * sent and asks.
  */
 public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu> implements VendingResultView {
     private static final int TAB_ORDERS = 0;
     private static final int TAB_VILLAGE = 1;
     private static final int TAB_MARKET = 2;
-    private static final String[] TAB_KEYS = {"tradery.board.tab.orders", "tradery.board.tab.village", "tradery.board.tab.market"};
+    private static final int TAB_PATRON = 3;
+    private static final String[] TAB_KEYS = {"tradery.board.tab.orders", "tradery.board.tab.village", "tradery.board.tab.market",
+        "tradery.board.tab.patron"};
+    private static final int TAB_COUNT = TAB_KEYS.length;
+    private static final int TAB_W = (284 - 2 * (TAB_KEYS.length - 1)) / TAB_KEYS.length;
 
     private static final int PAD = 8;
     private static final int INNER_W = 284;
@@ -86,6 +93,13 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
     private static final int CHART_SLOT = 20;
     private static final int CHART_BAR = 9;
     private static final int CHART_DAYS = VillageState.HISTORY_DAYS;
+
+    // Patron tab: the patron and the contributors on the left, the name and the specialization on the right
+    private static final int RENAME_Y = TOP + 12;
+    private static final int RENAME_BUTTON_W = 46;
+    private static final int SPEC_Y = TOP + 84;
+    private static final int SPEC_STEP = 22;
+    private static final int TOP_LINES = VillageCouncil.TOP;
 
     // Market tab
     private static final int ICONS_PER_ROW = 7;
@@ -134,6 +148,10 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
     private Button fundButton;
     private Button rentButton;
     private EditBox donateBox;
+    private Button renameButton;
+    private EditBox renameBox;
+    private String renameText = "";
+    private final Button[] specButtons = new Button[VillageSpecialization.values().length];
 
     private Component resultMessage = Component.empty();
     private boolean resultSuccess;
@@ -169,6 +187,21 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
         rentButton = addRenderableWidget(Button.builder(Component.translatable("tradery.board.rent_button"),
                 b -> click(VillageBoardMenu.RENT, 0))
             .bounds(leftPos + RIGHT_X, topPos + TOP + 66, RIGHT_W, 20).build());
+        renameBox = new EditBox(font, leftPos + RIGHT_X, topPos + RENAME_Y + 3, RIGHT_W - RENAME_BUTTON_W - 2, 14,
+            Component.translatable("tradery.board.rename_hint"));
+        renameBox.setMaxLength(VillageCouncil.MAX_NAME);
+        renameBox.setValue(renameText);
+        renameBox.setResponder(text -> renameText = text);
+        addRenderableWidget(renameBox);
+        renameButton = addRenderableWidget(Button.builder(Component.translatable("tradery.board.rename"), b -> rename())
+            .bounds(leftPos + RIGHT_X + RIGHT_W - RENAME_BUTTON_W, topPos + RENAME_Y + 1, RENAME_BUTTON_W, 18).build());
+        renameButton.setTooltip(Tooltip.create(Component.translatable("tradery.board.rename_tip", VillageCouncil.MAX_NAME)));
+        for (VillageSpecialization specialization : VillageSpecialization.values()) {
+            int index = specialization.ordinal();
+            specButtons[index] = addRenderableWidget(Button.builder(specialization.displayName(), b -> click(VillageBoardMenu.SPECIALIZE, index))
+                .bounds(leftPos + RIGHT_X, topPos + SPEC_Y + index * SPEC_STEP, RIGHT_W, 20).build());
+        }
+        shownData = null;
         refresh();
         updateButtons();
     }
@@ -186,6 +219,10 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
         } else {
             click(VillageBoardMenu.FUND, selectedProject - 1);
         }
+    }
+
+    private void rename() {
+        Platform.get().sendToServer(new TraderyPayloads.VillageRenamePayload(menu.containerId, renameText));
     }
 
     private void onDonateTyped(String text) {
@@ -233,6 +270,24 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
             ? Component.translatable("tradery.board.rent_for", money(rentTotal(market)), market.rentDays())
             : Component.translatable("tradery.board.rent_button"));
         rentButton.setTooltip(Tooltip.create(Component.translatable("tradery.board.rent_tip")));
+
+        VillageBoardMenu.Council council = data.council();
+        renameBox.setHint(Component.empty().append(data.info().name()).withStyle(ChatFormatting.DARK_GRAY));
+        VillageSpecialization picked = council.picked().orElse(null);
+        for (VillageSpecialization specialization : VillageSpecialization.values()) {
+            Button button = specButtons[specialization.ordinal()];
+            button.setMessage(specialization == picked
+                ? Component.literal("✔ ").append(specialization.displayName()).withStyle(ChatFormatting.DARK_GREEN)
+                : specialization.displayName());
+            button.setTooltip(Tooltip.create(Component.empty().append(specialization.displayName()).append("\n")
+                .append(specialization.description(council.bonusPercent()).copy().withStyle(ChatFormatting.GRAY))));
+        }
+    }
+
+    /** The project needs no specialization, or the one in effect here. */
+    private static boolean specializationFits(VillageBoardMenu.Data data, VillageBoardMenu.ProjectView project) {
+        return project.needs().isEmpty()
+            || data.council().specializationActive() && project.specialization().equals(data.council().specialization());
     }
 
     private static long rentTotal(VillageBoardMenu.Market market) {
@@ -261,8 +316,8 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
         super.extractBackground(graphics, mouseX, mouseY, a);
         refresh();
         Panels.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
-        int tabW = (INNER_W - 4) / 3;
-        for (int i = 0; i < 3; i++) {
+        int tabW = TAB_W;
+        for (int i = 0; i < TAB_COUNT; i++) {
             int x = leftPos + PAD + i * (tabW + 2);
             if (i == tab) {
                 graphics.fill(x, topPos + TAB_Y, x + tabW, topPos + TAB_Y + TAB_H, 0xFFFFFFFF);
@@ -281,6 +336,8 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
             case TAB_VILLAGE -> {
                 Panels.inset(graphics, leftPos + RIGHT_X - 1, topPos + PROJECT_Y - 1, PROJECT_W + 2, PROJECT_ROWS * PROJECT_ROW_H + 1);
                 Panels.inset(graphics, leftPos + PROJECT_SCROLL_X - 1, topPos + PROJECT_Y - 1, 8, PROJECT_ROWS * PROJECT_ROW_H + 1);
+            }
+            case TAB_PATRON -> {
             }
             default -> {
                 List<VillageBoardMenu.ShiftView> shifts = data().market().shifts();
@@ -312,6 +369,21 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
         deliverButton.visible = tab == TAB_ORDERS;
         fundButton.visible = tab == TAB_VILLAGE;
         rentButton.visible = tab == TAB_MARKET;
+
+        VillageBoardMenu.Council council = data.council();
+        boolean patronTab = tab == TAB_PATRON;
+        renameBox.visible = patronTab && council.viewerIsPatron();
+        renameButton.visible = renameBox.visible;
+        if (!renameBox.visible && renameBox.isFocused()) {
+            renameBox.setFocused(false);
+        }
+        boolean levelOk = data.info().level() >= council.specializationMinLevel();
+        VillageSpecialization picked = council.picked().orElse(null);
+        for (VillageSpecialization specialization : VillageSpecialization.values()) {
+            Button button = specButtons[specialization.ordinal()];
+            button.visible = patronTab;
+            button.active = council.viewerIsPatron() && levelOk && specialization != picked && council.changeInDays() == 0;
+        }
 
         VillageBoardMenu.OrderView order = selectedOrder < data.orders().size() ? data.orders().get(selectedOrder) : null;
         selectedOwned = order == null ? 0 : owned(order.item().getItem());
@@ -348,6 +420,10 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
             fundButton.active = false;
             fundButton.setMessage(Panels.fit(font, Component.translatable("tradery.board.project_needs", Villages.levelName(project.level())),
                 RIGHT_W - 8));
+        } else if (!specializationFits(data, project)) {
+            fundButton.active = false;
+            fundButton.setMessage(Panels.fit(font, Component.translatable("tradery.board.project_needs", project.needs().orElseThrow().displayName()),
+                RIGHT_W - 8));
         } else {
             fundButton.active = ClientEconomy.balance() >= project.cost();
             fundButton.setMessage(Panels.fit(font, Component.translatable("tradery.board.fund_for", money(project.cost())), RIGHT_W - 8));
@@ -364,8 +440,8 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
         graphics.text(font, Panels.fit(font, info.name(), INNER_W - levelWidth - 8), PAD, 6, Panels.LABEL, false);
         graphics.text(font, level, PAD + INNER_W - levelWidth, 6, HEADING, false);
 
-        int tabW = (INNER_W - 4) / 3;
-        for (int i = 0; i < 3; i++) {
+        int tabW = TAB_W;
+        for (int i = 0; i < TAB_COUNT; i++) {
             Component label = Panels.fit(font, Component.translatable(TAB_KEYS[i]), tabW - 6);
             int x = PAD + i * (tabW + 2) + (tabW - font.width(label)) / 2;
             graphics.text(font, label, x, TAB_Y + 3, i == tab ? Panels.LABEL : 0xFF3A3A3A, false);
@@ -374,6 +450,7 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
         switch (tab) {
             case TAB_ORDERS -> orders(graphics, data, mouseX, mouseY);
             case TAB_VILLAGE -> village(graphics, data, mouseX, mouseY);
+            case TAB_PATRON -> patron(graphics, data);
             default -> market(graphics, data);
         }
 
@@ -543,6 +620,9 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
             } else if (info.level() < project.level()) {
                 status = Component.translatable("tradery.board.project_needs", Villages.levelName(project.level()));
                 color = ERROR;
+            } else if (!specializationFits(data, project)) {
+                status = Component.translatable("tradery.board.project_needs", project.needs().orElseThrow().displayName());
+                color = ERROR;
             } else {
                 status = money(project.cost());
                 color = GOLD;
@@ -645,6 +725,66 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
 
     private Component flowText(long amount, boolean in) {
         return Component.literal(in ? "+" : "-").append(money(amount)).withStyle(in ? ChatFormatting.GREEN : ChatFormatting.RED);
+    }
+
+    // ------------------------------------------------------------------ Patron tab
+
+    private void patron(GuiGraphicsExtractor graphics, VillageBoardMenu.Data data) {
+        VillageBoardMenu.Council council = data.council();
+        int x = PAD;
+        graphics.text(font, Panels.fit(font, Component.translatable("tradery.board.patron"), LEFT_W), x, TOP + 1, HEADING, false);
+        int y = TOP + 12;
+        if (council.patron().isEmpty()) {
+            y = wrapped(graphics, Component.translatable("tradery.board.no_patron"), x, y, LEFT_W, MUTED, 1);
+        } else {
+            y = wrapped(graphics, Component.literal(council.patron()), x, y, LEFT_W, GOLD, 1);
+            y = wrapped(graphics, Component.translatable("tradery.board.patron_gave", money(council.patronContribution())), x, y, LEFT_W, MUTED, 1);
+        }
+        y = wrapped(graphics, council.viewerIsPatron() ? Component.translatable("tradery.board.you_are_patron")
+            : Component.translatable("tradery.board.you_gave", money(council.viewerContribution())), x, y + 2, LEFT_W, Panels.LABEL, 2);
+        y = wrapped(graphics, Component.translatable("tradery.board.patron_rule", money(council.minContribution())), x, y + 2, LEFT_W, MUTED, 3);
+
+        graphics.text(font, Panels.fit(font, Component.translatable("tradery.board.contributors"), LEFT_W), x, y + 4, HEADING, false);
+        y += 15;
+        if (council.top().isEmpty()) {
+            wrapped(graphics, Component.translatable("tradery.board.no_contributors"), x, y, LEFT_W, MUTED, 2);
+        }
+        int place = 1;
+        for (VillageBoardMenu.Contributor contributor : council.top()) {
+            if (y > MESSAGE_Y - LINE - 2) {
+                break;
+            }
+            Component amount = money(contributor.amount());
+            int amountWidth = font.width(amount);
+            Component name = Panels.fit(font, Component.literal(place + ". " + contributor.name()), LEFT_W - amountWidth - 4);
+            boolean isPatron = contributor.name().equals(council.patron()) && place == 1;
+            graphics.text(font, name, x, y, isPatron ? GOLD : Panels.LABEL, false);
+            graphics.text(font, amount, x + LEFT_W - amountWidth, y, MUTED, false);
+            y += LINE;
+            place++;
+        }
+
+        x = RIGHT_X;
+        graphics.text(font, Panels.fit(font, Component.translatable("tradery.board.village_name"), RIGHT_W), x, TOP + 1, HEADING, false);
+        if (!council.viewerIsPatron()) {
+            wrapped(graphics, Component.translatable("tradery.board.patron_perks", council.taxSharePercent()), x, RENAME_Y, RIGHT_W, MUTED, 4);
+        }
+        graphics.text(font, Panels.fit(font, Component.translatable("tradery.board.specialization"), RIGHT_W), x, SPEC_Y - 30, HEADING, false);
+        VillageSpecialization picked = council.picked().orElse(null);
+        Component state;
+        int color = Panels.LABEL;
+        if (data.info().level() < council.specializationMinLevel()) {
+            state = Component.translatable("tradery.board.spec_needs", Villages.levelName(council.specializationMinLevel()));
+            color = MUTED;
+        } else if (picked == null) {
+            state = Component.translatable(council.viewerIsPatron() ? "tradery.board.spec_pick" : "tradery.board.spec_none");
+            color = MUTED;
+        } else if (council.changeInDays() > 0) {
+            state = Component.translatable("tradery.board.spec_change_in", picked.displayName(), council.changeInDays());
+        } else {
+            state = Component.translatable("tradery.board.spec_current", picked.displayName());
+        }
+        wrapped(graphics, state, x, SPEC_Y - 19, RIGHT_W, color, 2);
     }
 
     // ------------------------------------------------------------------ Market tab
@@ -820,8 +960,8 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
     private int tabAt(double mouseX, double mouseY) {
         double x = mouseX - leftPos - PAD;
         double y = mouseY - topPos - TAB_Y;
-        int tabW = (INNER_W - 4) / 3;
-        if (x < 0 || y < 0 || y >= TAB_H || x >= 3 * (tabW + 2)) {
+        int tabW = TAB_W;
+        if (x < 0 || y < 0 || y >= TAB_H || x >= TAB_COUNT * (tabW + 2)) {
             return -1;
         }
         int index = (int) (x / (tabW + 2));
@@ -834,6 +974,7 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
             int clickedTab = tabAt(event.x(), event.y());
             if (clickedTab >= 0) {
                 tab = clickedTab;
+                updateButtons();
                 return true;
             }
             int order = orderAt(event.x(), event.y());
@@ -865,18 +1006,31 @@ public class VillageBoardScreen extends AbstractContainerScreen<VillageBoardMenu
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        // While typing a donation, keys go to the text box (so "E" doesn't close the window)
-        if (donateBox.isVisible() && donateBox.isFocused() && !event.isEscape()) {
-            return donateBox.keyPressed(event) || true;
+        // While typing a donation or a name, keys go to the text box (so "E" doesn't close the window)
+        EditBox typing = typing();
+        if (typing != null && !event.isEscape()) {
+            if (typing == renameBox && event.isConfirmation()) {
+                rename();
+                return true;
+            }
+            return typing.keyPressed(event) || true;
         }
         return super.keyPressed(event);
     }
 
     @Override
     public boolean charTyped(CharacterEvent event) {
-        if (donateBox.isVisible() && donateBox.isFocused()) {
-            return donateBox.charTyped(event);
+        EditBox typing = typing();
+        if (typing != null) {
+            return typing.charTyped(event);
         }
         return super.charTyped(event);
+    }
+
+    private @Nullable EditBox typing() {
+        if (donateBox.isVisible() && donateBox.isFocused()) {
+            return donateBox;
+        }
+        return renameBox.isVisible() && renameBox.isFocused() ? renameBox : null;
     }
 }

@@ -1,0 +1,19 @@
+{
+  "profession": "villagersplus:alchemist",
+  "wants": [
+    {
+      "item": "minecraft:glass_bottle",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:spider_eye",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:gunpowder"
+    },
+    {
+      "item": "minecraft:blaze_powder"
+    }
+  ]
+}

@@ -13,14 +13,43 @@ dependencies {
     // Text Placeholder API: optional (%tradery:balance% etc.)
     compileOnly("eu.pb4:placeholder-api:${placeholder_api_version}") { transitive = false }
 
-    // Dev only: run with the optional mods installed: ./gradlew :fabric:runClient -Pcompat=true
-    if (project.hasProperty('compat')) {
-        runtimeOnly("mezz.jei:jei-26.3-fabric:${jei_version}")
-        runtimeOnly("maven.modrinth:jade:${jade_fabric_version}")
-        runtimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}")
-        runtimeOnly("dev.architectury:architectury-fabric:${architectury_version}")
-        runtimeOnly("me.shedaniel.cloth:cloth-config-fabric:${cloth_config_version}")
-        runtimeOnly("eu.pb4:placeholder-api:${placeholder_api_version}")
+    // Dev only: run with the optional mods installed: ./gradlew :fabric:runClient -Pcompat=true, or some of them:
+    // -Pcompat=recipes,jade,placeholders,wthit,maps (or bluemap, squaremap),villages (Jade and WTHIT both draw a tooltip: pick one for screenshots)
+    def compat = project.findProperty('compat')?.toString()
+    if (compat != null) {
+        def wanted = { String group -> compat == 'true' || compat.split(',')*.trim().contains(group) }
+        if (wanted('recipes')) {
+            runtimeOnly("mezz.jei:jei-26.3-fabric:${jei_version}")
+            runtimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}")
+            runtimeOnly("dev.architectury:architectury-fabric:${architectury_version}")
+            runtimeOnly("me.shedaniel.cloth:cloth-config-fabric:${cloth_config_version}")
+        }
+        if (wanted('jade')) {
+            runtimeOnly("maven.modrinth:jade:${jade_fabric_version}")
+        }
+        if (wanted('placeholders')) {
+            runtimeOnly("eu.pb4:placeholder-api:${placeholder_api_version}")
+        }
+        if (wanted('wthit')) {
+            // WTHIT 21 needs Fabric API 0.165.2+ at runtime: add -Pfabric_api_version=0.166.2+26.3
+            runtimeOnly("maven.modrinth:wthit:fabric-${wthit_version}")
+            runtimeOnly("maven.modrinth:badpackets:fabric-${badpackets_version}")
+        }
+        // `maps` = both; BlueMap and squaremap don't load together on NeoForge 1.21.1 (both bring Adventure's gson serializer)
+        if (wanted('maps') || wanted('bluemap')) {
+            runtimeOnly("maven.modrinth:bluemap:${bluemap_version}-fabric")
+        }
+        if (wanted('maps') || wanted('squaremap')) {
+            runtimeOnly("maven.modrinth:squaremap:${squaremap_fabric_id}")
+        }
+        if (wanted('villages')) {
+            runtimeOnly("maven.modrinth:villagersplus:${villagersplus_version}-fabric")
+            runtimeOnly("maven.modrinth:villagerstradingplus:${villagerstradingplus_version}-fabric")
+            // CTOV on Fabric reads its config through Cloth Config (AutoConfig)
+            runtimeOnly("me.shedaniel.cloth:cloth-config-fabric:${cloth_config_version}")
+            runtimeOnly("maven.modrinth:ct-overhaul-village:${ctov_fabric_version}") { transitive = false }
+            runtimeOnly("maven.modrinth:lithostitched:${lithostitched_version}-fabric-26.3")
+        }
     }
 }
 

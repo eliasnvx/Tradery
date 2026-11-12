@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "#minecraft:planks",
+    "E": "minecraft:emerald",
+    "C": "minecraft:chest"
+  },
+  "pattern": [
+    "PEP",
+    "PCP",
+    "PPP"
+  ],
+  "result": {
+    "id": "tradery:trade_crate"
+  }
+}

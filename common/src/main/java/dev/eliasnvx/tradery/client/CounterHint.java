@@ -1,8 +1,6 @@
 package dev.eliasnvx.tradery.client;
 
-import dev.eliasnvx.tradery.config.ClientConfig;
 import dev.eliasnvx.tradery.config.TraderyConfig;
-import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.vending.CounterOffer;
 import dev.eliasnvx.tradery.vending.CounterSettings;
 import dev.eliasnvx.tradery.vending.MarketCounterBlockEntity;
@@ -43,7 +41,6 @@ public final class CounterHint {
     private static Component footer = Component.empty();
     private static boolean footerWarn;
 
-    private static @Nullable Boolean jadeLoaded;
     private static @Nullable BlockPos shownPos;
     private static @Nullable CounterSettings shownSettings;
     private static String shownOwner = "";
@@ -87,14 +84,7 @@ public final class CounterHint {
     }
 
     private static boolean enabled() {
-        ClientConfig.HintMode mode = TraderyConfig.client().vending().hint();
-        if (mode != ClientConfig.HintMode.AUTO) {
-            return mode == ClientConfig.HintMode.ON;
-        }
-        if (jadeLoaded == null) {
-            jadeLoaded = Platform.get().isModLoaded("jade");
-        }
-        return !jadeLoaded;
+        return LookHints.enabled();
     }
 
     private static void refresh(Minecraft minecraft, MarketCounterBlockEntity counter) {

@@ -131,7 +131,7 @@ public final class VillagerTradeGameTests {
     private static ServerConfig withTrading(ServerConfig config, boolean enabled) {
         return new ServerConfig(config.currency(), config.economy(), config.pay(), config.vending(), config.ore(), config.history(),
             config.log(), config.villagers(), config.market(),
-            new ServerConfig.VillagerTradingSection(enabled, config.villagerTrading().emeraldValue()), config.villages());
+            new ServerConfig.VillagerTradingSection(enabled, config.villagerTrading().emeraldValue()), config.villages(), config.tradeCrates(), config.integrations());
     }
 
     // ------------------------------------------------------------------ tests

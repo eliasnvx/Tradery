@@ -1,0 +1,84 @@
+{
+  "prices": [
+    {
+      "item": "minecraft:sugar",
+      "price": 0.1
+    },
+    {
+      "item": "minecraft:glistering_melon_slice",
+      "price": 1.5
+    },
+    {
+      "item": "minecraft:spider_eye",
+      "price": 0.3
+    },
+    {
+      "item": "minecraft:gunpowder",
+      "price": 0.4
+    },
+    {
+      "item": "minecraft:blaze_powder",
+      "price": 1.5
+    },
+    {
+      "item": "minecraft:oak_sapling",
+      "price": 0.1
+    },
+    {
+      "item": "minecraft:poppy",
+      "price": 0.08
+    },
+    {
+      "item": "minecraft:dandelion",
+      "price": 0.08
+    },
+    {
+      "item": "minecraft:flower_pot",
+      "price": 0.3
+    },
+    {
+      "item": "minecraft:moss_block",
+      "price": 0.3
+    },
+    {
+      "item": "minecraft:raw_iron",
+      "price": 0.6
+    },
+    {
+      "item": "minecraft:raw_copper",
+      "price": 0.25
+    },
+    {
+      "item": "minecraft:rail",
+      "price": 0.5
+    },
+    {
+      "item": "minecraft:ladder",
+      "price": 0.15
+    },
+    {
+      "item": "minecraft:candle",
+      "price": 0.4
+    },
+    {
+      "item": "minecraft:amethyst_shard",
+      "price": 0.4
+    },
+    {
+      "item": "minecraft:soul_sand",
+      "price": 0.15
+    },
+    {
+      "item": "minecraft:sea_pickle",
+      "price": 0.3
+    },
+    {
+      "item": "minecraft:seagrass",
+      "price": 0.05
+    },
+    {
+      "item": "minecraft:dried_kelp",
+      "price": 0.06
+    }
+  ]
+}

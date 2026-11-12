@@ -18,6 +18,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProc
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -38,6 +39,25 @@ public final class MarketPools {
     public static final ResourceKey<StructureProcessorList> PROCESSORS = ResourceKey.create(Registries.PROCESSOR_LIST, Tradery.id("market_stock"));
 
     private MarketPools() {
+    }
+
+    /**
+     * ChoiceTheorem's Overhauled Village (SPEC "Интеграции 1.2"): its village kinds → the vanilla type whose stalls
+     * fit them best. Its roads connect houses by {@code minecraft:building_entrance}, like vanilla streets, so the
+     * same stall templates join its house pools ({@code ctov:village/<kind>/house}) when the mod is there.
+     */
+    public static final Map<String, String> CTOV_TYPES = Map.ofEntries(
+        Map.entry("plains", "plains"), Map.entry("plains_fortified", "plains"), Map.entry("beach", "plains"),
+        Map.entry("mushroom", "plains"), Map.entry("jungle", "plains"), Map.entry("jungle_tree", "plains"),
+        Map.entry("desert", "desert"), Map.entry("desert_oasis", "desert"),
+        Map.entry("savanna", "savanna"), Map.entry("savanna_na", "savanna"), Map.entry("mesa", "savanna"), Map.entry("mesa_fortified", "savanna"),
+        Map.entry("taiga", "taiga"), Map.entry("taiga_fortified", "taiga"), Map.entry("mountain", "taiga"), Map.entry("swamp", "taiga"),
+        Map.entry("swamp_fortified", "taiga"), Map.entry("halloween", "taiga"),
+        Map.entry("snowy_igloo", "snowy"), Map.entry("mountain_alpine", "snowy"), Map.entry("christmas", "snowy"));
+
+    /** {@code ctov:village/<kind>/house}. */
+    public static Identifier ctovHousesPool(String kind) {
+        return Identifier.fromNamespaceAndPath("ctov", "village/" + kind + "/house");
     }
 
     /** {@code minecraft:village/<type>/houses}. */
@@ -94,7 +114,25 @@ public final class MarketPools {
             }
         }
         Tradery.LOGGER.info("Village markets: {} stall templates added to the village house pools with weight {}", added, market.weight());
-        return added;
+        // ChoiceTheorem's Overhauled Village: its pools exist only with the mod
+        int ctov = 0;
+        for (Map.Entry<String, String> kind : new java.util.TreeMap<>(CTOV_TYPES).entrySet()) {
+            Optional<StructureTemplatePool> pool = pools.getOptional(ctovHousesPool(kind.getKey()));
+            if (pool.isEmpty()) {
+                continue;
+            }
+            for (String stall : STALLS) {
+                Identifier template = template(kind.getValue(), stall);
+                if (server.getStructureTemplateManager().get(template).isPresent()
+                    && add(pool.get(), element(template, processors.get()), market.weight())) {
+                    ctov++;
+                }
+            }
+        }
+        if (ctov > 0) {
+            Tradery.LOGGER.info("Village markets: {} stall templates added to ChoiceTheorem's Overhauled Village house pools", ctov);
+        }
+        return added + ctov;
     }
 
     /** How often a stall template is in the pool's pick list (its weight once added, else 0). */

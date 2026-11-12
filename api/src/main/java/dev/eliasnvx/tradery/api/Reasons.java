@@ -56,6 +56,13 @@ public final class Reasons {
      * amount's direction tells which.
      */
     public static final Identifier VILLAGE_CARAVAN = TraderyApi.id("village/caravan");
+    /**
+     * A village's patron got their share of a trade tax the village took. The tax is a counter outside the ledger,
+     * so the money enters the ledger: the server account to the patron. The note is the village.
+     *
+     * @since 1.2.0
+     */
+    public static final Identifier VILLAGE_PATRON = TraderyApi.id("village/patron");
     /** Coin ore mined straight to the balance. */
     public static final Identifier ORE_MINED = TraderyApi.id("ore/mined");
     /** Coin items turned into balance (pickup or use). */

@@ -1,0 +1,17 @@
+{
+  "profession": "villagersplus:occultist",
+  "supplies": [
+    {
+      "item": "minecraft:candle",
+      "per_day": 2
+    },
+    {
+      "item": "minecraft:amethyst_shard",
+      "per_day": 2
+    },
+    {
+      "item": "minecraft:soul_sand",
+      "per_day": 4
+    }
+  ]
+}

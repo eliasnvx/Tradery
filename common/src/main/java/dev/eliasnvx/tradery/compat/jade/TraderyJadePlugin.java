@@ -8,7 +8,7 @@ import snownee.jade.api.IWailaCommonRegistration;
 import snownee.jade.api.IWailaPlugin;
 import snownee.jade.api.WailaPlugin;
 
-/** Jade: what a vending block sells, for how much, how many are left, and who owns it; a bell's village. */
+/** Jade: what a vending block sells, for how much, how many are left, and who owns it; what a trade crate wants; a bell's village. */
 @WailaPlugin("tradery")
 public final class TraderyJadePlugin implements IWailaPlugin {
     @Override
@@ -22,6 +22,7 @@ public final class TraderyJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(VendingJadeProvider.INSTANCE, VendingBlock.class);
         registration.registerBlockComponent(DisplayJadeProvider.INSTANCE, DisplayBlock.class);
         registration.registerBlockComponent(CounterJadeProvider.INSTANCE, dev.eliasnvx.tradery.vending.MarketCounterBlock.class);
+        registration.registerBlockComponent(CrateJadeProvider.INSTANCE, dev.eliasnvx.tradery.vending.TradeCrateBlock.class);
         registration.registerBlockComponent(BellJadeProvider.INSTANCE, net.minecraft.world.level.block.BellBlock.class);
     }
 }

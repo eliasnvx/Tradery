@@ -1,0 +1,11 @@
+{
+  "cost": 1200,
+  "level": 3,
+  "icon": "minecraft:blast_furnace",
+  "specialization": "crafts",
+  "effects": {
+    "wage_multiplier": 1.1
+  },
+  "action": "structure",
+  "structure": "forge"
+}

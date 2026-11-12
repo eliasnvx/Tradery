@@ -100,7 +100,7 @@ public final class VillagerTrading {
      * The other side of the window: a villager with its wallet, or a caravan with its purse. Says what an emerald in
      * an offer is worth, how much money it has, and books a trade whose money already moved.
      */
-    private interface Partner {
+    interface Partner {
         /** Money for one emerald in the offer at {@code index} (minor units). */
         long emeraldValue(int index);
 
@@ -122,7 +122,7 @@ public final class VillagerTrading {
         Identifier reason();
     }
 
-    private record VillagerPartner(Villager villager, MinecraftServer server) implements Partner {
+    record VillagerPartner(Villager villager, MinecraftServer server) implements Partner {
         @Override
         public long emeraldValue(int index) {
             return VillagerTrading.emeraldValue();
@@ -296,16 +296,18 @@ public final class VillagerTrading {
         MinecraftServer server = player.level().getServer();
         long today = VillagerPurchases.today(server);
         long wallet = partner.money(today);
-        // What the player gets minus what the partner keeps of the payment (after the village's tax); the villager's
-        // wallet (the caravan's purse) covers a positive one, so it never ends below zero
-        long net = terms.payout() - partner.keeps(terms.price());
-        if (net > wallet) {
+        // What the partner pays out minus what it keeps of the payment (after the village's tax): the villager's wallet
+        // (the caravan's purse) covers a positive one, so it never ends below zero
+        long fromWallet = terms.payout() - partner.keeps(terms.price());
+        if (fromWallet > wallet) {
             return partner.outOfMoney();
         }
 
         EconomyService economy = EconomyService.INSTANCE;
         LedgerAccount account = economy.account(player.getUUID());
         Reason reason = Reason.of(partner.reason(), note(offer));
+        // The player pays the full price (the tax is part of it) and gets the full payout
+        long net = terms.payout() - terms.price();
         if (net < 0 && account.balance(economy.defaultCurrency()) < -net) {
             return Messages.failure(FailReason.INSUFFICIENT_FUNDS);
         }
@@ -340,7 +342,7 @@ public final class VillagerTrading {
         return null;
     }
 
-    private static boolean sameItem(ItemCost a, ItemCost b) {
+    static boolean sameItem(ItemCost a, ItemCost b) {
         return a.item().equals(b.item());
     }
 
@@ -387,7 +389,7 @@ public final class VillagerTrading {
     }
 
     /** Pre-checks make these impossible; if one ever happens, it's a bug worth a loud log line. */
-    private static void warnIfShort(String what, int done, int expected) {
+    static void warnIfShort(String what, int done, int expected) {
         if (done != expected) {
             Tradery.LOGGER.error("Villager trade {} moved {} of {} items; please report this", what, done, expected);
         }

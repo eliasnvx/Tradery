@@ -42,6 +42,7 @@ public final class TraderyFabricClient implements ClientModInitializer {
         MenuScreens.register(TraderyMenus.COUNTER_OWNER.get(), dev.eliasnvx.tradery.client.screen.CounterOwnerScreen::new);
         MenuScreens.register(TraderyMenus.COUNTER_BUYER.get(), dev.eliasnvx.tradery.client.screen.CounterBuyerScreen::new);
         MenuScreens.register(TraderyMenus.SHOP_LEDGER.get(), dev.eliasnvx.tradery.client.screen.ShopLedgerScreen::new);
+        MenuScreens.register(TraderyMenus.TRADE_CRATE.get(), dev.eliasnvx.tradery.client.screen.TradeCrateScreen::new);
         BlockEntityRenderers.register(TraderyBlocks.VENDING_BLOCK_ENTITY.get(), VendingRenderer::new);
         BlockEntityRenderers.register(TraderyBlocks.DISPLAY_BLOCK_ENTITY.get(), DisplayRenderer::new);
         BlockEntityRenderers.register(TraderyBlocks.MARKET_COUNTER_BLOCK_ENTITY.get(), dev.eliasnvx.tradery.client.render.CounterRenderer::new);

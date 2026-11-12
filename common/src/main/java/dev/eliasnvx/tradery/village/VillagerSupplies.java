@@ -182,9 +182,12 @@ public final class VillagerSupplies {
         // The villager's ledger entry exists first, with its first day's wage, as for a customer
         VillagerPurchases.wallet(villager, today);
         int level = villager.getVillagerData().level();
+        // A farming village makes more
+        VillageState village = Villages.of(villager);
+        double farming = VillageCouncil.factor(village, VillageSpecialization.FARMING) + (village == null ? 0 : VillageProjects.effects(village).supplies());
         Map<String, Integer> daily = new HashMap<>();
         for (Product product : products(villager.getVillagerData().profession())) {
-            daily.put(product.key(), dailyAmount(product, level));
+            daily.put(product.key(), (int) Math.round(dailyAmount(product, level) * farming));
         }
         VillagerLedger.get(server).produce(villager.getUUID(), today, daily, TraderyConfig.server().villages().suppliers().stockDays());
     }

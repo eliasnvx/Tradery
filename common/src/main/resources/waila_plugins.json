@@ -1,0 +1,10 @@
+{
+  "tradery:plugin": {
+    "entrypoints": {
+      "common": "dev.eliasnvx.tradery.compat.wthit.TraderyWthitCommonPlugin",
+      "client": "dev.eliasnvx.tradery.compat.wthit.TraderyWthitClientPlugin"
+    },
+    "side": "*",
+    "required": ["tradery"]
+  }
+}

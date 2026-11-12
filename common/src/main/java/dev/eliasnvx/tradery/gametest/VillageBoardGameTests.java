@@ -460,6 +460,8 @@ public final class VillageBoardGameTests {
         helper.assertValueEqual(golems.size(), golemsBefore + 1, "a golem by its post");
         IronGolem golem = golems.getLast();
         helper.assertFalse(golem.isPlayerCreated(), "the village's golem, not a player's");
+        helper.assertTrue(golem.getBlockY() <= helper.absolutePos(bell).getY(), "the golem stands on the ground by its post, not on its roof: "
+            + golem.blockPosition());
         helper.assertTrue(VillageProjects.effects(village).raidLoss() < 1, "raids hurt less");
         golems.forEach(IronGolem::discard);
         helper.setBlock(bell, Blocks.AIR);

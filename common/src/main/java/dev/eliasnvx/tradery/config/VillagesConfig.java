@@ -16,7 +16,8 @@ import static dev.eliasnvx.tradery.config.ConfigCodecs.field;
  */
 public record VillagesConfig(int censusIntervalTicks, double prosperityDecayPerDay, BigDecimal treasuryPerVillager, int treasuryDays,
                              BigDecimal tradeTaxPercent, int boardRadius, Levels levels, Orders orders, Suppliers suppliers,
-                             Caravans caravans, MarketDay marketDay, Rent rent, Threats threats, Buildings buildings, Festival festival) {
+                             Caravans caravans, MarketDay marketDay, Rent rent, Threats threats, Buildings buildings, Festival festival,
+                             Council council) {
 
     /**
      * Village levels: prosperity thresholds and what each level gives. Every list has one entry per level, the
@@ -129,6 +130,27 @@ public record VillagesConfig(int censusIntervalTicks, double prosperityDecayPerD
         ).apply(i, Festival::new));
     }
 
+    /**
+     * The village patron and specialization (SPEC "Покровитель", "Специализация").
+     *
+     * @param patronMinContribution   the patron has given at least this (projects and donations), major units
+     * @param patronTaxSharePercent   share of the village's trade tax paid to the patron (out of the tax)
+     * @param specializationMinLevel  village level from which the patron picks a specialization (3: Town)
+     * @param specializationChangeDays days between two changes of the specialization
+     * @param specializationBonus     the specialization's bonus (0.15: +15%)
+     */
+    public record Council(BigDecimal patronMinContribution, BigDecimal patronTaxSharePercent, int specializationMinLevel,
+                          int specializationChangeDays, double specializationBonus) {
+        static final Council DEFAULT = new Council(BigDecimal.valueOf(100), BigDecimal.TEN, 3, 7, 0.15);
+        static final Codec<Council> CODEC = RecordCodecBuilder.create(i -> i.group(
+            field(ConfigCodecs.NON_NEGATIVE, "patronMinContribution", DEFAULT.patronMinContribution).forGetter(Council::patronMinContribution),
+            field(ConfigCodecs.PERCENT, "patronTaxSharePercent", DEFAULT.patronTaxSharePercent).forGetter(Council::patronTaxSharePercent),
+            field(Codec.intRange(1, 16), "specializationMinLevel", DEFAULT.specializationMinLevel).forGetter(Council::specializationMinLevel),
+            field(Codec.intRange(0, 365), "specializationChangeDays", DEFAULT.specializationChangeDays).forGetter(Council::specializationChangeDays),
+            field(Codec.doubleRange(0, 10), "specializationBonus", DEFAULT.specializationBonus).forGetter(Council::specializationBonus)
+        ).apply(i, Council::new));
+    }
+
     public record Threats(double raidLossProsperity, double raidWinProsperity, double restorationMarkup) {
         static final Threats DEFAULT = new Threats(0.3, 100, 1.5);
         static final Codec<Threats> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -139,7 +161,8 @@ public record VillagesConfig(int censusIntervalTicks, double prosperityDecayPerD
     }
 
     static final VillagesConfig DEFAULT = new VillagesConfig(600, 0.05, BigDecimal.ONE, 7, BigDecimal.TEN, 48, Levels.DEFAULT,
-        Orders.DEFAULT, Suppliers.DEFAULT, Caravans.DEFAULT, MarketDay.DEFAULT, Rent.DEFAULT, Threats.DEFAULT, Buildings.DEFAULT, Festival.DEFAULT);
+        Orders.DEFAULT, Suppliers.DEFAULT, Caravans.DEFAULT, MarketDay.DEFAULT, Rent.DEFAULT, Threats.DEFAULT, Buildings.DEFAULT, Festival.DEFAULT,
+        Council.DEFAULT);
 
     static final Codec<VillagesConfig> CODEC = RecordCodecBuilder.create(i -> i.group(
         field(Codec.intRange(20, 24_000), "censusIntervalTicks", DEFAULT.censusIntervalTicks).forGetter(VillagesConfig::censusIntervalTicks),
@@ -156,7 +179,8 @@ public record VillagesConfig(int censusIntervalTicks, double prosperityDecayPerD
         field(Rent.CODEC, "rent", DEFAULT.rent).forGetter(VillagesConfig::rent),
         field(Threats.CODEC, "threats", DEFAULT.threats).forGetter(VillagesConfig::threats),
         field(Buildings.CODEC, "buildings", DEFAULT.buildings).forGetter(VillagesConfig::buildings),
-        field(Festival.CODEC, "festival", DEFAULT.festival).forGetter(VillagesConfig::festival)
+        field(Festival.CODEC, "festival", DEFAULT.festival).forGetter(VillagesConfig::festival),
+        field(Council.CODEC, "council", DEFAULT.council).forGetter(VillagesConfig::council)
     ).apply(i, VillagesConfig::new));
 
     /** Comments for server.json5, keyed like {@link ServerConfig#COMMENTS}. */
@@ -191,6 +215,12 @@ public record VillagesConfig(int censusIntervalTicks, double prosperityDecayPerD
         Map.entry("villages.buildings", "Villages save up for and build a well, a watchtower and a trade hall as they level up (data pack tradery/village_buildings)"),
         Map.entry("villages.buildings.savingsShare", "Share of the daily treasury income put aside while a building is pending (0..1)"),
         Map.entry("villages.festival", "On market days of villages at minLevel and up, a festival at dusk: fireworks and a wallet bonus"),
-        Map.entry("villages.festival.walletBonusDays", "Days of wages every villager gets on top at the festival")
+        Map.entry("villages.festival.walletBonusDays", "Days of wages every villager gets on top at the festival"),
+        Map.entry("villages.council", "The village patron (its biggest contributor) and the specialization they pick"),
+        Map.entry("villages.council.patronMinContribution", "A patron has given at least this to the village (projects and donations)"),
+        Map.entry("villages.council.patronTaxSharePercent", "Share of the village's trade tax paid to its patron (taken out of the tax)"),
+        Map.entry("villages.council.specializationMinLevel", "Village level from which the patron picks farming, crafts or trade (3: Town)"),
+        Map.entry("villages.council.specializationChangeDays", "Days between two changes of the specialization"),
+        Map.entry("villages.council.specializationBonus", "The specialization's bonus: 0.15 = +15% supplies, wages or visits")
     );
 }

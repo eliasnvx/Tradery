@@ -1,0 +1,21 @@
+{
+  "profession": "villagersplus:miner",
+  "supplies": [
+    {
+      "item": "minecraft:coal",
+      "per_day": 6
+    },
+    {
+      "item": "minecraft:cobblestone",
+      "per_day": 16
+    },
+    {
+      "item": "minecraft:raw_iron",
+      "per_day": 2
+    },
+    {
+      "item": "minecraft:raw_copper",
+      "per_day": 4
+    }
+  ]
+}

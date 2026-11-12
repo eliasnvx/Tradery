@@ -191,9 +191,10 @@ public final class SupplierGameTests {
     private static ServerConfig withSuppliers(ServerConfig config, VillagesConfig.Suppliers suppliers) {
         VillagesConfig v = config.villages();
         VillagesConfig villages = new VillagesConfig(v.censusIntervalTicks(), v.prosperityDecayPerDay(), v.treasuryPerVillager(), v.treasuryDays(),
-            v.tradeTaxPercent(), v.boardRadius(), v.levels(), v.orders(), suppliers, v.caravans(), v.marketDay(), v.rent(), v.threats(), v.buildings(), v.festival());
+            v.tradeTaxPercent(), v.boardRadius(), v.levels(), v.orders(), suppliers, v.caravans(), v.marketDay(), v.rent(), v.threats(), v.buildings(), v.festival(),
+            v.council());
         return new ServerConfig(config.currency(), config.economy(), config.pay(), config.vending(), config.ore(), config.history(),
-            config.log(), config.villagers(), config.market(), config.villagerTrading(), villages);
+            config.log(), config.villagers(), config.market(), config.villagerTrading(), villages, config.tradeCrates(), config.integrations());
     }
 
     // ------------------------------------------------------------------ tests

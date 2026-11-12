@@ -5,6 +5,8 @@ import dev.eliasnvx.tradery.gametest.MarketGameTests;
 import dev.eliasnvx.tradery.gametest.SourcesGameTests;
 import dev.eliasnvx.tradery.gametest.RobustnessGameTests;
 import dev.eliasnvx.tradery.gametest.TraderyGameTests;
+import dev.eliasnvx.tradery.gametest.TradeCrateGameTests;
+import dev.eliasnvx.tradery.gametest.VillageCouncilGameTests;
 import dev.eliasnvx.tradery.gametest.ShopLedgerGameTests;
 import dev.eliasnvx.tradery.gametest.MarketCounterGameTests;
 import dev.eliasnvx.tradery.gametest.VillageCommerceGameTests;
@@ -24,7 +26,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
  */
 public final class TraderyGameTestsFabric {
     /** Methods below that forward to a shared test (everything except {@link #allTestsRegistered}). */
-    private static final int WIRED = 112;
+    private static final int WIRED = 127;
 
     @GameTest
     public void economyTransferIsAtomic(GameTestHelper helper) {
@@ -235,6 +237,11 @@ public final class TraderyGameTestsFabric {
     @GameTest
     public void marketPoolsGetStalls(GameTestHelper helper) {
         MarketGameTests.poolsGetStalls(helper);
+    }
+
+    @GameTest
+    public void marketStallSkipsFloodedPlot(GameTestHelper helper) {
+        MarketGameTests.stallSkipsFloodedPlot(helper);
     }
 
     @GameTest
@@ -585,6 +592,78 @@ public final class TraderyGameTestsFabric {
     @GameTest
     public void festivalOnMarketDay(GameTestHelper helper) {
         VillageBuildingGameTests.festivalOnMarketDay(helper);
+    }
+
+    @GameTest
+    public void crateBuysWithMoney(GameTestHelper helper) {
+        TradeCrateGameTests.buysWithMoney(helper);
+    }
+
+    @GameTest
+    public void crateSellsForMoney(GameTestHelper helper) {
+        TradeCrateGameTests.sellsForMoney(helper);
+    }
+
+    @GameTest
+    public void crateVillageTax(GameTestHelper helper) {
+        TradeCrateGameTests.villageTax(helper);
+    }
+
+    @GameTest
+    public void crateEmeraldsAsItems(GameTestHelper helper) {
+        TradeCrateGameTests.emeraldsAsItems(helper);
+    }
+
+    @GameTest
+    public void crateFailuresChangeNothing(GameTestHelper helper) {
+        TradeCrateGameTests.failuresChangeNothing(helper);
+    }
+
+    @GameTest
+    public void crateOwnerReputationDiscount(GameTestHelper helper) {
+        TradeCrateGameTests.ownerReputationDiscount(helper);
+    }
+
+    /** Hoppers move one item every 8 ticks. */
+    @GameTest(maxTicks = 100)
+    public void crateHopperSides(GameTestHelper helper) {
+        TradeCrateGameTests.hopperSides(helper);
+    }
+
+    @GameTest
+    public void crateBreakDropsStores(GameTestHelper helper) {
+        TradeCrateGameTests.breakDropsStores(helper);
+    }
+
+    /** A villager walks to the crate and browses ({@code tradeCrates.browseTicks}) before it trades. */
+    @GameTest(maxTicks = 200)
+    public void crateVillagerWalksAndTrades(GameTestHelper helper) {
+        TradeCrateGameTests.villagerWalksAndTrades(helper);
+    }
+
+    @GameTest
+    public void councilPatronElected(GameTestHelper helper) {
+        VillageCouncilGameTests.patronElected(helper);
+    }
+
+    @GameTest
+    public void councilRename(GameTestHelper helper) {
+        VillageCouncilGameTests.rename(helper);
+    }
+
+    @GameTest
+    public void councilTaxShare(GameTestHelper helper) {
+        VillageCouncilGameTests.taxShare(helper);
+    }
+
+    @GameTest
+    public void councilSpecialization(GameTestHelper helper) {
+        VillageCouncilGameTests.specialization(helper);
+    }
+
+    @GameTest
+    public void councilSpecializationProject(GameTestHelper helper) {
+        VillageCouncilGameTests.specializationProject(helper);
     }
 
     @GameTest

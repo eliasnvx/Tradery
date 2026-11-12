@@ -28,6 +28,8 @@ public final class CompatInfo {
             Component.translatable("block.tradery.village_board"), Component.translatable("tradery.info.village_board")));
         pages.add(new Page(List.of(new ItemStack(TraderyBlocks.MARKET_COUNTER_ITEM.get())),
             Component.translatable("block.tradery.market_counter"), Component.translatable("tradery.info.market_counter")));
+        pages.add(new Page(List.of(new ItemStack(TraderyBlocks.TRADE_CRATE_ITEM.get())),
+            Component.translatable("block.tradery.trade_crate"), Component.translatable("tradery.info.trade_crate")));
         pages.add(new Page(List.of(new ItemStack(TraderyBlocks.SHOP_LEDGER.get())),
             Component.translatable("item.tradery.shop_ledger"), Component.translatable("tradery.info.shop_ledger")));
         List<ItemStack> ores = new ArrayList<>();

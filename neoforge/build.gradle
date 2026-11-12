@@ -62,18 +62,47 @@ neoForge {
     }
 }
 neoForge.addModdingDependenciesTo(sourceSets.clientTest)
+// -Pcompat puts the optional mods into the client test too
+configurations.clientTestRuntimeOnly.extendsFrom(configurations.runtimeOnly)
 
 dependencies {
     // REI finds NeoForge plugins by an annotation that only its NeoForge jar has
     compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}") { transitive = false }
 
-    // Dev only: run with the optional mods installed: ./gradlew :neoforge:runClient -Pcompat=true
-    if (project.hasProperty('compat')) {
-        runtimeOnly("mezz.jei:jei-26.3-neoforge:${jei_version}")
-        runtimeOnly("maven.modrinth:jade:${jade_neoforge_version}")
-        runtimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}")
-        runtimeOnly("dev.architectury:architectury-neoforge:${architectury_version}")
-        runtimeOnly("me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}")
+    // Dev only: run with the optional mods installed: ./gradlew :neoforge:runClient -Pcompat=true, or some of them:
+    // -Pcompat=recipes,jade,wthit,maps (or bluemap, squaremap),villages (Jade and WTHIT both draw a tooltip: pick one for screenshots).
+    // CTOV 4.2.2b and Guard Villagers 5.0.0 need a newer NeoForge than ours (-Pneoforge_version=26.3.0.102), where
+    // JEI, REI and Architectury don't load: leave `recipes` out then
+    def compat = project.findProperty('compat')?.toString()
+    if (compat != null) {
+        def wanted = { String group -> compat == 'true' || compat.split(',')*.trim().contains(group) }
+        if (wanted('recipes')) {
+            runtimeOnly("mezz.jei:jei-26.3-neoforge:${jei_version}")
+            runtimeOnly("me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}")
+            runtimeOnly("dev.architectury:architectury-neoforge:${architectury_version}")
+            runtimeOnly("me.shedaniel.cloth:cloth-config-neoforge:${cloth_config_version}")
+        }
+        if (wanted('jade')) {
+            runtimeOnly("maven.modrinth:jade:${jade_neoforge_version}")
+        }
+        if (wanted('wthit')) {
+            runtimeOnly("maven.modrinth:wthit:neo-${wthit_version}")
+            runtimeOnly("maven.modrinth:badpackets:neo-${badpackets_version}")
+        }
+        // `maps` = both; BlueMap and squaremap don't load together on NeoForge 1.21.1 (both bring Adventure's gson serializer)
+        if (wanted('maps') || wanted('bluemap')) {
+            runtimeOnly("maven.modrinth:bluemap:${bluemap_version}-neoforge")
+        }
+        if (wanted('maps') || wanted('squaremap')) {
+            runtimeOnly("maven.modrinth:squaremap:${squaremap_neoforge_id}")
+        }
+        if (wanted('villages')) {
+            runtimeOnly("maven.modrinth:villagersplus:${villagersplus_version}-neoforge")
+            runtimeOnly("maven.modrinth:villagerstradingplus:${villagerstradingplus_version}-neoforge")
+            runtimeOnly("maven.modrinth:ct-overhaul-village:${ctov_neoforge_version}") { transitive = false }
+            runtimeOnly("maven.modrinth:lithostitched:${lithostitched_version}-neoforge-26.3")
+            runtimeOnly("maven.modrinth:guard-villagers:${guard_villagers_version}")
+        }
     }
 }
 

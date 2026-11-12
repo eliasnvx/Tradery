@@ -110,7 +110,8 @@ public final class VillageBoard {
                 break;
             }
             projects.add(new VillageBoardMenu.ProjectView(project.id(), new ItemStack(project.icon()), VillagerPurchases.toMinor(project.cost()),
-                project.level(), village.projects.contains(project.id().toString())));
+                project.level(), village.projects.contains(project.id().toString()),
+                project.specialization() == null ? "" : project.specialization().id()));
         }
 
         List<VillageBoardMenu.ShiftView> shifts = new ArrayList<>();
@@ -126,7 +127,23 @@ public final class VillageBoard {
             VillageCommerce.licenceUntil(server, village, viewer.getUUID()).orElse(-1),
             List.copyOf(news.subList(0, Math.min(news.size(), VillageBoardMenu.MAX_NEWS))));
 
-        return new VillageBoardMenu.Data(board.immutable(), today, info, List.copyOf(orders), List.copyOf(projects), market);
+        return new VillageBoardMenu.Data(board.immutable(), today, info, List.copyOf(orders), List.copyOf(projects), market,
+            council(server, village, viewer.getUUID()));
+    }
+
+    /** The Patron tab for {@code viewer}. */
+    static VillageBoardMenu.Council council(MinecraftServer server, VillageState village, UUID viewer) {
+        List<VillageBoardMenu.Contributor> top = new ArrayList<>();
+        for (VillageState.Contribution contribution : VillageCouncil.top(village)) {
+            top.add(new VillageBoardMenu.Contributor(TraderyPayloads.clip(contribution.name(), 64), contribution.amount()));
+        }
+        String patron = TraderyPayloads.clip(VillageCouncil.patronName(village), 64);
+        long patronContribution = village.patron().map(id -> VillageCouncil.contribution(village, id)).orElse(0L);
+        var config = VillageCouncil.config();
+        return new VillageBoardMenu.Council(patron, VillageCouncil.isPatron(village, viewer), VillageCouncil.contribution(village, viewer),
+            patronContribution, VillageCouncil.minContribution(), List.copyOf(top), village.specialization,
+            VillageCouncil.active(village).isPresent(), config.specializationMinLevel(), VillageCouncil.daysUntilChange(server, village),
+            VillageCouncil.bonusPercent(), config.patronTaxSharePercent().stripTrailingZeros().toPlainString());
     }
 
     /** What the village saves for, for the Village tab. */
@@ -188,8 +205,10 @@ public final class VillageBoard {
      * @param prosperity    points, rounded down
      * @param nextThreshold points for the next level, -1 at the top
      * @param marketDayIn   days to the next market day: 0 today, -1 none planned
+     * @param specialization the {@link VillageSpecialization} id in effect, or empty
+     * @param patron        the patron's name, or empty
      */
-    public record BellInfo(Component name, int level, int prosperity, int nextThreshold, int marketDayIn) {
+    public record BellInfo(Component name, int level, int prosperity, int nextThreshold, int marketDayIn, String specialization, String patron) {
     }
 
     /** The village of this bell if it is one Tradery knows; looking never creates a village. */
@@ -207,7 +226,8 @@ public final class VillageBoard {
         int marketDayIn = next < 0 ? -1 : (int) Math.min(Integer.MAX_VALUE, Math.max(0, next - today));
         double threshold = Villages.nextThreshold(village);
         return Optional.of(new BellInfo(Villages.displayName(village), Villages.level(village), clampToInt(village.prosperity()),
-            threshold < 0 ? -1 : clampToInt(threshold), marketDayIn));
+            threshold < 0 ? -1 : clampToInt(threshold), marketDayIn, VillageCouncil.active(village).map(VillageSpecialization::id).orElse(""),
+            TraderyPayloads.clip(VillageCouncil.patronName(village), 64)));
     }
 
     /**
@@ -227,8 +247,9 @@ public final class VillageBoard {
         }
         Optional<BellInfo> info = bellInfo(level, pos);
         Platform.get().sendToPlayer(player, info
-            .map(i -> new TraderyPayloads.BellInfoPayload(pos.immutable(), true, i.name(), i.level(), i.prosperity(), i.nextThreshold(), i.marketDayIn()))
-            .orElseGet(() -> new TraderyPayloads.BellInfoPayload(pos.immutable(), false, Component.empty(), 0, 0, -1, -1)));
+            .map(i -> new TraderyPayloads.BellInfoPayload(pos.immutable(), true, i.name(), i.level(), i.prosperity(), i.nextThreshold(), i.marketDayIn(),
+                i.specialization(), i.patron()))
+            .orElseGet(() -> new TraderyPayloads.BellInfoPayload(pos.immutable(), false, Component.empty(), 0, 0, -1, -1, "", "")));
     }
 
     /** One project funding per {@link #FUND_TICKS} per player. */

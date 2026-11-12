@@ -15,6 +15,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -27,6 +29,8 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -78,6 +82,52 @@ public final class MarketStockProcessor implements StructureProcessor {
             }
         }
         return new StructureTemplate.StructureBlockInfo(info.pos(), state, stocked);
+    }
+
+    /**
+     * A market stall skips a plot under water while the world generates: at road height by a pond, its floor ends up
+     * below the water line and the stall floods (the element doesn't place air). With water above the floor, in the
+     * stall or right next to it, the piece places nothing and the plot stays empty. A stall funded from the village
+     * board is placed in the live world and only on dry, flat ground, so this never cancels a paid one.
+     */
+    @Override
+    public List<StructureTemplate.StructureBlockInfo> finalizeProcessing(ServerLevelAccessor level, BlockPos offset, BlockPos pos,
+                                                                         List<StructureTemplate.StructureBlockInfo> original,
+                                                                         List<StructureTemplate.StructureBlockInfo> processed,
+                                                                         StructurePlaceSettings settings) {
+        if (level instanceof WorldGenRegion && underWater(level, processed)) {
+            return new ArrayList<>();
+        }
+        return processed;
+    }
+
+    /** Water one block above the lowest of {@code blocks} (the floor), within their footprint or one block around it. */
+    public static boolean underWater(LevelReader level, List<StructureTemplate.StructureBlockInfo> blocks) {
+        if (blocks.isEmpty()) {
+            return false;
+        }
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (StructureTemplate.StructureBlockInfo info : blocks) {
+            BlockPos at = info.pos();
+            minX = Math.min(minX, at.getX());
+            minY = Math.min(minY, at.getY());
+            minZ = Math.min(minZ, at.getZ());
+            maxX = Math.max(maxX, at.getX());
+            maxZ = Math.max(maxZ, at.getZ());
+        }
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int x = minX - 1; x <= maxX + 1; x++) {
+            for (int z = minZ - 1; z <= maxZ + 1; z++) {
+                if (level.getFluidState(cursor.set(x, minY + 1, z)).is(FluidTags.WATER)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** What the vendor at {@code pos} (world position) sells. */

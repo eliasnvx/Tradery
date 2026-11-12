@@ -1,10 +1,8 @@
 package dev.eliasnvx.tradery.compat.jade;
 
 import dev.eliasnvx.tradery.Tradery;
-import dev.eliasnvx.tradery.vending.StackMath;
+import dev.eliasnvx.tradery.compat.TooltipData;
 import dev.eliasnvx.tradery.vending.VendingBlockEntity;
-import dev.eliasnvx.tradery.vending.VendingSettings;
-import dev.eliasnvx.tradery.vending.VendingTrades;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -28,14 +26,7 @@ enum VendingStockData implements StreamServerDataProvider<BlockAccessor, Integer
 
     @Override
     public Integer streamData(BlockAccessor accessor) {
-        if (!(accessor.getBlockEntity() instanceof VendingBlockEntity vendor)) {
-            return 0;
-        }
-        VendingSettings settings = vendor.settings();
-        if (settings.isBuyback() && !vendor.admin().infiniteStock()) {
-            return (int) Math.min(VendingTrades.UNLIMITED, StackMath.space(vendor.stock().getItems(), settings.goods()) / settings.perTrade());
-        }
-        return vendor.tradesInStock();
+        return accessor.getBlockEntity() instanceof VendingBlockEntity vendor ? TooltipData.vendingStock(vendor) : 0;
     }
 
     @Override

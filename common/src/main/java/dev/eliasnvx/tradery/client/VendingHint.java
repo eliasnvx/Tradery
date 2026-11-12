@@ -1,9 +1,7 @@
 package dev.eliasnvx.tradery.client;
 
 import dev.eliasnvx.tradery.api.vending.PriceMode;
-import dev.eliasnvx.tradery.config.ClientConfig;
 import dev.eliasnvx.tradery.config.TraderyConfig;
-import dev.eliasnvx.tradery.platform.Platform;
 import dev.eliasnvx.tradery.vending.AdminFlags;
 import dev.eliasnvx.tradery.vending.VendingBlock;
 import dev.eliasnvx.tradery.vending.VendingBlockEntity;
@@ -74,7 +72,6 @@ public final class VendingHint {
     private static int offerLabelWidth;
     private static int offerForWidth;
 
-    private static @Nullable Boolean jadeLoaded;
     private static @Nullable BlockPos shownPos;
     private static @Nullable VendingSettings shownSettings;
     private static @Nullable AdminFlags shownAdmin;
@@ -133,14 +130,7 @@ public final class VendingHint {
     }
 
     private static boolean enabled() {
-        ClientConfig.HintMode mode = TraderyConfig.client().vending().hint();
-        if (mode != ClientConfig.HintMode.AUTO) {
-            return mode == ClientConfig.HintMode.ON;
-        }
-        if (jadeLoaded == null) {
-            jadeLoaded = Platform.get().isModLoaded("jade");
-        }
-        return !jadeLoaded;
+        return LookHints.enabled();
     }
 
     private static int drawRows(GuiGraphicsExtractor graphics, Font font, List<Row> rows, int x, int y) {
