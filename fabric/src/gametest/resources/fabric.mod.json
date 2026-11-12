@@ -10,6 +10,7 @@
       "dev.eliasnvx.tradery.fabric.gametest.CommonEconomyGameTests"
     ],
     "fabric-client-gametest": [
+      "dev.eliasnvx.tradery.fabric.gametest.CompatShotsClientTest",
       "dev.eliasnvx.tradery.fabric.gametest.HudClientTest",
       "dev.eliasnvx.tradery.fabric.gametest.VendingClientTest",
       "dev.eliasnvx.tradery.fabric.gametest.OreClientTest",

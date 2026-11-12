@@ -11,6 +11,10 @@ import dev.eliasnvx.tradery.client.screen.VillageBoardScreen;
 import dev.eliasnvx.tradery.client.screen.CounterBuyerScreen;
 import dev.eliasnvx.tradery.client.screen.CounterOwnerScreen;
 import dev.eliasnvx.tradery.client.screen.ShopLedgerScreen;
+import dev.eliasnvx.tradery.client.screen.TradeCrateScreen;
+import dev.eliasnvx.tradery.menu.TradeCrateMenu;
+import dev.eliasnvx.tradery.vending.TradeCrateBlock;
+import dev.eliasnvx.tradery.vending.TradeCrateBlockEntity;
 import dev.eliasnvx.tradery.vending.CounterMenus;
 import dev.eliasnvx.tradery.vending.CounterOffer;
 import dev.eliasnvx.tradery.vending.CounterSettings;
@@ -88,20 +92,23 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
     private static final String SHOTS_CONFIG = """
         {
           villagers: { checkIntervalTicks: 20, visitChance: 1.0, customerCooldownTicks: 200 },
-          market: { weight: 60 }
+          market: { weight: 50 },
+          tradeCrates: { visitChance: 1.0, browseTicks: 60 }
         }
         """;
 
     @Override
     public void runTest(ClientGameTestContext context) {
         String mode = System.getenv("TRADERY_MARKET_SHOTS");
-        if (!"1".equals(mode) && !"trade".equals(mode) && !"village".equals(mode) && !"shops".equals(mode)) {
+        if (!"1".equals(mode) && !"trade".equals(mode) && !"village".equals(mode) && !"shops".equals(mode) && !"crate".equals(mode)) {
             return;
         }
         Path config = Platform.get().configDir().resolve("tradery").resolve("server.json5");
         try {
             Files.createDirectories(config.getParent());
-            Files.writeString(config, SHOTS_CONFIG);
+            // The crate scene takes any adult farmer around: a fresh village's villagers may not hold their job sites yet
+            Files.writeString(config, "crate".equals(mode)
+                ? SHOTS_CONFIG.replace("customerCooldownTicks: 200 }", "customerCooldownTicks: 200, requireHomeAndJob: false }") : SHOTS_CONFIG);
             run(context, mode);
         } catch (java.io.IOException e) {
             throw new IllegalStateException(e);
@@ -159,6 +166,10 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
                 shops(context, server, stall);
                 return;
             }
+            if ("crate".equals(mode)) {
+                crate(context, server, stall);
+                return;
+            }
             setHudHidden(context, true);
             lookFrom(context, server, stall, facing, 5.0, 1.2, 0.5);
             context.waitTicks(40);
@@ -203,6 +214,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
             tradeWindow(context, server, shop, facing);
             villageEconomy(context, server, stall, facing);
             shops(context, server, stall);
+            crate(context, server, stall);
             System.out.println("Tradery market shots: village " + village + ", stall " + stall + ", shop " + shop + ", waited " + waited);
         }
     }
@@ -213,7 +225,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
      * A villager of the village, with its own offers, in front of {@code block}; the player right-clicks it, picks
      * an offer that pays emeralds (sells to it), then one that costs emeralds (buys from it).
      */
-    private static void tradeWindow(ClientGameTestContext context, TestServerContext server, BlockPos block, Direction facing) {
+    static void tradeWindow(ClientGameTestContext context, TestServerContext server, BlockPos block, Direction facing) {
         server.runCommand("gamemode survival @p");
         lookFrom(context, server, block, facing, 3.0, 0.0, 0.0);
         int[] rows = server.computeOnServer(s -> openTrade(s, block.relative(facing)));
@@ -245,7 +257,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
      *
      * @return list rows of the offer to sell and the offer to buy (-1: none)
      */
-    private static int[] openTrade(MinecraftServer server, BlockPos at) {
+    static int[] openTrade(MinecraftServer server, BlockPos at) {
         ServerLevel level = server.overworld();
         ServerPlayer player = player(server);
         Villager chosen = null;
@@ -393,6 +405,18 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
         shot(context, "board_donated");
         clickBoardTab(context, 2);
         shot(context, "board_market");
+        // The donation made the player the patron: the Patron tab, a new name, a specialization (the village is a Town)
+        clickBoardTab(context, 3);
+        shot(context, "board_patron");
+        clickBoard(context, 156 + (136 - 48) / 2.0, 49 + 3 + 7);
+        context.getInput().typeChars("Oakford");
+        context.waitTicks(3);
+        context.getInput().pressKey(InputConstants.KEY_RETURN);
+        context.waitTicks(10);
+        clickBoard(context, 156 + 136 / 2.0, 121 + 10);
+        context.waitTicks(10);
+        hoverBoard(context, 156 + 136 / 2.0, 121 + 22 + 10);
+        shot(context, "board_patron_done");
         context.runOnClient(mc -> mc.player.closeContainer());
 
         // The bell: its hint over the crosshair, from a free spot on the ground next to it
@@ -605,8 +629,75 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
         context.runOnClient(mc -> mc.player.closeContainer());
     }
 
+    // ------------------------------------------------------------------ trade crate
+
+    /**
+     * A player's trade crate by the market (1.2): wanting emeralds and bread, wheat in the payment; its window; a
+     * farmer of the village walking up and trading; the window again with what came in.
+     */
+    private static void crate(ClientGameTestContext context, TestServerContext server, BlockPos stall) {
+        server.runCommand("gamemode survival @p");
+        BlockPos at = server.computeOnServer(s -> openGround(s.overworld(), stall, 4, 10));
+        Direction side = server.computeOnServer(s -> {
+            ServerLevel level = s.overworld();
+            Direction facing = Direction.Plane.HORIZONTAL.stream()
+                .filter(d -> level.isEmptyBlock(at.relative(d)) && level.getBlockState(at.relative(d).below()).isSolid()
+                    && level.isEmptyBlock(at.relative(d, 2)) && level.isEmptyBlock(at.relative(d, 2).above()))
+                .findFirst().orElse(Direction.NORTH);
+            level.setBlockAndUpdate(at, TraderyBlocks.TRADE_CRATE.get().defaultBlockState().setValue(TradeCrateBlock.FACING, facing));
+            TradeCrateBlockEntity crate = (TradeCrateBlockEntity) level.getBlockEntity(at);
+            ServerPlayer p = player(s);
+            crate.setOwner(AccountId.player(p.getUUID()), p.nameAndId().name());
+            VendorsData.get(s).add(level, at, AccountId.player(p.getUUID()), true);
+            // Novice farmers buy wheat and sell bread; journeymen buy pumpkins and sell apples
+            crate.wants().setItem(0, new ItemStack(Items.EMERALD));
+            crate.wants().setItem(1, new ItemStack(Items.BREAD));
+            crate.wants().setItem(2, new ItemStack(Items.APPLE));
+            crate.setItem(0, new ItemStack(Items.WHEAT, 64));
+            crate.setItem(1, new ItemStack(Items.WHEAT, 64));
+            crate.setItem(2, new ItemStack(Items.PUMPKIN, 64));
+            EconomyService.INSTANCE.setBalance(EconomyService.INSTANCE.account(p.getUUID()),
+                EconomyService.INSTANCE.defaultCurrency().toMinor(java.math.BigDecimal.valueOf(500)), Reason.of(Reasons.ADMIN_SET, "shots"));
+            return facing;
+        });
+        lookFrom(context, server, at, side, 2.6, 0.6, 0.4);
+        context.waitTicks(20);
+        shot(context, "crate_block");
+        server.runOnServer(s -> TradeCrateMenu.open(player(s), (TradeCrateBlockEntity) s.overworld().getBlockEntity(at), false));
+        context.waitForScreen(TradeCrateScreen.class);
+        context.waitTicks(5);
+        shot(context, "crate_screen");
+        context.runOnClient(mc -> mc.player.closeContainer());
+
+        // A farmer of the village comes for its own trades (the crate calls one every second for the shots)
+        if (server.computeOnServer(s -> s.overworld().getEntitiesOfClass(Villager.class, new AABB(at).inflate(32),
+            v -> VillagerCustomers.isEligible(v) && v.getVillagerData().profession().is(VillagerProfession.FARMER)).isEmpty())) {
+            System.out.println("Tradery market shots: hired " + server.computeOnServer(s -> hireFarmers(s, at, 2)));
+        }
+        lookFrom(context, server, at, side, 6.0, 2.0, 0.4);
+        for (int i = 0; i < 6 && server.computeOnServer(s -> customerNear(s, at) == null); i++) {
+            System.out.println("Tradery market shots: " + server.computeOnServer(s -> describeVillagers(s, at)));
+            context.waitTicks(20 * 20);
+        }
+        waitOnServer(context, server, s -> customerNear(s, at) != null, 20 * 60);
+        context.waitTicks(20);
+        shot(context, "crate_villager");
+        waitOnServer(context, server, s -> {
+            TradeCrateBlockEntity crate = (TradeCrateBlockEntity) s.overworld().getBlockEntity(at);
+            return crate.received().stream().anyMatch(stack -> !stack.isEmpty())
+                || crate.payment().stream().mapToInt(ItemStack::getCount).sum() < 192;
+        }, 20 * 120);
+        context.waitTicks(20);
+        shot(context, "crate_traded");
+        server.runOnServer(s -> TradeCrateMenu.open(player(s), (TradeCrateBlockEntity) s.overworld().getBlockEntity(at), false));
+        context.waitForScreen(TradeCrateScreen.class);
+        context.waitTicks(5);
+        shot(context, "crate_after");
+        context.runOnClient(mc -> mc.player.closeContainer());
+    }
+
     /** A village board on a stall near {@code stall}, or one placed next to the stall. */
-    private static BlockPos boardNear(MinecraftServer server, BlockPos stall, Direction facing) {
+    static BlockPos boardNear(MinecraftServer server, BlockPos stall, Direction facing) {
         ServerLevel level = server.overworld();
         for (BlockPos pos : BlockPos.betweenClosed(stall.offset(-12, -4, -12), stall.offset(12, 6, 12))) {
             if (level.getBlockState(pos).is(TraderyBlocks.VILLAGE_BOARD.get())) {
@@ -623,7 +714,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
      * The nearest spot {@code min}..{@code max} blocks (horizontally) from {@code center} where a player can stand in the
      * open: solid ground, two blocks of air, sky above; falls back to {@code center} raised above the ground.
      */
-    private static BlockPos openGround(ServerLevel level, BlockPos center, int min, int max) {
+    static BlockPos openGround(ServerLevel level, BlockPos center, int min, int max) {
         for (int r = min; r <= max; r++) {
             for (int dx = -r; dx <= r; dx++) {
                 for (int dz = -r; dz <= r; dz++) {
@@ -645,7 +736,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
     }
 
     /** Stands the player at {@code feet} looking at {@code target}. */
-    private static void lookAt(ClientGameTestContext context, TestServerContext server, BlockPos feet, Vec3 target) {
+    static void lookAt(ClientGameTestContext context, TestServerContext server, BlockPos feet, Vec3 target) {
         double x = feet.getX() + 0.5;
         double y = feet.getY();
         double z = feet.getZ() + 0.5;
@@ -690,13 +781,13 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
         return trader == null ? -1 : trader.getId();
     }
 
-    /** Clicks a tab of the village board (0 Orders, 1 Village, 2 Market; layout as in {@link VillageBoardScreen}). */
-    private static void clickBoardTab(ClientGameTestContext context, int tab) {
+    /** Clicks a tab of the village board (0 Orders, 1 Village, 2 Market, 3 Patron; layout as in {@link VillageBoardScreen}). */
+    static void clickBoardTab(ClientGameTestContext context, int tab) {
         double[] pos = context.computeOnClient(mc -> {
             var window = mc.getWindow();
             int left = (window.getGuiScaledWidth() - 300) / 2;
             int top = (window.getGuiScaledHeight() - 208) / 2;
-            int tabW = (284 - 4) / 3;
+            int tabW = (284 - 6) / 4;
             double guiX = left + 8 + tab * (tabW + 2) + tabW / 2.0;
             double guiY = top + 18 + 7;
             double scaleX = (double) window.getScreenWidth() / window.getGuiScaledWidth();
@@ -712,7 +803,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
 
     /** Clicks a row of the trade list (rows 0..6; the window is centred, layout as in {@link VillagerTradeScreen}). */
     /** Screen coordinates of a point of the board window (300×208), relative to its top-left corner. */
-    private static double[] boardPoint(ClientGameTestContext context, double guiXOffset, double guiYOffset) {
+    static double[] boardPoint(ClientGameTestContext context, double guiXOffset, double guiYOffset) {
         return context.computeOnClient(mc -> {
             var window = mc.getWindow();
             int left = (window.getGuiScaledWidth() - 300) / 2;
@@ -723,7 +814,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
         });
     }
 
-    private static void clickBoard(ClientGameTestContext context, double guiXOffset, double guiYOffset) {
+    static void clickBoard(ClientGameTestContext context, double guiXOffset, double guiYOffset) {
         double[] pos = boardPoint(context, guiXOffset, guiYOffset);
         context.getInput().setCursorPos(pos[0], pos[1]);
         context.getInput().pressMouse(InputConstants.MOUSE_BUTTON_LEFT); // SDL numbering in 26.3: left is 1
@@ -731,13 +822,13 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
     }
 
     /** Leaves the cursor over a point of the board (a tooltip in the shot). */
-    private static void hoverBoard(ClientGameTestContext context, double guiXOffset, double guiYOffset) {
+    static void hoverBoard(ClientGameTestContext context, double guiXOffset, double guiYOffset) {
         double[] pos = boardPoint(context, guiXOffset, guiYOffset);
         context.getInput().setCursorPos(pos[0], pos[1]);
         context.waitTicks(2);
     }
 
-    private static void clickRow(ClientGameTestContext context, int row) {
+    static void clickRow(ClientGameTestContext context, int row) {
         double[] pos = context.computeOnClient(mc -> {
             var window = mc.getWindow();
             int left = (window.getGuiScaledWidth() - 306) / 2;
@@ -769,7 +860,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
     }
 
     /** The server-owned vending block nearest to the village centre, in the loaded chunks around it. */
-    private static BlockPos findMarketVendor(ServerLevel level, BlockPos center) {
+    static BlockPos findMarketVendor(ServerLevel level, BlockPos center) {
         BlockPos best = null;
         double bestDistance = Double.MAX_VALUE;
         ChunkPos middle = ChunkPos.containing(center);
@@ -793,7 +884,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
     }
 
     /** A bread stall of the player's on open ground a few blocks along the street from the market stall. */
-    private static BlockPos placeShop(MinecraftServer server, BlockPos stall, Direction facing) {
+    static BlockPos placeShop(MinecraftServer server, BlockPos stall, Direction facing) {
         ServerLevel level = server.overworld();
         Direction side = facing.getClockWise();
         BlockPos pos = null;
@@ -828,7 +919,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
     }
 
     /** Gives up to {@code count} adult villagers with a home near the shop a composter next to them and the farmer's job. */
-    private static int hireFarmers(MinecraftServer server, BlockPos shop, int count) {
+    static int hireFarmers(MinecraftServer server, BlockPos shop, int count) {
         ServerLevel level = server.overworld();
         List<Villager> candidates = new java.util.ArrayList<>(level.getEntitiesOfClass(Villager.class, new AABB(shop).inflate(32),
             v -> !v.isBaby() && v.getBrain().hasMemoryValue(net.minecraft.world.entity.ai.memory.MemoryModuleType.HOME)));
@@ -862,14 +953,14 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
         return hired;
     }
 
-    private static Villager customerNear(MinecraftServer server, BlockPos shop) {
+    static Villager customerNear(MinecraftServer server, BlockPos shop) {
         List<Villager> near = server.overworld().getEntitiesOfClass(Villager.class, new AABB(shop).inflate(6),
             v -> VillagerCustomers.isCustomer(v.getUUID()));
         return near.isEmpty() ? null : near.get(0);
     }
 
     /** Why the villagers around may not shop: memories, activity and state. */
-    private static String describeVillagers(MinecraftServer server, BlockPos shop) {
+    static String describeVillagers(MinecraftServer server, BlockPos shop) {
         StringBuilder out = new StringBuilder();
         for (Villager v : server.overworld().getEntitiesOfClass(Villager.class, new AABB(shop).inflate(48))) {
             var brain = v.getBrain();
@@ -885,7 +976,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
     }
 
     /** Polls a server-side condition from the test thread (predicates of waitFor run on the client thread). */
-    private static int waitOnServer(ClientGameTestContext context, TestServerContext server,
+    static int waitOnServer(ClientGameTestContext context, TestServerContext server,
                                     java.util.function.Predicate<MinecraftServer> condition, int timeoutTicks) {
         for (int waited = 0; waited < timeoutTicks; waited += 10) {
             if (server.computeOnServer(condition::test)) {
@@ -902,7 +993,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
      * Eyes {@code distance} blocks out from the vending block's front (its facing side), {@code up} above it and
      * {@code side} along it, looking at the block.
      */
-    private static void lookFrom(ClientGameTestContext context, TestServerContext server, BlockPos target, Direction facing,
+    static void lookFrom(ClientGameTestContext context, TestServerContext server, BlockPos target, Direction facing,
                                  double distance, double up, double side) {
         Direction along = facing.getClockWise();
         double x = target.getX() + 0.5 + facing.getStepX() * distance + along.getStepX() * side;
@@ -929,7 +1020,7 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
         context.takeScreenshot("market_" + name);
     }
 
-    private static void setHudHidden(ClientGameTestContext context, boolean hidden) {
+    static void setHudHidden(ClientGameTestContext context, boolean hidden) {
         context.runOnClient(mc -> {
             if (mc.gui.hud.isHidden() != hidden) {
                 mc.gui.hud.toggle();
@@ -937,11 +1028,11 @@ public final class LivingMarketShotsClientTest implements FabricClientGameTest {
         });
     }
 
-    private static ServerPlayer player(MinecraftServer server) {
+    static ServerPlayer player(MinecraftServer server) {
         return server.getPlayerList().getPlayers().getFirst();
     }
 
-    private static VendingBlockEntity vendor(MinecraftServer server, BlockPos pos) {
+    static VendingBlockEntity vendor(MinecraftServer server, BlockPos pos) {
         return (VendingBlockEntity) server.overworld().getBlockEntity(pos);
     }
 }

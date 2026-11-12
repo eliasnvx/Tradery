@@ -66,10 +66,12 @@ public final class TraderyClientTest {
     private static final int TIMEOUT_TICKS = 20 * 60;
     private static final AtomicInteger TICKS = new AtomicInteger();
     private static volatile boolean started;
+    /** {@code TRADERY_COMPAT_SHOTS=1}: the 1.2 integrations too (run with -Pcompat=wthit,maps,villages), see {@link CompatShots}. */
+    private static final boolean COMPAT = "1".equals(System.getenv("TRADERY_COMPAT_SHOTS"));
 
     /** Set when the test starts: the mod is constructed before the game instance exists. */
-    private Minecraft minecraft;
-    private final List<String> notes = new ArrayList<>();
+    Minecraft minecraft;
+    final List<String> notes = new ArrayList<>();
 
     public TraderyClientTest() {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> {
@@ -89,8 +91,8 @@ public final class TraderyClientTest {
         minecraft = Minecraft.getInstance();
         Thread watchdog = new Thread(() -> {
             try {
-                Thread.sleep(5 * 60 * 1000L);
-                finish(false, "timed out after 5 minutes");
+                Thread.sleep((COMPAT ? 30 : 5) * 60 * 1000L);
+                finish(false, "timed out after " + (COMPAT ? 30 : 5) + " minutes");
             } catch (InterruptedException ignored) {
             }
         }, "tradery-client-test-watchdog");
@@ -203,6 +205,10 @@ public final class TraderyClientTest {
         command("gamemode survival @p");
         aimAt(bread);
         screenshot("end");
+
+        if (COMPAT) {
+            new CompatShots(this).run(origin, bread);
+        }
     }
 
     private void setUp(MinecraftServer server, BlockPos bread, BlockPos cobble, BlockPos own) {
@@ -272,7 +278,7 @@ public final class TraderyClientTest {
     }
 
     /** Stand 1.6 blocks south of {@code pos}, facing it from slightly above (as a player does at a shop). */
-    private void aimAt(BlockPos pos) {
+    void aimAt(BlockPos pos) {
         command("tp @p " + (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() - 1.6) + " 0 25");
         waitTicks(5);
         client(() -> {
@@ -310,7 +316,7 @@ public final class TraderyClientTest {
 
     // ------------------------------------------------------------------ helpers
 
-    private ServerPlayer player(MinecraftServer server) {
+    ServerPlayer player(MinecraftServer server) {
         return server.getPlayerList().getPlayers().getFirst();
     }
 
@@ -332,14 +338,14 @@ public final class TraderyClientTest {
         return found;
     }
 
-    private void command(String command) {
+    void command(String command) {
         server(server -> {
             server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), command);
             return null;
         });
     }
 
-    private void screenshot(String name) {
+    void screenshot(String name) {
         waitTicks(2);
         client(() -> Screenshot.grab(minecraft.gameDirectory, "tradery_" + name + ".png", minecraft.gameRenderer.mainRenderTarget(), 1,
             message -> {
@@ -347,27 +353,27 @@ public final class TraderyClientTest {
         waitTicks(3);
     }
 
-    private <T> T client(Supplier<T> action) {
+    <T> T client(Supplier<T> action) {
         return CompletableFuture.supplyAsync(action, minecraft).join();
     }
 
-    private void client(Runnable action) {
+    void client(Runnable action) {
         CompletableFuture.runAsync(action, minecraft).join();
     }
 
-    private <T> T server(Function<MinecraftServer, T> action) {
+    <T> T server(Function<MinecraftServer, T> action) {
         MinecraftServer server = minecraft.getSingleplayerServer();
         return CompletableFuture.supplyAsync(() -> action.apply(server), server).join();
     }
 
-    private void waitTicks(int ticks) {
+    void waitTicks(int ticks) {
         int target = TICKS.get() + ticks;
         while (TICKS.get() < target) {
             sleep();
         }
     }
 
-    private void waitFor(String what, Predicate<Minecraft> condition, int timeoutTicks) {
+    void waitFor(String what, Predicate<Minecraft> condition, int timeoutTicks) {
         int deadline = TICKS.get() + timeoutTicks;
         while (!client(() -> condition.test(minecraft))) {
             if (TICKS.get() > deadline) {
@@ -386,7 +392,7 @@ public final class TraderyClientTest {
         }
     }
 
-    private static void check(boolean condition, String what) {
+    static void check(boolean condition, String what) {
         if (!condition) {
             throw new AssertionError(what);
         }
