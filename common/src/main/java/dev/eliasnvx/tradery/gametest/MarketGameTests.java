@@ -59,7 +59,8 @@ public final class MarketGameTests {
     public static final List<TraderyGameTests.Entry> ALL = List.of(
         new TraderyGameTests.Entry("market_stalls_stock_offers", MarketGameTests::stallsStockOffers),
         new TraderyGameTests.Entry("market_changers_use_config_prices", MarketGameTests::changersUseConfigPrices),
-        new TraderyGameTests.Entry("market_pools_get_stalls", MarketGameTests::poolsGetStalls));
+        new TraderyGameTests.Entry("market_pools_get_stalls", MarketGameTests::poolsGetStalls),
+        new TraderyGameTests.Entry("market_stall_skips_flooded_plot", MarketGameTests::stallSkipsFloodedPlot));
 
     private MarketGameTests() {
     }
@@ -120,7 +121,7 @@ public final class MarketGameTests {
 
     private static ServerConfig withMarket(ServerConfig config, ServerConfig.MarketSection market) {
         return new ServerConfig(config.currency(), config.economy(), config.pay(), config.vending(), config.ore(), config.history(),
-            config.log(), config.villagers(), market, config.villagerTrading(), config.villages());
+            config.log(), config.villagers(), market, config.villagerTrading(), config.villages(), config.tradeCrates(), config.integrations());
     }
 
     // ------------------------------------------------------------------ tests
@@ -236,6 +237,35 @@ public final class MarketGameTests {
                 helper.assertValueEqual(entrance.pos(), new BlockPos(2, 1, 0), id + ": entrance on the street side, a block above the floor");
             }
         }
+        helper.succeed();
+    }
+
+    /**
+     * While the world generates, a stall whose plot is under water places nothing; water right next to it counts,
+     * water at the floor's own height (a farm's channel) doesn't. In the live world (the village board) nothing is cut.
+     */
+    public static void stallSkipsFloodedPlot(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        // A 3×3 floor at relative y 1; the stall's height above it is y 2
+        List<StructureTemplate.StructureBlockInfo> floor = new ArrayList<>();
+        for (int x = 1; x <= 3; x++) {
+            for (int z = 1; z <= 3; z++) {
+                floor.add(new StructureTemplate.StructureBlockInfo(helper.absolutePos(new BlockPos(x, 1, z)), Blocks.OAK_PLANKS.defaultBlockState(), null));
+            }
+        }
+        helper.assertFalse(MarketStockProcessor.underWater(level, floor), "a dry plot keeps its stall");
+        helper.setBlock(new BlockPos(2, 2, 2), Blocks.WATER);
+        helper.assertTrue(MarketStockProcessor.underWater(level, floor), "water in the stall: skipped");
+        List<StructureTemplate.StructureBlockInfo> kept = MarketStockProcessor.INSTANCE.finalizeProcessing(level, helper.absolutePos(BlockPos.ZERO),
+            helper.absolutePos(BlockPos.ZERO), floor, floor, new StructurePlaceSettings());
+        helper.assertTrue(kept.size() == floor.size(), "the live world (a board-funded stall) keeps every block: " + kept.size());
+        helper.setBlock(new BlockPos(2, 2, 2), Blocks.AIR);
+        helper.setBlock(new BlockPos(0, 2, 2), Blocks.WATER);
+        helper.assertTrue(MarketStockProcessor.underWater(level, floor), "water right next to the stall: skipped");
+        helper.setBlock(new BlockPos(0, 2, 2), Blocks.AIR);
+        helper.setBlock(new BlockPos(0, 1, 2), Blocks.WATER);
+        helper.assertFalse(MarketStockProcessor.underWater(level, floor), "water at the floor's height next to it: kept");
+        helper.setBlock(new BlockPos(0, 1, 2), Blocks.AIR);
         helper.succeed();
     }
 }

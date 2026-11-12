@@ -1,0 +1,19 @@
+{
+  "profession": "villagersplus:miner",
+  "wants": [
+    {
+      "item": "minecraft:torch",
+      "weight": 3
+    },
+    {
+      "item": "minecraft:ladder",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:rail"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    }
+  ]
+}

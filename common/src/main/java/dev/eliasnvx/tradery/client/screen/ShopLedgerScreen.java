@@ -271,6 +271,11 @@ public class ShopLedgerScreen extends AbstractContainerScreen<ShopLedgerMenu> im
         if (row.kind() == ShopLedgerMenu.KIND_COUNTER) {
             return Component.translatable("tradery.ledger.counter_offers", row.offers().size());
         }
+        if (row.kind() == ShopLedgerMenu.KIND_CRATE) {
+            return row.revenueCount() > 0
+                ? Component.translatable("tradery.ledger.crate_received", row.revenueCount())
+                : Component.translatable("tradery.ledger.crate_wants", row.offers().size());
+        }
         ShopLedgerMenu.OfferView offer = row.offers().getFirst();
         Component price = price(offer);
         return row.buyback()
@@ -295,7 +300,8 @@ public class ShopLedgerScreen extends AbstractContainerScreen<ShopLedgerMenu> im
                 : Component.translatable("tradery.vending.empty"));
         }
         if (row.has(ShopSnapshot.NO_ROOM)) {
-            alerts.add(Component.translatable(row.buyback() ? "tradery.ledger.stock_full" : "tradery.ledger.no_room"));
+            alerts.add(Component.translatable(row.kind() == ShopLedgerMenu.KIND_CRATE ? "tradery.ledger.crate_full"
+                : row.buyback() ? "tradery.ledger.stock_full" : "tradery.ledger.no_room"));
         }
         return alerts;
     }
@@ -351,8 +357,16 @@ public class ShopLedgerScreen extends AbstractContainerScreen<ShopLedgerMenu> im
     /** Everything about the shop: each offer, the revenue waiting, the alerts, whether this is the last known state. */
     private List<Component> details(ShopLedgerMenu.Row row) {
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.translatable(row.kind() == ShopLedgerMenu.KIND_COUNTER ? "block.tradery.market_counter" : "block.tradery.vending_block"));
+        lines.add(Component.translatable(switch (row.kind()) {
+            case ShopLedgerMenu.KIND_COUNTER -> "block.tradery.market_counter";
+            case ShopLedgerMenu.KIND_CRATE -> "block.tradery.trade_crate";
+            default -> "block.tradery.vending_block";
+        }));
         for (ShopLedgerMenu.OfferView offer : row.offers()) {
+            if (row.kind() == ShopLedgerMenu.KIND_CRATE) {
+                lines.add(Component.translatable("tradery.ledger.crate_want", offer.goods().getHoverName()).withStyle(ChatFormatting.GRAY));
+                continue;
+            }
             Component goods = Component.literal(offer.goods().getCount() + " × ").append(offer.goods().getHoverName());
             Component stock = row.buyback()
                 ? Component.translatable("tradery.screen.room", stock(offer.stock()))

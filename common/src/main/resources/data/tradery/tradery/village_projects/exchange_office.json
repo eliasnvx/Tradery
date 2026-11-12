@@ -1,0 +1,12 @@
+{
+  "cost": 1200,
+  "level": 3,
+  "icon": "minecraft:gold_ingot",
+  "specialization": "trade",
+  "effects": {
+    "visit_chance": 0.1,
+    "rent_multiplier": 0.75
+  },
+  "action": "structure",
+  "structure": "exchange_office"
+}

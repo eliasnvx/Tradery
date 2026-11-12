@@ -1,0 +1,16 @@
+{
+  "profession": "villagersplus:oceanographer",
+  "wants": [
+    {
+      "item": "minecraft:cod",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:salmon",
+      "weight": 2
+    },
+    {
+      "item": "minecraft:dried_kelp"
+    }
+  ]
+}

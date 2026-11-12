@@ -13,15 +13,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * What a shop (vending block or market counter) last looked like, kept in the vending index ({@link VendorsData}) so
+ * What a shop (vending block, market counter or trade crate) last looked like, kept in the vending index ({@link VendorsData}) so
  * the shop ledger can list shops in unloaded chunks. Small on purpose: items without their components, at most
  * {@link CounterSettings#MAX_OFFERS} offers. Updated when the block's offer or stock changes; compared by value, so an
  * unchanged snapshot doesn't mark the index dirty.
  *
- * @param kind         vending block or market counter
+ * @param kind         vending block, market counter or trade crate
  * @param buyback      a vending block buying from players
  * @param villagers    the owner's villagers toggle
- * @param offers       configured offers only (one for a vending block)
+ * @param offers       configured offers only (one for a vending block; a crate's wanted items, stock = how many it received)
  * @param revenueItem  an item waiting in the revenue slots ({@link Items#AIR} for none)
  * @param revenue      items waiting in the revenue slots, all kinds together
  * @param alerts       bits: {@link #NOT_CONFIGURED}, {@link #EMPTY}, {@link #NO_ROOM}
@@ -35,7 +35,7 @@ public record ShopSnapshot(Kind kind, boolean buyback, boolean villagers, List<O
     public static final int NO_ROOM = 4;
 
     public enum Kind {
-        VENDING, COUNTER
+        VENDING, COUNTER, CRATE
     }
 
     /**
@@ -157,5 +157,31 @@ public record ShopSnapshot(Kind kind, boolean buyback, boolean villagers, List<O
             alerts |= NOT_CONFIGURED;
         }
         return new ShopSnapshot(Kind.COUNTER, false, settings.villagers(), offers, Items.AIR, 0, alerts);
+    }
+
+    /** A crate: its wanted items, what villagers left in it, and whether the received store is full. */
+    public static ShopSnapshot of(TradeCrateBlockEntity crate) {
+        List<ItemStack> received = crate.received();
+        List<Offer> offers = new ArrayList<>();
+        for (ItemStack want : crate.wanted()) {
+            int got = (int) Math.min(VendingTrades.UNLIMITED, StackMath.countMatching(received, stack -> stack.is(want.getItem())));
+            offers.add(new Offer(want.getItem(), Math.max(1, Math.min(99, want.getCount())), 0, Items.AIR, 0, got));
+        }
+        Item revenueItem = Items.AIR;
+        long revenue = 0;
+        boolean full = true;
+        for (ItemStack stack : received) {
+            if (stack.isEmpty()) {
+                full = false;
+                continue;
+            }
+            if (revenueItem == Items.AIR) {
+                revenueItem = stack.getItem();
+            }
+            revenue += stack.getCount();
+            full &= stack.getCount() >= stack.getMaxStackSize();
+        }
+        int alerts = (offers.isEmpty() ? NOT_CONFIGURED : 0) | (full ? NO_ROOM : 0);
+        return new ShopSnapshot(Kind.CRATE, false, true, offers, revenueItem, (int) Math.min(Integer.MAX_VALUE, revenue), alerts);
     }
 }

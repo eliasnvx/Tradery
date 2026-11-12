@@ -183,6 +183,8 @@ public final class VillageGameTests {
         helper.assertTrue(tax > 0, "there is a tax");
         helper.assertValueEqual(village.treasury(), tax, "tax in the treasury");
         helper.assertValueEqual(VillagerPurchases.wallet(villager, today), price - tax, "the rest in the wallet");
+        helper.assertValueEqual(EconomyService.INSTANCE.account(player.getUUID()).balance(EconomyService.INSTANCE.defaultCurrency()), 0L,
+            "the player paid the full price: the tax is part of it");
         helper.assertTrue(village.prosperity() > 0, "prosperity grew");
         villager.discard();
         helper.succeed();

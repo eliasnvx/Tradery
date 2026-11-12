@@ -32,6 +32,9 @@ public final class TraderyMenus {
     public static final Supplier<MenuType<dev.eliasnvx.tradery.menu.ShopLedgerMenu>> SHOP_LEDGER = Platform.get().register(Registries.MENU,
         "shop_ledger", () -> Platform.get().menuType(dev.eliasnvx.tradery.menu.ShopLedgerMenu::new,
             dev.eliasnvx.tradery.menu.ShopLedgerMenu.Data.STREAM_CODEC));
+    public static final Supplier<MenuType<dev.eliasnvx.tradery.menu.TradeCrateMenu>> TRADE_CRATE = Platform.get().register(Registries.MENU,
+        "trade_crate", () -> Platform.get().menuType(dev.eliasnvx.tradery.menu.TradeCrateMenu::new,
+            dev.eliasnvx.tradery.menu.TradeCrateMenu.Data.STREAM_CODEC));
 
     private TraderyMenus() {
     }

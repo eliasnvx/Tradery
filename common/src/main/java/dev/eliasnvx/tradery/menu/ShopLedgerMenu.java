@@ -40,6 +40,7 @@ public class ShopLedgerMenu extends AbstractContainerMenu {
     public static final int KIND_UNKNOWN = 0;
     public static final int KIND_VENDING = 1;
     public static final int KIND_COUNTER = 2;
+    public static final int KIND_CRATE = 3;
 
     /**
      * One offer of a row. Icons are plain items (no components) with the amount per trade as their count.
@@ -60,7 +61,7 @@ public class ShopLedgerMenu extends AbstractContainerMenu {
     /**
      * One shop.
      *
-     * @param kind          {@link #KIND_VENDING}, {@link #KIND_COUNTER} or {@link #KIND_UNKNOWN} (no snapshot yet)
+     * @param kind          {@link #KIND_VENDING}, {@link #KIND_COUNTER}, {@link #KIND_CRATE} or {@link #KIND_UNKNOWN} (no snapshot yet)
      * @param live          read from the loaded block just now; false = the last known snapshot
      * @param villagersFlag the owner's villagers toggle
      * @param villagersUsed the toggle means something here (money trades)
@@ -86,7 +87,7 @@ public class ShopLedgerMenu extends AbstractContainerMenu {
             buf -> {
                 GlobalPos pos = GlobalPos.STREAM_CODEC.decode(buf);
                 int kind = buf.readVarInt();
-                if (kind < KIND_UNKNOWN || kind > KIND_COUNTER) {
+                if (kind < KIND_UNKNOWN || kind > KIND_CRATE) {
                     throw new IllegalArgumentException("Bad shop kind: " + kind);
                 }
                 return new Row(pos, kind, buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(),

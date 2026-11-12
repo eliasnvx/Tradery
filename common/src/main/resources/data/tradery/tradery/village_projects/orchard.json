@@ -1,0 +1,11 @@
+{
+  "cost": 1200,
+  "level": 3,
+  "icon": "minecraft:apple",
+  "specialization": "farming",
+  "effects": {
+    "supplies": 0.1
+  },
+  "action": "structure",
+  "structure": "orchard"
+}

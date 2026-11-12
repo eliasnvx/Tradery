@@ -13,6 +13,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import dev.eliasnvx.tradery.vending.MarketCounterBlockEntity;
+import dev.eliasnvx.tradery.vending.TradeCrateBlockEntity;
 import dev.eliasnvx.tradery.vending.CounterTrades;
 import dev.eliasnvx.tradery.vending.VendingSettings;
 import dev.eliasnvx.tradery.vending.VendingTrades;
@@ -47,7 +48,8 @@ import java.util.UUID;
 
 /**
  * Brings villagers to players' vending blocks: customers to money sales ("Villagers can buy"), suppliers to money
- * buybacks ("Villagers can sell", {@link VillagerSupplies}). Vending block entities don't tick: every
+ * buybacks ("Villagers can sell", {@link VillagerSupplies}), and traders to trade crates ({@link TradeCrates}, with
+ * {@code tradeCrates.visitChance}, to do their own offers). Vending block entities don't tick: every
  * {@code villagers.checkIntervalTicks} each level walks the vending index for its loaded vendors and, with
  * {@code villagers.visitChance} (scaled by the owner's reputation and the stall's village: market day, trading
  * licence, and for customers the funded projects), calls one eligible villager in {@code villagers.visitRadius}
@@ -77,7 +79,7 @@ public final class VillagerCustomers {
         final int browseTicks;
         /** Comes to sell its produce to a buyback, not to buy. */
         final boolean supplier;
-        /** At a market counter: the offer it came for; -1 at a vending block. */
+        /** At a market counter: the offer it came for; at a trade crate: its own offer it will do; -1 at a vending block. */
         final int offer;
         Phase phase = Phase.WALKING;
         long browseUntil;
@@ -115,7 +117,7 @@ public final class VillagerCustomers {
             return;
         }
         ServerConfig.VillagersSection config = TraderyConfig.server().villagers();
-        if (!config.enabled()) {
+        if (!config.enabled() && !TradeCrates.enabled()) {
             if (!CUSTOMERS.isEmpty()) {
                 cancelAll(level);
             }
@@ -261,7 +263,9 @@ public final class VillagerCustomers {
      * one has its own tick in the interval (from its position), so 200 stalls mean two or three a tick, not 200 at once.
      */
     private static void scan(ServerLevel level, ServerConfig.VillagersSection config, long time) {
-        if (config.visitChance() <= 0) {
+        boolean shops = config.enabled() && config.visitChance() > 0;
+        boolean crates = TradeCrates.enabled() && TraderyConfig.server().tradeCrates().visitChance() > 0;
+        if (!shops && !crates) {
             return;
         }
         if (time % BELL_CACHE_TICKS == 0) {
@@ -278,6 +282,15 @@ public final class VillagerCustomers {
             BlockPos pos = entry.pos().pos();
             // Only loaded, entity-ticking chunks: nothing is simulated for unloaded stalls
             if (!level.isPositionEntityTicking(pos) || busy(level.dimension(), pos)) {
+                continue;
+            }
+            if (level.getBlockEntity(pos) instanceof TradeCrateBlockEntity crate) {
+                if (crates) {
+                    scanCrate(level, crate, config, random);
+                }
+                continue;
+            }
+            if (!shops) {
                 continue;
             }
             if (level.getBlockEntity(pos) instanceof MarketCounterBlockEntity counter) {
@@ -358,7 +371,7 @@ public final class VillagerCustomers {
             if (pick < 0) {
                 Villager customer = nearby.get(i);
                 if (roll < config.visitChance() * VillagerPurchases.reputationFactor(customer, owner) * factor) {
-                    start(level, customer, counter.getBlockPos(), stand, config, false, offers[i]);
+                    start(level, customer, counter.getBlockPos(), stand, config, false, offers[i], config.browseTicks());
                 }
                 return;
             }
@@ -392,6 +405,34 @@ public final class VillagerCustomers {
         Villager supplier = pickSupplier(nearby, vendor, VillagerPurchases.today(server), random);
         if (supplier != null && roll < config.visitChance() * VillagerPurchases.reputationFactor(supplier, owner) * factor) {
             start(level, supplier, vendor, stand, config, true);
+        }
+    }
+
+    /**
+     * A trade crate with wanted items: with {@code tradeCrates.visitChance}, one villager in reach that has an offer
+     * the crate can do now ({@link TradeCrates#findOffer}) comes to do it.
+     */
+    private static void scanCrate(ServerLevel level, TradeCrateBlockEntity crate, ServerConfig.VillagersSection config, RandomSource random) {
+        if (crate.wanted().isEmpty() || random.nextDouble() >= TraderyConfig.server().tradeCrates().visitChance()) {
+            return;
+        }
+        BlockPos stand = standPos(crate);
+        if (stand == null) {
+            return;
+        }
+        List<Villager> able = new ArrayList<>();
+        List<Integer> offers = new ArrayList<>();
+        for (Villager villager : candidates(level, crate.getBlockPos(), config.visitRadius(), config.visitRadius(), null)) {
+            int offer = TradeCrates.findOffer(villager, crate);
+            if (offer >= 0) {
+                able.add(villager);
+                offers.add(offer);
+            }
+        }
+        if (!able.isEmpty()) {
+            int pick = random.nextInt(able.size());
+            start(level, able.get(pick), crate.getBlockPos(), stand, config, false, offers.get(pick),
+                TraderyConfig.server().tradeCrates().browseTicks());
         }
     }
 
@@ -467,6 +508,27 @@ public final class VillagerCustomers {
         return true;
     }
 
+    /**
+     * Sends an eligible villager to this trade crate now, if it has an offer the crate can do (the scan does this by
+     * chance; tests and other mods directly).
+     *
+     * @return false if the villager or the crate can't take part
+     */
+    public static boolean invite(Villager villager, TradeCrateBlockEntity crate) {
+        if (!(villager.level() instanceof ServerLevel level) || crate.getLevel() != level || !TradeCrates.enabled() || !isEligible(villager)
+            || busy(level.dimension(), crate.getBlockPos())) {
+            return false;
+        }
+        int offer = TradeCrates.findOffer(villager, crate);
+        BlockPos stand = standPos(crate);
+        if (offer < 0 || stand == null) {
+            return false;
+        }
+        start(level, villager, crate.getBlockPos(), stand, TraderyConfig.server().villagers(), false, offer,
+            TraderyConfig.server().tradeCrates().browseTicks());
+        return true;
+    }
+
     /** Ends the villager's visit now without trading; its cooldown starts as after any visit. */
     public static void cancel(Villager villager) {
         Customer customer = CUSTOMERS.remove(villager.getUUID());
@@ -477,13 +539,13 @@ public final class VillagerCustomers {
 
     private static void start(ServerLevel level, Villager villager, VendingBlockEntity vendor, BlockPos stand, ServerConfig.VillagersSection config,
                               boolean supplier) {
-        start(level, villager, vendor.getBlockPos(), stand, config, supplier, -1);
+        start(level, villager, vendor.getBlockPos(), stand, config, supplier, -1, config.browseTicks());
     }
 
     private static void start(ServerLevel level, Villager villager, BlockPos stall, BlockPos stand, ServerConfig.VillagersSection config,
-                              boolean supplier, int offer) {
+                              boolean supplier, int offer, int browseTicks) {
         Customer customer = new Customer(villager.getUUID(), level.dimension(), stall.immutable(), stand.immutable(),
-            level.getGameTime(), config.walkTimeoutTicks(), config.browseTicks(), supplier, offer);
+            level.getGameTime(), config.walkTimeoutTicks(), browseTicks, supplier, offer);
         CUSTOMERS.put(customer.villager, customer);
         walkTo(villager, customer);
     }
@@ -502,8 +564,10 @@ public final class VillagerCustomers {
             BlockEntity stall = level.isLoaded(customer.vendor) ? level.getBlockEntity(customer.vendor) : null;
             VendingBlockEntity vendor = stall instanceof VendingBlockEntity v ? v : null;
             MarketCounterBlockEntity counter = stall instanceof MarketCounterBlockEntity c ? c : null;
-            boolean open = vendor != null ? customer.offer < 0 && takes(vendor, customer.supplier)
-                : counter != null && !customer.supplier && CounterTrades.servesVillagers(counter, customer.offer);
+            TradeCrateBlockEntity crate = stall instanceof TradeCrateBlockEntity c ? c : null;
+            boolean open = crate != null ? TradeCrates.enabled() && !crate.wanted().isEmpty()
+                : vendor != null ? config.enabled() && customer.offer < 0 && takes(vendor, customer.supplier)
+                : counter != null && config.enabled() && !customer.supplier && CounterTrades.servesVillagers(counter, customer.offer);
             if (villager == null || !villager.isAlive() || villager.isSleeping() || villager.isTrading() || isPanicking(villager.getBrain())
                 || !open) {
                 it.remove();
@@ -539,7 +603,9 @@ public final class VillagerCustomers {
             lookAtStall(villager, customer);
             if (now >= customer.browseUntil) {
                 it.remove();
-                if (counter != null) {
+                if (crate != null) {
+                    TradeCrates.visit(villager, crate, customer.offer);
+                } else if (counter != null) {
                     VillagerPurchases.visit(villager, counter, customer.offer, level.getRandom().nextDouble());
                 } else if (customer.supplier) {
                     VillagerSupplies.visit(villager, vendor);

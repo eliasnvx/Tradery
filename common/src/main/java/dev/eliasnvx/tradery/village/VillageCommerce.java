@@ -130,12 +130,13 @@ public final class VillageCommerce {
     }
 
     /**
-     * How much more often villagers of this village come to a vending block of {@code owner}: market day and the
-     * owner's trading licence multiplied (1 = as usual).
+     * How much more often villagers of this village come to a vending block of {@code owner}: market day, the
+     * owner's trading licence and the trade specialization multiplied (1 = as usual).
      */
     public static double visitFactor(MinecraftServer server, VillageState village, UUID owner) {
         VillagesConfig config = Villages.config();
         double factor = isMarketDay(server, village) ? config.marketDay().visitMultiplier() : 1.0;
+        factor *= VillageCouncil.factor(village, VillageSpecialization.TRADE);
         if (licenceUntil(server, village, owner).isPresent()) {
             factor *= config.rent().visitMultiplier();
         }
@@ -154,9 +155,10 @@ public final class VillageCommerce {
 
     // ------------------------------------------------------------------ trading places
 
-    /** Price of a trading place per day here (minor units). */
+    /** Price of a trading place per day here (minor units): the level's, times the projects' {@code rent_multiplier}. */
     public static long rentPerDay(VillageState village) {
-        BigDecimal perDay = Villages.byLevel(Villages.config().levels().rentPerDay(), Villages.level(village));
+        BigDecimal perDay = Villages.byLevel(Villages.config().levels().rentPerDay(), Villages.level(village))
+            .multiply(BigDecimal.valueOf(VillageProjects.effects(village).rentMultiplier()));
         return VillagerPurchases.toMinor(perDay);
     }
 

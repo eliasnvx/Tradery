@@ -1,0 +1,17 @@
+{
+  "profession": "villagersplus:oceanographer",
+  "supplies": [
+    {
+      "item": "minecraft:kelp",
+      "per_day": 8
+    },
+    {
+      "item": "minecraft:seagrass",
+      "per_day": 6
+    },
+    {
+      "item": "minecraft:sea_pickle",
+      "per_day": 2
+    }
+  ]
+}

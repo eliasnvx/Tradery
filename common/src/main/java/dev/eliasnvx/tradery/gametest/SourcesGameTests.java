@@ -94,7 +94,7 @@ public final class SourcesGameTests {
         ServerConfig.OreSection ore = config.ore();
         return new ServerConfig(config.currency(), config.economy(), config.pay(), config.vending(),
             new ServerConfig.OreSection(ore.enabled(), direct, ore.coinValues(), dailyCap, ore.inflationDamping()), config.history(), config.log(),
-            config.villagers(), config.market(), config.villagerTrading(), config.villages());
+            config.villagers(), config.market(), config.villagerTrading(), config.villages(), config.tradeCrates(), config.integrations());
     }
 
     // ------------------------------------------------------------------ tests

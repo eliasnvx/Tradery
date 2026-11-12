@@ -37,6 +37,10 @@ public final class TraderyNeoForge {
         platform.attach(modBus);
 
         modBus.addListener(TraderyNeoForge::registerPayloads);
+        // Pipes reach a trade crate through the item capability, by side like vanilla hoppers (none without a side)
+        modBus.addListener((net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) -> event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, dev.eliasnvx.tradery.registry.TraderyBlocks.TRADE_CRATE_BLOCK_ENTITY.get(),
+            (crate, side) -> side == null ? null : new net.neoforged.neoforge.items.wrapper.SidedInvWrapper(crate, side)));
         TraderyGameTestsNeoForge.register(modBus);
         NeoForge.EVENT_BUS.addListener((PermissionGatherEvent.Nodes event) -> event.addNodes(NeoForgePlatform.nodes()));
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> TraderyServer.registerCommands(event.getDispatcher()));
