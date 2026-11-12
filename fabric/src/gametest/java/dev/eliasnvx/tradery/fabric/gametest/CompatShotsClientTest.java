@@ -142,7 +142,10 @@ public final class CompatShotsClientTest implements FabricClientGameTest {
             if (stall != null) {
                 Direction facing = server.computeOnServer(s -> s.overworld().getBlockState(stall).getValue(VendingBlock.FACING));
                 setHudHidden(context, true);
-                lookFrom(context, server, stall, facing, 6.5, 3.5, 0.8);
+                // From the street in front of the stall, where nothing stands between the camera and the vendors
+                if (!frontView(context, server, stall, facing)) {
+                    lookFrom(context, server, stall, facing, 6.5, 3.5, 0.8);
+                }
                 context.waitTicks(40);
                 shot(context, "ctov_stall");
                 setHudHidden(context, false);
@@ -332,6 +335,58 @@ public final class CompatShotsClientTest implements FabricClientGameTest {
             }
         }
         log("no spot at all with a clear view of " + target);
+        return false;
+    }
+
+    /** Stands the player on the ground 4..7 blocks in front of {@code stall}, where the crosshair lands on its vendor. */
+    private static boolean frontView(ClientGameTestContext context, TestServerContext server, BlockPos stall, Direction facing) {
+        List<BlockPos> spots = server.computeOnServer(s -> {
+            ServerLevel level = s.overworld();
+            List<BlockPos> found = new ArrayList<>();
+            for (int distance = 5; distance <= 7; distance++) {
+                for (int side : new int[] {0, 1, -1, 2, -2}) {
+                    BlockPos column = stall.relative(facing, distance).relative(facing.getClockWise(), side);
+                    int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                    BlockPos feet = new BlockPos(column.getX(), y, column.getZ());
+                    if (Math.abs(y - stall.getY()) <= 2 && level.getBlockState(feet.below()).isSolid() && level.isEmptyBlock(feet)
+                        && level.isEmptyBlock(feet.above())) {
+                        found.add(feet);
+                    }
+                }
+            }
+            return found;
+        });
+        for (BlockPos feet : spots) {
+            lookAt(context, server, feet, Vec3.atCenterOf(stall).add(0, 0.6, 0));
+            if (onTarget(context, stall)) {
+                return true;
+            }
+        }
+        // Village clutter in front (hay, fences): from a little higher up, flying (the HUD is hidden in this shot)
+        List<BlockPos> air = server.computeOnServer(s -> {
+            ServerLevel level = s.overworld();
+            List<BlockPos> found = new ArrayList<>();
+            for (int up = 1; up <= 3; up++) {
+                for (int distance = 4; distance <= 7; distance++) {
+                    for (int side : new int[] {0, 1, -1, 2, -2}) {
+                        BlockPos feet = stall.relative(facing, distance).relative(facing.getClockWise(), side).above(up);
+                        if (level.isEmptyBlock(feet) && level.isEmptyBlock(feet.above())) {
+                            found.add(feet);
+                        }
+                    }
+                }
+            }
+            return found;
+        });
+        server.runCommand("gamemode creative @p");
+        for (BlockPos feet : air) {
+            lookAt(context, server, feet, Vec3.atCenterOf(stall).add(0, 0.6, 0));
+            context.runOnClient(mc -> mc.player.getAbilities().flying = true);
+            if (onTarget(context, stall)) {
+                return true;
+            }
+        }
+        log("no clear front view of the stall at " + stall + " among " + spots.size() + " + " + air.size());
         return false;
     }
 

@@ -15,6 +15,7 @@ dependencies {
 
     // Dev only: run with the optional mods installed: ./gradlew :fabric:runClient -Pcompat=true, or some of them:
     // -Pcompat=recipes,jade,placeholders,wthit,maps (or bluemap, squaremap),villages (Jade and WTHIT both draw a tooltip: pick one for screenshots)
+    // WTHIT 21 and VillagersPlus need a newer Fabric API than ours at runtime: add -Pfabric_api_version=0.166.2+26.3
     def compat = project.findProperty('compat')?.toString()
     if (compat != null) {
         def wanted = { String group -> compat == 'true' || compat.split(',')*.trim().contains(group) }
@@ -31,7 +32,6 @@ dependencies {
             runtimeOnly("eu.pb4:placeholder-api:${placeholder_api_version}")
         }
         if (wanted('wthit')) {
-            // WTHIT 21 needs Fabric API 0.165.2+ at runtime: add -Pfabric_api_version=0.166.2+26.3
             runtimeOnly("maven.modrinth:wthit:fabric-${wthit_version}")
             runtimeOnly("maven.modrinth:badpackets:fabric-${badpackets_version}")
         }
