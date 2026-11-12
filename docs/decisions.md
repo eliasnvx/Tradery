@@ -143,6 +143,15 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 ## 2026-10-09: Lowest Fabric Loader
 - `fabric.mod.json` asks for Fabric Loader >= 0.15.11 (`fabric_loader_min_version`), what the Fabric API we build against needs itself, instead of the 0.19.5 we develop with: modpacks on this Minecraft version often pin an older loader. Checked: GameTests and the Fabric client test pass on Loader 0.15.11 (`-Pfabric_loader_version=0.15.11`).
 
+## 2026-11-10: 1.2 port (Trade Crate, patron, specialization, integrations)
+Ported from 26.3 by a three-way apply of the 1.2 diff plus mechanical renames; behavior is the same. Differences:
+- Pipes: NeoForge 21.1's `Capabilities.ItemHandler.BLOCK` with `SidedInvWrapper` (26.3: the transfer API's `WorldlyContainerWrapper`). `PushReaction.BLOCK` (no `IMMOVEABLE`), `getRenderShape` → `MODEL`, `ItemInteractionResult` in `useItemOn`, comparator without a direction, removal through `onRemove`.
+- Codecs with more than six fields go through `PortCodecs.composite` (the Patron tab, the board data, the bell hint).
+- Integrations: WTHIT 12.10.3 (compiled against the Mojang-named NeoForge jar), BlueMap API 2.7.8 (2.8 needs Java 25), squaremap API 1.4.3 (Java 8), CTOV 3.6.4 (same `ctov:village/<kind>/house` pools and jigsaw names), Guard Villagers 2.4.12 (NeoForge). Dev runtime with `-Pcompat=true`.
+- New project buildings converted to `Name`/`Properties` palettes, DataVersion 3955.
+- The 1.1 trade-tax charge bug is fixed here too (see 26.3-dev).
+- 2026-11-12, checked with the real mods (see 26.3-dev): `-Pcompat` takes groups (`recipes,jade,placeholders,wthit,maps,villages`); hints step aside for WTHIT as for Jade (`client/LookHints`), the bell hint too; squaremap shops are a gold-coin icon; map popups don't wrap; the Watch Post's golem and guards stand by the post, not on it; a market stall whose plot is under water while the world generates isn't placed (`MarketStockProcessor#finalizeProcessing`, only in a `WorldGenRegion`).
+
 ## API notes (1.21.1)
 - `ResourceLocation.fromNamespaceAndPath`; `ResourceKey#location()`.
 - `SavedData.Factory(Supplier, BiFunction<CompoundTag, HolderLookup.Provider, T>, DataFixTypes)`, `server.overworld().getDataStorage().computeIfAbsent(factory, name)`; `util/CodecSavedData` wraps a `Codec` into that.

@@ -11,7 +11,7 @@ Minecraft 1.21.1 · Fabric and NeoForge · also on 26.3 and 1.20.1
 [![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-62B47A)](https://www.minecraft.net/)
 [![Fabric](https://img.shields.io/badge/Fabric-0.15.11+-DBD0B4)](https://fabricmc.net/)
 [![NeoForge](https://img.shields.io/badge/NeoForge-21.1-E68A00)](https://neoforged.net/)
-[![Economy API 1.1.0](https://img.shields.io/badge/Economy%20API-1.1.0-8A5CF6)](docs/api/README.md)
+[![Economy API 1.2.0](https://img.shields.io/badge/Economy%20API-1.2.0-8A5CF6)](docs/api/README.md)
 [![MIT](https://img.shields.io/badge/License-MIT-D6303C)](LICENSE)
 
 </div>
@@ -96,7 +96,7 @@ A vending block holds one offer: a number of one item for a price. Items are com
 
 **Quick trade.** Sneak + right-click buys one sale from a selling block, sneak + left-click sells one to a buying block. Holding the button repeats it. The owner's own sneak-clicks act like vanilla, so you can still break your block.
 
-**The hint.** Looking at a vending block shows its owner, goods and price at the top of the screen, which keys to press, or why it can't trade right now (sold out, no room, not set up). Sneak to see the items' full tooltips. When Jade is installed the hint is off by default, because Jade shows the same lines.
+**The hint.** Looking at a vending block shows its owner, goods and price at the top of the screen, which keys to press, or why it can't trade right now (sold out, no room, not set up). Sneak to see the items' full tooltips. When Jade or WTHIT is installed the hint is off by default (the bell's and the market counter's too), because they show the same lines.
 
 | Quick trade: 20 bread in one hold | Hint while sneaking |
 |---|---|
@@ -156,6 +156,16 @@ Emeralds stay an item. You can exchange them at a village market's changer, use 
 ### Villagers as suppliers
 
 Switch "Villagers can sell" on a buyback block and villagers bring it what they produce: crops from farmers, fish from fishermen, wool from shepherds, stone from masons and so on. A villager produces a set amount a day by profession and level and keeps at most two days of it. It sells to your block if you pay at least 80% of the item's fair price there, up to two sales per visit, paid from your balance into its wallet.
+
+### Trade crate
+
+A wooden crate villagers trade with on their own, for when you'd rather not lock villagers in a trading hall. Put up to three items in its "Wants" slots (a copy, like a vending block's goods). A villager within 32 blocks whose own offers give one of them walks up and does that trade: as many times as the offer's uses, the payment and the room allow, up to 16 a visit. It's the villager's own deal, at its own price, with the discount your reputation with it earns you, even while you're offline. It gains experience and levels up as if you'd traded with it, and remembers the trades.
+
+![A farmer trading at a trade crate](docs/images/village/trade_crate.jpg)
+
+Emeralds work as in the trade window: while `villagerTrading.enabled` is on they're money, taken from your balance when you buy and paid by the villager's wallet when you sell; with it off they're items, taken from the payment and left in the received slots. Everything else the villager asks for (wheat, books, sticks…) comes out of the nine payment slots, and what it gives goes into the nine received slots. If something is missing, there's no room or nobody can pay, the trade doesn't happen and nothing moves.
+
+Hoppers and pipes fill the payment from the top and the sides and take the received items from the bottom; they can't reach the other half. A comparator reads how full the received slots are. Only you open or break your crates, explosions and pistons leave them alone, and they count toward `vending.maxPerPlayer`. Craft one from planks around a chest with an emerald on top.
 
 ## Villages
 
@@ -218,6 +228,9 @@ Players can pay for projects from their own balance. The money is destroyed (a d
 | Watch Post | 600 | Village | A wooden lookout and an iron golem | Raids cost half as much |
 | New Market Stall | 400 | Village | A market stall with three server vendors | |
 | Trading Yard | 1 000 | Town | A fenced yard under an awning | Caravans leave a day sooner, market days come a day earlier |
+| Orchard Farmstead | 1 200 | Town, Farming | A garden plot with ripe crops and a scarecrow | Suppliers make 10% more |
+| Forge | 1 200 | Town, Crafts | A smithy with the armorer's, weaponsmith's and toolsmith's job sites | Villagers' pay and the treasury's income ×1.1 |
+| Exchange Office | 1 200 | Town, Trade | A counting house with a counter | Customers come 10% more often, trading places cost 25% less |
 | Donation | any | Hamlet | | All of it goes into the treasury |
 
 ![Street lights at night](docs/images/village/street_lights.jpg)
@@ -227,6 +240,24 @@ Buildings go where a village house could stand: on a flat spot of real ground ne
 Street lights are a wall base, a fence post in the village's wood (sandstone walls in the desert) and an arm that holds a lantern over the road, with three free blocks underneath. They go along every street that is still dark, at least ten blocks apart, and skip streets that vanilla lamp posts or torches already light. Paving turns every dirt path of the village into stone in its style and fills single-block dips and gaps. Both keep going once a day, so parts of the village loaded later get theirs too.
 
 ![A paved village from above](docs/images/village/village_above.jpg)
+
+### Patron and specialization
+
+Everything you pay for a village (projects and donations) counts toward your contribution there. Whoever has given the most, at least 100, is the village's patron; on a tie the patron stays. The board's Patron tab lists the biggest contributors.
+
+The patron names the village (up to 32 characters; the name shows on the board, over the bell, in the title when you walk in and on web maps), and gets 10% of the village's trade tax, taken out of the tax rather than added on top.
+
+![The Patron tab](docs/images/village/board_patron.jpg)
+
+From Town level the patron picks what the village specializes in, and can change it once a week:
+
+| Specialization | Bonus | Its project |
+|---|---|---|
+| Farming | Suppliers make 15% more | Orchard Farmstead |
+| Crafts | Villagers' pay and the treasury's income +15% | Forge |
+| Trade | Customers and suppliers come 15% more often | Exchange Office |
+
+A specialization's project can only be funded while the village has that specialization, and its effect holds only while it keeps it. If the village drops below Town, the bonus pauses until it's back.
 
 ### The village builds for itself
 
@@ -318,6 +349,12 @@ These are the settings people ask about most:
 | `villages.levels.thresholds` | `[0, 300, 1500, 5000]` | Every per-level list has one entry per level |
 | `villages.buildings.enabled` | `true` | |
 | `villages.festival.enabled` | `true` | |
+| `villages.council.patronMinContribution` | `100` | |
+| `villages.council.patronTaxSharePercent` | `10` | Out of the trade tax |
+| `villages.council.specializationBonus` | `0.15` | |
+| `tradeCrates.enabled`, `.hoppers` | `true`, `true` | |
+| `tradeCrates.maxTradesPerVisit` | `16` | |
+| `integrations.maps.villages`, `.shops`, `.updateSeconds` | `true`, `true`, `60` | BlueMap and squaremap layers |
 
 Data packs can change the rest under `data/<namespace>/tradery/`:
 
@@ -343,18 +380,22 @@ Every transaction is also written to `<world>/tradery/logs/YYYY-MM-DD.log` as on
 
 | Mod | What you get |
 |---|---|
-| Jade | Owner, offer and stock of vending blocks; a bell's village, level, treasury and what it's saving for |
+| Jade, WTHIT | Owner, offers and stock of vending blocks and counters, what a trade crate wants; a bell's village, level, specialization, patron, treasury and what it's saving for |
 | JEI, REI | Drag items into the goods, price and facade slots; info pages for the blocks, coin ore and coins |
 | Common Economy API (Fabric, built in) | Other economy mods read and change Tradery balances, so shop mods built on it use the same money |
 | Text Placeholder API (Fabric) | `%tradery:balance%`, `%tradery:balance_short%`, `%tradery:top_name 1%`, `%tradery:top_balance 1%`, `%tradery:currency%` |
 | LuckPerms | All `tradery.*` permission nodes |
+| BlueMap, squaremap | Map layers of Tradery's villages (level, prosperity, treasury, specialization, patron) and of players' shops (owner and offers) |
+| ChoiceTheorem's Overhauled Village | Market stalls generate in its villages too, in the closest vanilla style |
+| VillagersPlus | Its alchemists, horticulturists, miners, occultists and oceanographers supply buyback blocks and shop at players' stalls |
+| Guard Villagers (NeoForge) | The Watch Post brings two guards with its iron golem |
 | Minimaps | The village title stays in the middle of the screen, clear of the corners minimaps use |
 
-All of them are optional. EMI and WTHIT support is planned.
+All of them are optional. EMI support is planned.
 
 ## For developers
 
-`dev.eliasnvx:tradery-api:1.1.0+1.21.1` gives you accounts, atomic transactions and events, the same on Fabric and NeoForge. The [API guide](docs/api/README.md) has the details.
+`dev.eliasnvx:tradery-api:1.2.0+1.21.1` gives you accounts, atomic transactions and events, the same on Fabric and NeoForge. The [API guide](docs/api/README.md) has the details.
 
 ```java
 TraderyEconomy eco = TraderyEconomy.get();               // server thread only
@@ -374,7 +415,7 @@ Every movement of money has a reason id such as `tradery:vending/sale`, `tradery
 
 **Villagers don't come to my stall.** Check that the block sells for money (not items, not buyback), has stock and has "Villagers can buy" on; that there are villagers with a bed and a workstation within 32 blocks; that the price is at most 1.5 times the fair price and the item has a fair price at all; and that it's daytime. Villagers don't walk in unloaded chunks, and a village that bought a lot of one item today wants less of it.
 
-**Can hoppers fill or empty a vending block?** No. Vending blocks have no inventory that hoppers, pipes or other mods can reach.
+**Can hoppers fill or empty a vending block?** No. Vending blocks have no inventory that hoppers, pipes or other mods can reach. The trade crate is the block meant for automation.
 
 **What are emeralds good for now?** They're an ordinary item. The changer on a village market buys and sells them, item-priced vending blocks can ask for them, and wandering traders still use them.
 
