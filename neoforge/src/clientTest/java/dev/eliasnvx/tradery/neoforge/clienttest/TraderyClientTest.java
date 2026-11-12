@@ -132,8 +132,8 @@ public final class TraderyClientTest {
         minecraft = Minecraft.getInstance();
         Thread watchdog = new Thread(() -> {
             try {
-                Thread.sleep(5 * 60 * 1000L);
-                finish(false, "timed out after 5 minutes");
+                Thread.sleep((COMPAT ? 30 : 8) * 60 * 1000L);
+                finish(false, "timed out after " + (COMPAT ? 30 : 8) + " minutes");
             } catch (InterruptedException ignored) {
             }
         }, "tradery-client-test-watchdog");
@@ -292,6 +292,9 @@ public final class TraderyClientTest {
             level.setBlockAndUpdate(board, TraderyBlocks.VILLAGE_BOARD.get().defaultBlockState().setValue(VillageBoardBlock.FACING, Direction.NORTH));
             EconomyService.INSTANCE.deposit(EconomyService.INSTANCE.account(player(server).getUUID()), 50_000,
                 Reason.of(Reasons.ADMIN_GIVE, "client test"));
+            // 1.2: the player gave the village the most, so the board's Patron tab is theirs
+            dev.eliasnvx.tradery.village.VillageCouncil.contribute(server, village, player(server),
+                dev.eliasnvx.tradery.village.VillageCouncil.minContribution() * 3);
             return null;
         });
 
@@ -307,21 +310,47 @@ public final class TraderyClientTest {
         waitFor("board screen", mc -> mc.screen instanceof VillageBoardScreen, TIMEOUT_TICKS);
         waitTicks(10);
         screenshot("board_orders");
-        for (int tab = 1; tab <= 2; tab++) {
+        String[] tabs = {"board_village", "board_market", "board_patron"};
+        for (int tab = 1; tab <= 3; tab++) {
             int index = tab;
             client(() -> {
                 var screen = minecraft.screen;
                 int left = (screen.width - 300) / 2;
                 int top = (screen.height - 208) / 2;
-                int tabW = (284 - 4) / 3;
+                int tabW = (284 - 6) / 4;
                 screen.mouseClicked(left + 8 + index * (tabW + 2) + tabW / 2.0, top + 18 + 7, InputConstants.MOUSE_BUTTON_LEFT);
             });
             waitTicks(5);
-            screenshot(tab == 1 ? "board_village" : "board_market");
+            screenshot(tabs[tab - 1]);
         }
+        // 1.2, the Patron tab: a new name (typed into the box, then Enter) and a specialization (the village is a Town)
+        clickBoard(156 + (136 - 48) / 2.0, 49 + 3 + 7);
+        client(() -> {
+            for (char c : "Oakford".toCharArray()) {
+                minecraft.screen.charTyped(c, 0);
+            }
+        });
+        waitTicks(3);
+        client(() -> minecraft.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+        waitTicks(10);
+        clickBoard(156 + 136 / 2.0, 121 + 10);
+        waitTicks(10);
+        screenshot("board_patron_done");
+        String council = server(server -> {
+            VillageState village = Villages.at(server, server.overworld().dimension(), bell);
+            return Villages.displayName(village).getString() + " / "
+                + dev.eliasnvx.tradery.village.VillageCouncil.active(village).map(Enum::name).orElse("none")
+                + " / patron " + dev.eliasnvx.tradery.village.VillageCouncil.patronName(village);
+        });
+        check(council.startsWith("Oakford / FARMING / patron "), "renamed and specialized from the Patron tab: " + council);
         client(() -> minecraft.player.closeContainer());
         waitFor("board closed", mc -> mc.screen == null, TIMEOUT_TICKS);
-        notes.add("village board: three tabs");
+        notes.add("village board: four tabs; the Patron tab renamed and specialized the village (" + council + ")");
+
+        // 1.2: the bell's hint (name, level, specialization, patron)
+        lookAt(bell.offset(1, 0, -2), net.minecraft.world.phys.Vec3.atCenterOf(bell));
+        waitTicks(20);
+        screenshot("bell_hint");
 
         // A villager's own trades, priced in money
         command("tp @p " + (villagerAt.getX() + 0.5) + " " + villagerAt.getY() + " " + (villagerAt.getZ() - 1.5) + " 0 20");
@@ -413,6 +442,225 @@ public final class TraderyClientTest {
         client(() -> minecraft.player.closeContainer());
         waitFor("ledger closed", mc -> mc.screen == null, TIMEOUT_TICKS);
         notes.add("shop ledger opened");
+
+        crate(bell);
+        if (COMPAT) {
+            compatShots(bell);
+        }
+    }
+
+    /** {@code TRADERY_COMPAT_SHOTS=1}: the 1.2 integrations too (run with -Pcompat=wthit,maps,villages). */
+    private static final boolean COMPAT = "1".equals(System.getenv("TRADERY_COMPAT_SHOTS"));
+
+    /**
+     * The 1.2 integrations: the Watch Post funded (with Guard Villagers, two guards come with the golem), then Tradery's
+     * layers on BlueMap and squaremap. Accepts BlueMap's download of the Minecraft client (Mojang's EULA) for the run;
+     * the world stays up while {@code tradery-hold} exists in the run directory (at most 20 minutes). WTHIT's tooltips
+     * are in the hint, crate and bell shots.
+     */
+    private void compatShots(BlockPos bell) {
+        StringBuilder mods = new StringBuilder("compat mods:");
+        for (String mod : List.of("wthit", "jade", "bluemap", "squaremap", "villagersplus", "ctov", "guardvillagers")) {
+            mods.append(' ').append(mod).append('=').append(net.neoforged.fml.ModList.get().isLoaded(mod));
+        }
+        notes.add(mods.toString());
+        boolean reload = acceptBlueMapDownload();
+        if (reload) {
+            command("bluemap reload");
+        }
+        String funded = server(server -> {
+            ServerPlayer p = player(server);
+            EconomyService.INSTANCE.deposit(EconomyService.INSTANCE.account(p.getUUID()), 100_000, Reason.of(Reasons.ADMIN_GIVE, "client test"));
+            VillageState village = Villages.at(server, server.overworld().dimension(), bell);
+            var outcome = dev.eliasnvx.tradery.village.VillageFunding.fund(p, village, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("tradery", "watch_post"));
+            return outcome.success() + " " + outcome.message().getString();
+        });
+        waitTicks(40);
+        String around = server(server -> {
+            ServerLevel level = server.overworld();
+            AABB box = new AABB(bell).inflate(24);
+            var guardType = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("guardvillagers", "guard"));
+            long guards = guardType.map(type -> level.getEntitiesOfClass(net.minecraft.world.entity.Entity.class, box, e -> e.getType() == type).size())
+                .orElse(0);
+            long golems = level.getEntitiesOfClass(net.minecraft.world.entity.animal.IronGolem.class, box).size();
+            return golems + " golem(s), " + guards + " guard(s)";
+        });
+        notes.add("watch post: " + funded + "; around the bell: " + around);
+        command("gamemode spectator @p");
+        lookAt(bell.offset(-6, 2, -7), net.minecraft.world.phys.Vec3.atCenterOf(bell).add(0, 0, 2));
+        waitTicks(40);
+        screenshot("watch_post");
+        command("gamemode survival @p");
+        check(!net.neoforged.fml.ModList.get().isLoaded("guardvillagers") || around.endsWith(" 2 guard(s)"), "the Watch Post brings two guards with Guard Villagers: " + around);
+
+        if (net.neoforged.fml.ModList.get().isLoaded("bluemap") || net.neoforged.fml.ModList.get().isLoaded("squaremap")) {
+            command("save-all flush");
+            waitTicks(40);
+            if (net.neoforged.fml.ModList.get().isLoaded("bluemap")) {
+                // From the console BlueMap wants a map name; as the player it renders around them
+                command("execute as @p at @p run bluemap force-update 160");
+            }
+            if (net.neoforged.fml.ModList.get().isLoaded("squaremap")) {
+                command("squaremap radiusrender minecraft:overworld 96 " + bell.getX() + " " + bell.getZ());
+            }
+            command("gamemode spectator @p");
+            lookAt(bell.offset(-10, 14, -18), net.minecraft.world.phys.Vec3.atCenterOf(bell));
+            Path hold = Path.of("tradery-hold");
+            try {
+                Files.writeString(hold, "Delete this file to end the run\n");
+                LOGGER.info("Tradery compat shots: holding for the web maps (BlueMap http://localhost:8100, squaremap http://localhost:8080); village at {} {} {}",
+                    bell.getX(), bell.getY(), bell.getZ());
+                for (int seconds = 0; seconds < 20 * 60 && Files.exists(hold); seconds++) {
+                    waitTicks(20);
+                }
+                Files.deleteIfExists(hold);
+            } catch (java.io.IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
+    /** Accepts BlueMap's download of the Minecraft client in its core.conf, as asked for these shots. */
+    private boolean acceptBlueMapDownload() {
+        Path core = Path.of("config", "bluemap", "core.conf");
+        try {
+            if (!Files.exists(core)) {
+                return false;
+            }
+            String text = Files.readString(core);
+            if (!text.contains("accept-download: false")) {
+                return false;
+            }
+            Files.writeString(core, text.replace("accept-download: false", "accept-download: true"));
+            notes.add("accepted BlueMap's download in " + core.toAbsolutePath());
+            return true;
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** 1.2: a trade crate of the player's, its window, and a farmer with a bed and a job walking up to trade with it. */
+    private void crate(BlockPos bell) {
+        BlockPos at = bell.offset(7, 0, -6);
+        BlockPos walker = at.offset(-6, 0, -5);
+        server(server -> {
+            ServerLevel level = server.overworld();
+            ServerPlayer p = player(server);
+            level.setBlockAndUpdate(at, TraderyBlocks.TRADE_CRATE.get().defaultBlockState()
+                .setValue(dev.eliasnvx.tradery.vending.TradeCrateBlock.FACING, Direction.NORTH));
+            var crate = (dev.eliasnvx.tradery.vending.TradeCrateBlockEntity) level.getBlockEntity(at);
+            crate.setOwner(AccountId.player(p.getUUID()), p.getGameProfile().getName());
+            VendorsData.get(server).add(level, at, AccountId.player(p.getUUID()), true);
+            // The first wanted slot comes first: bread lands in the crate, an emerald goes to the owner's balance
+            crate.wants().setItem(0, new ItemStack(Items.BREAD));
+            crate.wants().setItem(1, new ItemStack(Items.EMERALD));
+            crate.setItem(0, new ItemStack(Items.WHEAT, 64));
+            crate.setItem(1, new ItemStack(Items.WHEAT, 64));
+            return null;
+        });
+        aimAt(at);
+        screenshot("crate_block");
+        server(server -> {
+            dev.eliasnvx.tradery.menu.TradeCrateMenu.open(player(server),
+                (dev.eliasnvx.tradery.vending.TradeCrateBlockEntity) server.overworld().getBlockEntity(at), false);
+            return null;
+        });
+        waitFor("crate screen", mc -> mc.screen instanceof dev.eliasnvx.tradery.client.screen.TradeCrateScreen, TIMEOUT_TICKS);
+        waitTicks(5);
+        screenshot("crate_screen");
+        client(() -> minecraft.player.closeContainer());
+        waitFor("crate closed", mc -> mc.screen == null, TIMEOUT_TICKS);
+
+        boolean invited = server(server -> {
+            ServerLevel level = server.overworld();
+            Villager farmer = EntityType.VILLAGER.create(level);
+            farmer.moveTo(walker.getX() + 0.5, walker.getY(), walker.getZ() + 0.5, 0, 0);
+            farmer.setVillagerData(farmer.getVillagerData().setProfession(VillagerProfession.FARMER).setLevel(1));
+            level.addFreshEntity(farmer);
+            var brain = farmer.getBrain();
+            var dimension = level.dimension();
+            brain.setMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.HOME, net.minecraft.core.GlobalPos.of(dimension, walker.offset(-2, 0, 0)));
+            brain.setMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.JOB_SITE, net.minecraft.core.GlobalPos.of(dimension, walker.offset(-2, 0, 2)));
+            brain.setMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.MEETING_POINT, net.minecraft.core.GlobalPos.of(dimension, walker));
+            brain.setActiveActivityIfPossible(net.minecraft.world.entity.schedule.Activity.IDLE);
+            // Some experience: vanilla's ResetProfession takes the job of a novice who never traded and has no job site
+            farmer.setVillagerXp(1);
+            var offers = farmer.getOffers();
+            offers.clear();
+            offers.add(new net.minecraft.world.item.trading.MerchantOffer(new net.minecraft.world.item.trading.ItemCost(Items.EMERALD, 1), java.util.Optional.empty(), new ItemStack(Items.BREAD, 6), 0, 12, 1, 0.05f));
+            offers.add(new net.minecraft.world.item.trading.MerchantOffer(new net.minecraft.world.item.trading.ItemCost(Items.WHEAT, 20), java.util.Optional.empty(), new ItemStack(Items.EMERALD), 0, 12, 2, 0.05f));
+            return dev.eliasnvx.tradery.village.VillagerCustomers.invite(farmer,
+                (dev.eliasnvx.tradery.vending.TradeCrateBlockEntity) level.getBlockEntity(at));
+        });
+        check(invited, "the farmer took the invitation to the crate");
+        lookAt(at.offset(4, 0, -5), net.minecraft.world.phys.Vec3.atCenterOf(at).add(-2, 0, -2));
+        waitTicks(40);
+        screenshot("crate_villager");
+        int deadline = 20 * 60;
+        for (int waited = 0; waited < deadline && !server(server -> received(server, at)); waited += 10) {
+            waitTicks(10);
+        }
+        check(server(server -> received(server, at)), "the farmer traded at the crate within a minute");
+        waitTicks(20);
+        screenshot("crate_traded");
+        server(server -> {
+            dev.eliasnvx.tradery.menu.TradeCrateMenu.open(player(server),
+                (dev.eliasnvx.tradery.vending.TradeCrateBlockEntity) server.overworld().getBlockEntity(at), false);
+            return null;
+        });
+        waitFor("crate screen", mc -> mc.screen instanceof dev.eliasnvx.tradery.client.screen.TradeCrateScreen, TIMEOUT_TICKS);
+        waitTicks(5);
+        screenshot("crate_after");
+        client(() -> minecraft.player.closeContainer());
+        waitFor("crate closed", mc -> mc.screen == null, TIMEOUT_TICKS);
+        notes.add("trade crate: block, window, a farmer walked up and traded (" + server(server -> {
+            var crate = (dev.eliasnvx.tradery.vending.TradeCrateBlockEntity) server.overworld().getBlockEntity(at);
+            StringBuilder out = new StringBuilder("payment left " + crate.payment().stream().mapToInt(ItemStack::getCount).sum() + ", received");
+            for (ItemStack stack : crate.received()) {
+                if (!stack.isEmpty()) {
+                    out.append(' ').append(stack.getCount()).append(' ').append(stack.getHoverName().getString());
+                }
+            }
+            return out.toString();
+        }) + ")");
+    }
+
+    private static boolean received(MinecraftServer server, BlockPos at) {
+        var crate = (dev.eliasnvx.tradery.vending.TradeCrateBlockEntity) server.overworld().getBlockEntity(at);
+        return crate.received().stream().anyMatch(stack -> !stack.isEmpty())
+            || crate.payment().stream().mapToInt(ItemStack::getCount).sum() < 128;
+    }
+
+    /** Clicks a point of the village board (300×208, centred), relative to its top-left corner. */
+    private void clickBoard(double x, double y) {
+        client(() -> {
+            var screen = minecraft.screen;
+            int left = (screen.width - 300) / 2;
+            int top = (screen.height - 208) / 2;
+            screen.mouseClicked(left + x, top + y, InputConstants.MOUSE_BUTTON_LEFT);
+            screen.mouseReleased(left + x, top + y, InputConstants.MOUSE_BUTTON_LEFT);
+        });
+        waitTicks(3);
+    }
+
+    /** Stands the player at {@code feet} looking at {@code target}. */
+    private void lookAt(BlockPos feet, net.minecraft.world.phys.Vec3 target) {
+        double x = feet.getX() + 0.5;
+        double y = feet.getY();
+        double z = feet.getZ() + 0.5;
+        double dx = target.x - x;
+        double dy = target.y - (y + 1.62);
+        double dz = target.z - z;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        command(String.format(java.util.Locale.ROOT, "tp @p %.2f %.2f %.2f %.1f %.1f", x, y, z, yaw, pitch));
+        waitTicks(5);
+        client(() -> {
+            minecraft.player.setYRot(yaw);
+            minecraft.player.setXRot(pitch);
+            minecraft.player.setYHeadRot(yaw);
+        });
+        waitTicks(10);
     }
 
     private void setUp(MinecraftServer server, BlockPos bread, BlockPos cobble, BlockPos own) {
