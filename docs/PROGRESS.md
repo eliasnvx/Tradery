@@ -100,4 +100,5 @@ Phases and gates: `SPEC.md` → "Этапы разработки".
 - [x] Streets: paths from new buildings to the street, "Paved Streets" project over the whole village with daily repaving; the watch post builds a lookout; street lights with arms along every dark street (2026-10-24; VillageBoardGameTests 18/18)
 - [x] Port to 1.21.1 (2026-10-26, branch `1.21.1-dev`)
 - [x] Port to 1.20.1 (2026-10-26): every 1.1 source, resource and test; `./gradlew build` green (JUnit, GameTests Fabric 114/114, Forge 113/113); client checks on both loaders open the village title, the board's three tabs, a villager's trade window, the counter (block, buyer, owner) and the shop ledger; differences in `docs/decisions.md` 2026-10-26
-
+- [x] Port of 1.2 (2026-11-10): Trade Crate, patron, specialization with its projects, WTHIT, BlueMap, squaremap, CTOV, VillagersPlus, Guard Villagers; the trade-tax fix; `./gradlew build` green
+- [x] 1.2 client checks (2026-11-12): the client tests on both loaders also open the Patron tab (renaming and a specialization through the screen), the bell hint and a trade crate (block, window, a farmer walking up and trading); with `TRADERY_COMPAT_SHOTS=1` and `-Pcompat=wthit,maps,villages` they fund the Watch Post (guards with Guard Villagers on Forge) and hold the world for the BlueMap and squaremap web maps

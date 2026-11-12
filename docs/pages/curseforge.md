@@ -70,7 +70,7 @@ Looking at a vending block shows its owner, goods and price at the top of the sc
 | Right-click | The window: ×1, ×8, as many as you can, the exact stock |
 | Sneak while looking | The items' full tooltips: enchantments, potion effects, durability |
 
-The block in your hand isn't placed and the vending block isn't mined while you do this. The action bar adds up the whole streak, for example "Bought 20 × Bread for 12.50". When Jade is installed it shows the same lines and the built-in hint steps aside.
+The block in your hand isn't placed and the vending block isn't mined while you do this. The action bar adds up the whole streak, for example "Bought 20 × Bread for 12.50". When Jade or WTHIT is installed it shows the same lines and the built-in hint steps aside.
 
 ![Holding sneak + right-click: 20 bread in one go](https://raw.githubusercontent.com/eliasnvx/Tradery/26.3-dev/docs/images/page/quick_buy.jpg)
 

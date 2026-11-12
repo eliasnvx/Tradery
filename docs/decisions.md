@@ -134,6 +134,17 @@ Short architecture decisions (ADR-lite): date, decision, why. The SPEC section "
 | Text Placeholder API | 2.4.2+1.21 | optional |
 | JEI / REI / Jade | 19.57.0.451 / 16.0.799 / 15.10.6 | optional |
 
+## 2026-11-10: 1.2 port (Trade Crate, patron, specialization, integrations)
+Ported from the 1.21.1 port by a three-way apply plus renames (codec shim, Java 17); behavior is the same. Differences:
+- Pipes: Forge's `ITEM_HANDLER` capability attached to the crate (`AttachCapabilitiesEvent`, one `SidedInvWrapper` per side). `use` instead of `useItemOn`/`useWithoutItem`, NBT `load`/`saveAdditional` without registries, no block codec, `MerchantOffer` costs through `ItemCost.a/b`.
+- Jade 11 and WTHIT 8.21.2 get the bell's village and a vending block's stock as NBT (`TooltipData.Bell.write/read`, WTHIT's raw data tag); the lines are the same `TooltipLines` as on 26.3. No switch patterns (Java 17).
+- Integrations: BlueMap API v2.6.2 from JitPack (the last for Java 17), squaremap API 1.4.3 (Java 8), CTOV 3.4.14 (same pools), Guard Villagers 1.6.19 (Forge).
+- New project buildings converted to `Name`/`Properties` palettes, DataVersion 3465, under `data/tradery/structures/`; recipe results use `"item"`.
+- GameTest players through `MockPlayers.create` (Forge mock players have no channel).
+- The 1.1 trade-tax charge bug is fixed here too (see 26.3-dev).
+- 2026-11-12, checked with the real mods (see 26.3-dev): `-Pcompat` takes groups (`recipes,jade,placeholders,wthit,maps,villages`); hints step aside for WTHIT as for Jade (`client/LookHints`), the bell hint too; squaremap shops are a gold-coin icon; map popups don't wrap; the Watch Post's golem and guards stand by the post, not on it; a market stall whose plot is under water while the world generates isn't placed (`MarketStockProcessor#finalizeProcessing`, only in a `WorldGenRegion`).
+- 1.20.1 dev runtime for the integrations (Modrinth, 2026-11-12): BlueMap 5.3 (the last 1.20 build on Java 17; 5.12 for Forge needs Java 21), squaremap 1.2.0, CTOV 3.4.14 + Lithostitched 1.4.12, VillagersPlus 4.1.1 + VillagersTradingPlus 1.1.1, WTHIT 8.21.2 + badpackets 0.4.3, Guard Villagers 1.6.19 (Forge). Before this only their APIs were on the classpath.
+
 ## API notes (1.21.1)
 - `ResourceLocation.fromNamespaceAndPath`; `ResourceKey#location()`.
 - `SavedData.Factory(Supplier, BiFunction<CompoundTag, HolderLookup.Provider, T>, DataFixTypes)`, `server.overworld().getDataStorage().computeIfAbsent(factory, name)`; `util/CodecSavedData` wraps a `Codec` into that.
